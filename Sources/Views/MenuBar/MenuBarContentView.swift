@@ -1,3 +1,4 @@
+/// 点击菜单栏项后展开的主内容视图。
 import AppKit
 import SwiftUI
 

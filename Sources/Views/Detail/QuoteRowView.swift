@@ -1,3 +1,4 @@
+/// 可复用的键值行，用于展示代码、更新时间等简单信息。
 import SwiftUI
 
 struct QuoteRowView: View {

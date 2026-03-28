@@ -1,3 +1,4 @@
+/// 通用卡片容器，用来统一详情区块的背景、圆角和间距风格。
 import SwiftUI
 
 struct SectionCardView<Content: View>: View {

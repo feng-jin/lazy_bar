@@ -1,3 +1,4 @@
+/// 详情面板里的主价格卡片，展示最新价、涨跌额和涨跌幅。
 import SwiftUI
 
 struct PriceSummaryCard: View {

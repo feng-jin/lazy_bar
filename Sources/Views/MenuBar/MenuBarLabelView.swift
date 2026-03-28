@@ -1,3 +1,4 @@
+/// 菜单栏上的紧凑标签，展示股票代码、最新价和当日涨跌幅。
 import SwiftUI
 
 struct MenuBarLabelView: View {

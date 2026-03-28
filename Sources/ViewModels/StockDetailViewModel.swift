@@ -1,3 +1,4 @@
+/// 管理展开后的详情面板所需的完整行情状态。
 import Foundation
 
 @MainActor

@@ -1,3 +1,4 @@
+/// 应用入口，负责创建菜单栏项并把依赖注入到各个 ViewModel。
 import AppKit
 import SwiftUI
 

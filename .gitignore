@@ -1,8 +1,7 @@
+# 忽略本地构建产物和当前机器的 Xcode 用户状态文件。
 .DS_Store
 /.build
-/Packages
-xcuserdata/
 DerivedData/
-.swiftpm/configuration/registries.json
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+*.xcuserstate
 .netrc

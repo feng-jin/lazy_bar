@@ -1,3 +1,4 @@
+/// 管理菜单栏标签所需的紧凑行情状态。
 import Foundation
 
 @MainActor

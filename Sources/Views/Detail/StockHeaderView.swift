@@ -1,3 +1,4 @@
+/// 详情面板头部，展示公司名称、股票代码和更新时间。
 import SwiftUI
 
 struct StockHeaderView: View {

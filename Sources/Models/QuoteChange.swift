@@ -1,3 +1,4 @@
+/// 描述行情是上涨、下跌还是持平，并提供这三种状态共用的 UI 样式。
 import SwiftUI
 
 enum QuoteChange: Equatable {

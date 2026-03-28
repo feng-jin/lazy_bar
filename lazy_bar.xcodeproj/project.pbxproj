@@ -1,0 +1,398 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000011 /* AppDelegate.swift */; };
+		A00000000000000000000002 /* AppDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* AppDependencies.swift */; };
+		A00000000000000000000003 /* LazyBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* LazyBarApp.swift */; };
+		A00000000000000000000004 /* DisplayQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000021 /* DisplayQuote.swift */; };
+		A00000000000000000000005 /* QuoteChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000022 /* QuoteChange.swift */; };
+		A00000000000000000000006 /* StockQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000023 /* StockQuote.swift */; };
+		A00000000000000000000007 /* MockQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000031 /* MockQuoteProvider.swift */; };
+		A00000000000000000000008 /* QuoteProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000032 /* QuoteProviding.swift */; };
+		A00000000000000000000009 /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000041 /* MenuBarViewModel.swift */; };
+		A0000000000000000000000A /* StockDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000042 /* StockDetailViewModel.swift */; };
+		A0000000000000000000000B /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000051 /* MenuBarContentView.swift */; };
+		A0000000000000000000000C /* MenuBarLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000052 /* MenuBarLabelView.swift */; };
+		A0000000000000000000000D /* PriceSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000061 /* PriceSummaryCard.swift */; };
+		A0000000000000000000000E /* QuoteRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000062 /* QuoteRowView.swift */; };
+		A0000000000000000000000F /* StockHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000063 /* StockHeaderView.swift */; };
+		A00000000000000000000010 /* ChangeBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000071 /* ChangeBadgeView.swift */; };
+		A00000000000000000000014 /* SectionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000072 /* SectionCardView.swift */; };
+		A00000000000000000000015 /* PreviewMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000081 /* PreviewMocks.swift */; };
+		A00000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000091 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A00000000000000000000011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		A00000000000000000000012 /* AppDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencies.swift; sourceTree = "<group>"; };
+		A00000000000000000000013 /* LazyBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyBarApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000017 /* lazy_bar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lazy_bar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000018 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = Resources/Info.plist; sourceTree = SOURCE_ROOT; };
+		A00000000000000000000021 /* DisplayQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayQuote.swift; sourceTree = "<group>"; };
+		A00000000000000000000022 /* QuoteChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteChange.swift; sourceTree = "<group>"; };
+		A00000000000000000000023 /* StockQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuote.swift; sourceTree = "<group>"; };
+		A00000000000000000000031 /* MockQuoteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockQuoteProvider.swift; sourceTree = "<group>"; };
+		A00000000000000000000032 /* QuoteProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteProviding.swift; sourceTree = "<group>"; };
+		A00000000000000000000041 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000042 /* StockDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockDetailViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000051 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
+		A00000000000000000000052 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
+		A00000000000000000000061 /* PriceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceSummaryCard.swift; sourceTree = "<group>"; };
+		A00000000000000000000062 /* QuoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteRowView.swift; sourceTree = "<group>"; };
+		A00000000000000000000063 /* StockHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockHeaderView.swift; sourceTree = "<group>"; };
+		A00000000000000000000071 /* ChangeBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeBadgeView.swift; sourceTree = "<group>"; };
+		A00000000000000000000072 /* SectionCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCardView.swift; sourceTree = "<group>"; };
+		A00000000000000000000081 /* PreviewMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewMocks.swift; sourceTree = "<group>"; };
+		A00000000000000000000091 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000000000000000000101 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000111 = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000112 /* Sources */,
+				A00000000000000000000113 /* Resources */,
+				A00000000000000000000114 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000000000000000000112 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000121 /* App */,
+				A00000000000000000000122 /* Models */,
+				A00000000000000000000123 /* Providers */,
+				A00000000000000000000124 /* ViewModels */,
+				A00000000000000000000125 /* Views */,
+				A00000000000000000000126 /* PreviewSupport */,
+			);
+			path = Sources;
+			sourceTree = SOURCE_ROOT;
+		};
+		A00000000000000000000113 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000091 /* Assets.xcassets */,
+				A00000000000000000000018 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = SOURCE_ROOT;
+		};
+		A00000000000000000000114 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000017 /* lazy_bar.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000121 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000011 /* AppDelegate.swift */,
+				A00000000000000000000012 /* AppDependencies.swift */,
+				A00000000000000000000013 /* LazyBarApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000122 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000021 /* DisplayQuote.swift */,
+				A00000000000000000000022 /* QuoteChange.swift */,
+				A00000000000000000000023 /* StockQuote.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000123 /* Providers */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000031 /* MockQuoteProvider.swift */,
+				A00000000000000000000032 /* QuoteProviding.swift */,
+			);
+			path = Providers;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000124 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000041 /* MenuBarViewModel.swift */,
+				A00000000000000000000042 /* StockDetailViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000125 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000131 /* MenuBar */,
+				A00000000000000000000132 /* Detail */,
+				A00000000000000000000133 /* Shared */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000126 /* PreviewSupport */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000081 /* PreviewMocks.swift */,
+			);
+			path = PreviewSupport;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000131 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000051 /* MenuBarContentView.swift */,
+				A00000000000000000000052 /* MenuBarLabelView.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000132 /* Detail */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000061 /* PriceSummaryCard.swift */,
+				A00000000000000000000062 /* QuoteRowView.swift */,
+				A00000000000000000000063 /* StockHeaderView.swift */,
+			);
+			path = Detail;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000133 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000071 /* ChangeBadgeView.swift */,
+				A00000000000000000000072 /* SectionCardView.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000141 /* lazy_bar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000000000000000000151 /* Build configuration list for PBXNativeTarget "lazy_bar" */;
+			buildPhases = (
+				A00000000000000000000161 /* Sources */,
+				A00000000000000000000101 /* Frameworks */,
+				A00000000000000000000162 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = lazy_bar;
+			productName = lazy_bar;
+			productReference = A00000000000000000000017 /* lazy_bar.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000171 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					A00000000000000000000141 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+				};
+			};
+			buildConfigurationList = A00000000000000000000172 /* Build configuration list for PBXProject "lazy_bar" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000000000000000000111;
+			productRefGroup = A00000000000000000000114 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000141 /* lazy_bar */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000162 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000016 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000161 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000001 /* AppDelegate.swift in Sources */,
+				A00000000000000000000002 /* AppDependencies.swift in Sources */,
+				A00000000000000000000003 /* LazyBarApp.swift in Sources */,
+				A00000000000000000000004 /* DisplayQuote.swift in Sources */,
+				A00000000000000000000005 /* QuoteChange.swift in Sources */,
+				A00000000000000000000006 /* StockQuote.swift in Sources */,
+				A00000000000000000000007 /* MockQuoteProvider.swift in Sources */,
+				A00000000000000000000008 /* QuoteProviding.swift in Sources */,
+				A00000000000000000000009 /* MenuBarViewModel.swift in Sources */,
+				A0000000000000000000000A /* StockDetailViewModel.swift in Sources */,
+				A0000000000000000000000B /* MenuBarContentView.swift in Sources */,
+				A0000000000000000000000C /* MenuBarLabelView.swift in Sources */,
+				A0000000000000000000000D /* PriceSummaryCard.swift in Sources */,
+				A0000000000000000000000E /* QuoteRowView.swift in Sources */,
+				A0000000000000000000000F /* StockHeaderView.swift in Sources */,
+				A00000000000000000000010 /* ChangeBadgeView.swift in Sources */,
+				A00000000000000000000014 /* SectionCardView.swift in Sources */,
+				A00000000000000000000015 /* PreviewMocks.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000181 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A00000000000000000000182 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A00000000000000000000183 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A00000000000000000000184 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000000000000000000151 /* Build configuration list for PBXNativeTarget "lazy_bar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000183 /* Debug */,
+				A00000000000000000000184 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000000000000000000172 /* Build configuration list for PBXProject "lazy_bar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000181 /* Debug */,
+				A00000000000000000000182 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000171 /* Project object */;
+}

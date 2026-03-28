@@ -1,3 +1,4 @@
+/// 为 SwiftUI Preview 提供稳定的示例数据和预加载的 ViewModel。
 import Foundation
 
 @MainActor

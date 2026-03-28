@@ -1,3 +1,4 @@
+/// Provider 层返回的原始股票行情领域模型。
 import Foundation
 
 struct StockQuote: Equatable, Sendable {

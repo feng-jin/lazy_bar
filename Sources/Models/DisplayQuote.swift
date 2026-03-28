@@ -1,3 +1,4 @@
+/// 面向展示层的模型，负责把原始行情格式化成视图可直接使用的内容。
 import Foundation
 
 struct DisplayQuote: Equatable {

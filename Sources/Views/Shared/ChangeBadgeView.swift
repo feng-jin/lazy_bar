@@ -1,3 +1,4 @@
+/// 统一展示涨跌方向的徽标视图，封装图标、颜色和胶囊样式。
 import SwiftUI
 
 struct ChangeBadgeView: View {
