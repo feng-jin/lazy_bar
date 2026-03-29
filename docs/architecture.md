@@ -31,13 +31,13 @@
 3. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 4. ViewModel 调用 `QuoteProviding.fetchQuote()` 获取 `StockQuote`。
 5. ViewModel 将 `StockQuote` 转成 `DisplayQuote`。
-6. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 提供给设置页编辑。
+6. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
 7. `LazyBarApp` 将 `DisplayQuote` 和展示设置组合到 `MenuBarLabelView`，由 `MenuBarExtra` 渲染菜单栏标签；菜单栏文本的字段拼装继续由 `DisplayQuote` 提供，点击后展示 `MenuBarContentView`。
 
 ## 关键职责边界
 - `QuoteProviding` 是数据接入边界。后续接真实行情时，优先新增 provider 实现，而不是改 View。
 - `DisplayQuote` 是展示格式化边界。菜单栏名称、价格、涨跌幅、更新时间等字符串拼装应尽量集中在这里或 ViewModel。
-- `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置与持久化，避免把设置状态散落在 View 里。
+- `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置与持久化，`MenuBarSettingsViewModel` 负责设置页草稿与保存/取消动作，避免把设置状态散落在 View 里。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
 - App 层只负责场景装配，不承接业务逻辑、网络逻辑或跨层状态协调。
 - View 继续负责详情类和设置类 SwiftUI 界面的渲染，不承接业务逻辑、网络逻辑或跨层状态协调。

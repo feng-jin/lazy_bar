@@ -2,6 +2,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: MenuBarSettingsViewModel
 
     var body: some View {
@@ -38,14 +39,35 @@ struct SettingsView: View {
             }
 
             Section {
-                Text("菜单栏会根据这里的配置即时更新展示内容；如果把所有字段都关闭，会自动回退为显示股票简称。")
+                Text("设置页会先保留未保存的草稿；点击保存后菜单栏才会更新。如果把所有字段都关闭，会自动回退为显示股票简称。")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+            }
+
+            Section {
+                HStack {
+                    Spacer()
+
+                    Button("取消") {
+                        viewModel.cancel()
+                        dismiss()
+                    }
+
+                    Button("保存") {
+                        viewModel.save()
+                        dismiss()
+                    }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(!viewModel.hasUnsavedChanges)
+                }
             }
         }
         .formStyle(.grouped)
         .padding(20)
         .frame(width: 360)
+        .onAppear {
+            viewModel.beginEditing()
+        }
     }
 
     private func binding(
@@ -53,7 +75,7 @@ struct SettingsView: View {
         set setter: @escaping (Bool) -> Void
     ) -> Binding<Bool> {
         Binding(
-            get: { viewModel.settings[keyPath: keyPath] },
+            get: { viewModel.draftSettings[keyPath: keyPath] },
             set: setter
         )
     }

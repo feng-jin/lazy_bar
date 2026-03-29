@@ -5,6 +5,7 @@ import Foundation
 @MainActor
 final class MenuBarSettingsViewModel: ObservableObject {
     @Published private(set) var settings: MenuBarDisplaySettings
+    @Published private(set) var draftSettings: MenuBarDisplaySettings
 
     private let store: MenuBarSettingsStore
     private var cancellables = Set<AnyCancellable>()
@@ -12,33 +13,57 @@ final class MenuBarSettingsViewModel: ObservableObject {
     init(store: MenuBarSettingsStore) {
         self.store = store
         settings = store.settings
+        draftSettings = store.settings
 
         store.$settings
             .sink { [weak self] settings in
-                self?.settings = settings
+                guard let self else { return }
+                self.settings = settings
+
+                if !self.hasUnsavedChanges {
+                    self.draftSettings = settings
+                }
             }
             .store(in: &cancellables)
     }
 
     func setShowsSymbol(_ isEnabled: Bool) {
-        updateSettings { $0.showsSymbol = isEnabled }
+        updateDraftSettings { $0.showsSymbol = isEnabled }
     }
 
     func setShowsCompanyName(_ isEnabled: Bool) {
-        updateSettings { $0.showsCompanyName = isEnabled }
+        updateDraftSettings { $0.showsCompanyName = isEnabled }
     }
 
     func setShowsPrice(_ isEnabled: Bool) {
-        updateSettings { $0.showsPrice = isEnabled }
+        updateDraftSettings { $0.showsPrice = isEnabled }
     }
 
     func setShowsChangePercent(_ isEnabled: Bool) {
-        updateSettings { $0.showsChangePercent = isEnabled }
+        updateDraftSettings { $0.showsChangePercent = isEnabled }
     }
 
-    private func updateSettings(_ mutation: (inout MenuBarDisplaySettings) -> Void) {
-        var updatedSettings = settings
+    var hasUnsavedChanges: Bool {
+        draftSettings != settings
+    }
+
+    func save() {
+        guard hasUnsavedChanges else { return }
+        store.update(draftSettings)
+    }
+
+    func cancel() {
+        draftSettings = settings
+    }
+
+    func beginEditing() {
+        guard !hasUnsavedChanges else { return }
+        draftSettings = settings
+    }
+
+    private func updateDraftSettings(_ mutation: (inout MenuBarDisplaySettings) -> Void) {
+        var updatedSettings = draftSettings
         mutation(&updatedSettings)
-        store.update(updatedSettings)
+        draftSettings = updatedSettings
     }
 }
