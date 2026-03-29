@@ -29,15 +29,15 @@ final class MenuBarViewModel: ObservableObject {
 
     private enum LayoutMetrics {
         static let minimumItemWidth: CGFloat = 170
-        static let horizontalInset: CGFloat = 10
+        static let horizontalInset = MenuBarStyle.Metrics.statusItemHorizontalInset
         static let contentHorizontalInset: CGFloat = horizontalInset * 2
-        static let columnSpacing: CGFloat = 8
-        static let barTitleFont = NSFont.systemFont(ofSize: 12, weight: .semibold)
-        static let barSecondaryFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
-        static let barValueFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
-        static let listPrimaryFont = NSFont.systemFont(ofSize: 13, weight: .regular)
-        static let listSecondaryFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
-        static let listValueFont = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+        static let columnSpacing = MenuBarStyle.Metrics.columnSpacing
+        static let barTitleFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.primaryFontSize, weight: .semibold)
+        static let barSecondaryFont = NSFont.monospacedDigitSystemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .regular)
+        static let barValueFont = NSFont.monospacedDigitSystemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .medium)
+        static let listPrimaryFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.popoverPrimaryFontSize, weight: .semibold)
+        static let listSecondaryFont = NSFont.monospacedDigitSystemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .regular)
+        static let listValueFont = NSFont.monospacedDigitSystemFont(ofSize: MenuBarStyle.Metrics.popoverValueFontSize, weight: .medium)
     }
 
     @Published private(set) var displayQuotes: [DisplayQuote] = []

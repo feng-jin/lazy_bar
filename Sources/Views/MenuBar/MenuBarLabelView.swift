@@ -1,13 +1,42 @@
 /// 菜单栏上的紧凑 ticker 标签，在固定宽度内上下循环播放股票摘要。
 import SwiftUI
 
-enum MenuBarMetrics {
-    static let horizontalInset: CGFloat = 10
-    static let contentHeight: CGFloat = 16
-    static let fontSize: CGFloat = 12
-    static let verticalTextOffset: CGFloat = 1
-    static let verticalHoldDuration: TimeInterval = 1.6
-    static let verticalTransitionDuration: TimeInterval = 0.6
+enum MenuBarStyle {
+    enum Metrics {
+        static let statusItemHorizontalInset: CGFloat = 10
+        static let columnSpacing: CGFloat = 8
+        static let contentHeight: CGFloat = 16
+        static let primaryFontSize: CGFloat = 12
+        static let secondaryFontSize: CGFloat = 11
+        static let popoverPrimaryFontSize: CGFloat = 13
+        static let popoverValueFontSize: CGFloat = 12
+        static let verticalTextOffset: CGFloat = 1
+        static let verticalHoldDuration: TimeInterval = 1.6
+        static let verticalTransitionDuration: TimeInterval = 0.6
+        static let panelOuterPadding: CGFloat = 4
+        static let panelRowHorizontalPadding: CGFloat = 10
+        static let panelRowVerticalPadding: CGFloat = 7
+        static let panelCornerRadius: CGFloat = 14
+        static let panelRowCornerRadius: CGFloat = 8
+        static let panelBorderOpacity: CGFloat = 0.45
+        static let panelDividerLeadingInset: CGFloat = 10
+    }
+
+    static func primaryTextFont(size: CGFloat) -> Font {
+        .system(size: size, weight: .semibold, design: .rounded)
+    }
+
+    static func secondaryTextFont(size: CGFloat) -> Font {
+        .system(size: size, weight: .regular, design: .monospaced)
+    }
+
+    static func valueTextFont(size: CGFloat) -> Font {
+        .system(size: size, weight: .medium, design: .monospaced)
+    }
+
+    static func statusTextFont(size: CGFloat) -> Font {
+        .system(size: size, weight: .medium, design: .rounded)
+    }
 }
 
 struct MenuBarLabelView: View {
@@ -30,18 +59,18 @@ struct MenuBarLabelView: View {
         }
         .frame(
             width: layout.contentWidth,
-            height: MenuBarMetrics.contentHeight,
+            height: MenuBarStyle.Metrics.contentHeight,
             alignment: .leading
         )
     }
 
     private func statusText(_ text: String, layout: MenuBarViewModel.ColumnLayout) -> some View {
         Text(text)
-            .font(.system(size: MenuBarMetrics.fontSize, weight: .medium, design: .rounded))
+            .font(MenuBarStyle.statusTextFont(size: MenuBarStyle.Metrics.primaryFontSize))
             .lineLimit(1)
             .frame(
                 width: layout.contentWidth,
-                height: MenuBarMetrics.contentHeight,
+                height: MenuBarStyle.Metrics.contentHeight,
                 alignment: .leading
             )
     }
@@ -70,14 +99,14 @@ private struct VerticalTickerView: View {
                 .offset(y: offsetY)
                 .frame(
                     width: layout.contentWidth,
-                    height: MenuBarMetrics.contentHeight * 2,
+                    height: MenuBarStyle.Metrics.contentHeight * 2,
                     alignment: .topLeading
                 )
             }
         }
         .frame(
             width: layout.contentWidth,
-            height: MenuBarMetrics.contentHeight,
+            height: MenuBarStyle.Metrics.contentHeight,
             alignment: .topLeading
         )
         .clipped()
@@ -105,7 +134,7 @@ private struct VerticalTickerView: View {
 
             if let priceText = columns.priceText {
                 Text(priceText)
-                    .font(.system(size: MenuBarMetrics.fontSize - 1, weight: .medium, design: .monospaced))
+                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: layout.priceColumnWidth, alignment: .trailing)
@@ -115,7 +144,7 @@ private struct VerticalTickerView: View {
 
             if let changeText = columns.changeText {
                 Text(changeText)
-                    .font(.system(size: MenuBarMetrics.fontSize - 1, weight: .medium, design: .monospaced))
+                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                     .frame(maxWidth: layout.changeColumnWidth, alignment: .trailing)
@@ -125,10 +154,10 @@ private struct VerticalTickerView: View {
         }
         .frame(
             width: layout.contentWidth,
-            height: MenuBarMetrics.contentHeight,
+            height: MenuBarStyle.Metrics.contentHeight,
             alignment: .topLeading
         )
-        .offset(y: MenuBarMetrics.verticalTextOffset)
+        .offset(y: MenuBarStyle.Metrics.verticalTextOffset)
     }
 
     private var titleColumnWidth: CGFloat {
@@ -140,13 +169,13 @@ private struct VerticalTickerView: View {
     private func titleColumn(columns: DisplayQuote.MenuBarColumns) -> some View {
         HStack(spacing: 0) {
             Text(columns.primaryText)
-                .font(.system(size: MenuBarMetrics.fontSize, weight: .semibold, design: .rounded))
+                .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.primaryFontSize))
                 .lineLimit(1)
                 .truncationMode(.tail)
 
             if let secondaryText = columns.secondaryText {
                 Text(secondaryText)
-                    .font(.system(size: MenuBarMetrics.fontSize - 1, weight: .regular, design: .monospaced))
+                    .font(MenuBarStyle.secondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -169,14 +198,14 @@ private struct VerticalTickerView: View {
 
         animationTask = Task { @MainActor in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(MenuBarMetrics.verticalHoldDuration))
+                try? await Task.sleep(for: .seconds(MenuBarStyle.Metrics.verticalHoldDuration))
                 guard !Task.isCancelled else { return }
 
-                withAnimation(.easeInOut(duration: MenuBarMetrics.verticalTransitionDuration)) {
-                    offsetY = -MenuBarMetrics.contentHeight
+                withAnimation(.easeInOut(duration: MenuBarStyle.Metrics.verticalTransitionDuration)) {
+                    offsetY = -MenuBarStyle.Metrics.contentHeight
                 }
 
-                try? await Task.sleep(for: .seconds(MenuBarMetrics.verticalTransitionDuration))
+                try? await Task.sleep(for: .seconds(MenuBarStyle.Metrics.verticalTransitionDuration))
                 guard !Task.isCancelled else { return }
 
                 currentIndex = nextIndex

@@ -52,14 +52,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         NSLayoutConstraint.activate([
             labelView.leadingAnchor.constraint(
                 equalTo: button.leadingAnchor,
-                constant: MenuBarMetrics.horizontalInset
+                constant: MenuBarStyle.Metrics.statusItemHorizontalInset
             ),
             labelView.trailingAnchor.constraint(
                 equalTo: button.trailingAnchor,
-                constant: -MenuBarMetrics.horizontalInset
+                constant: -MenuBarStyle.Metrics.statusItemHorizontalInset
             ),
             labelView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-            labelView.heightAnchor.constraint(equalToConstant: MenuBarMetrics.contentHeight)
+            labelView.heightAnchor.constraint(equalToConstant: MenuBarStyle.Metrics.contentHeight)
         ])
 
         hostedLabelView = labelView
@@ -281,7 +281,7 @@ private final class QuotesPanelController: NSWindowController {
 
         panel.contentView = hostingView
         panel.contentView?.wantsLayer = true
-        panel.contentView?.layer?.cornerRadius = 14
+        panel.contentView?.layer?.cornerRadius = MenuBarStyle.Metrics.panelCornerRadius
         panel.contentView?.layer?.masksToBounds = true
         panel.setContentSize(contentSize)
 

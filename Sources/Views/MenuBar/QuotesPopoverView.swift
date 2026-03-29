@@ -2,10 +2,6 @@
 import AppKit
 import SwiftUI
 
-private enum QuotesPopoverMetrics {
-    static let horizontalPadding: CGFloat = 6
-}
-
 struct QuotesPopoverView: View {
     @ObservedObject var viewModel: MenuBarViewModel
     @ObservedObject var settingsStore: MenuBarSettingsStore
@@ -32,7 +28,7 @@ struct QuotesPopoverView: View {
 
                             if index < displayQuotes.count - 1 {
                                 Divider()
-                                    .padding(.leading, 10)
+                                    .padding(.leading, MenuBarStyle.Metrics.panelDividerLeadingInset)
                             }
                         }
                     }
@@ -41,20 +37,23 @@ struct QuotesPopoverView: View {
                 .scrollIndicators(.hidden)
             }
         }
-        .padding(4)
+        .padding(MenuBarStyle.Metrics.panelOuterPadding)
         .frame(width: layout.itemWidth)
         .background(.thickMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: MenuBarStyle.Metrics.panelCornerRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.45), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: MenuBarStyle.Metrics.panelCornerRadius, style: .continuous)
+                .stroke(
+                    Color(nsColor: .separatorColor).opacity(MenuBarStyle.Metrics.panelBorderOpacity),
+                    lineWidth: 0.5
+                )
         }
     }
 
     @ViewBuilder
     private func stateView(text: String) -> some View {
         Text(text)
-            .font(.system(size: 13, weight: .regular))
+            .font(MenuBarStyle.statusTextFont(size: MenuBarStyle.Metrics.popoverPrimaryFontSize))
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, minHeight: 56)
     }
@@ -74,7 +73,7 @@ private struct QuotePopoverRowView: View {
 
             if let priceText = columns.priceText {
                 Text(priceText)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.popoverValueFontSize))
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: layout.priceColumnWidth, alignment: .trailing)
@@ -84,7 +83,7 @@ private struct QuotePopoverRowView: View {
 
             if let changeText = columns.changeText {
                 Text(changeText)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.popoverValueFontSize))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
                     .frame(maxWidth: layout.changeColumnWidth, alignment: .trailing)
@@ -93,17 +92,17 @@ private struct QuotePopoverRowView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, QuotesPopoverMetrics.horizontalPadding)
-        .padding(.vertical, 7)
+        .padding(.horizontal, MenuBarStyle.Metrics.panelRowHorizontalPadding)
+        .padding(.vertical, MenuBarStyle.Metrics.panelRowVerticalPadding)
         .background {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: MenuBarStyle.Metrics.panelRowCornerRadius, style: .continuous)
                 .fill(
                     isHovering
                         ? Color(nsColor: .selectedContentBackgroundColor).opacity(0.16)
                         : .clear
                 )
         }
-        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: MenuBarStyle.Metrics.panelRowCornerRadius, style: .continuous))
         .onHover { hovering in
             isHovering = hovering
         }
@@ -114,14 +113,14 @@ private struct QuotePopoverRowView: View {
         HStack(spacing: 0) {
             if let primaryText = columns.primaryText {
                 Text(primaryText)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.popoverPrimaryFontSize))
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
 
             if let secondaryText = columns.secondaryText {
                 Text(secondaryText)
-                    .font(.system(size: 11, weight: .regular, design: .monospaced))
+                    .font(MenuBarStyle.secondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
