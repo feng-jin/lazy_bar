@@ -2,14 +2,16 @@
 import Foundation
 
 struct MockQuoteProvider: QuoteProviding {
+    static let sampleQuote = StockQuote(
+        symbol: "600519",
+        companyName: "贵州茅台",
+        lastPrice: 1688.88,
+        changeAmount: 23.56,
+        changePercent: 0.0141,
+        updatedAt: Date()
+    )
+
     func fetchQuote() async throws -> StockQuote {
-        StockQuote(
-            symbol: "AAPL",
-            companyName: "Apple Inc.",
-            lastPrice: 182.31,
-            changeAmount: 2.24,
-            changePercent: 0.0124,
-            updatedAt: Date()
-        )
+        Self.sampleQuote
     }
 }

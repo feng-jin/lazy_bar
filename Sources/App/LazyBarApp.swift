@@ -7,31 +7,40 @@ struct LazyBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     @StateObject private var menuBarViewModel: MenuBarViewModel
-    @StateObject private var detailViewModel: StockDetailViewModel
 
     init() {
         let dependencies = AppDependencies.live
         _menuBarViewModel = StateObject(
             wrappedValue: MenuBarViewModel(provider: dependencies.quoteProvider)
         )
-        _detailViewModel = StateObject(
-            wrappedValue: StockDetailViewModel(provider: dependencies.quoteProvider)
-        )
     }
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarContentView(viewModel: detailViewModel)
-                .frame(width: 320)
-                .task {
-                    await detailViewModel.loadIfNeeded()
-                }
+            MenuBarContentView()
         } label: {
             MenuBarLabelView(viewModel: menuBarViewModel)
                 .task {
                     await menuBarViewModel.loadIfNeeded()
                 }
         }
-        .menuBarExtraStyle(.window)
+        .menuBarExtraStyle(.menu)
+
+        Settings {
+            SettingsPlaceholderView()
+        }
+    }
+}
+
+private struct SettingsPlaceholderView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("设置")
+                .font(.title2.weight(.semibold))
+            Text("当前版本仅提供设置入口，具体配置项会在后续版本补充。")
+                .foregroundStyle(.secondary)
+        }
+        .padding(20)
+        .frame(width: 320, alignment: .leading)
     }
 }

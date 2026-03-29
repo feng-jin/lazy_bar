@@ -3,7 +3,7 @@
 ## 当前实现概览
 当前工程是一个单 target 的 macOS 原生应用，基于 SwiftUI 构建，通过 `MenuBarExtra` 提供菜单栏交互。
 
-应用入口在 `LazyBarApp`，负责创建菜单栏 label 和展开后的内容面板，并将依赖注入到对应的 ViewModel。
+应用入口在 `LazyBarApp`，负责创建菜单栏 label、菜单内容和设置场景，并将依赖注入到对应的 ViewModel。
 
 ## 分层结构
 - `Models`
@@ -15,10 +15,10 @@
   - `MockQuoteProvider`：当前 UI prototype 使用的 mock 数据源。
 - `ViewModels`
   - `MenuBarViewModel`：负责菜单栏紧凑标签状态。
-  - `StockDetailViewModel`：负责展开详情面板状态。
+  - `StockDetailViewModel`：保留为后续详情扩展使用，当前不接入主交互路径。
 - `Views`
   - `MenuBarLabelView`：bar 上的紧凑展示。
-  - `MenuBarContentView`：点击后弹出的详情容器。
+  - `MenuBarContentView`：点击后弹出的操作菜单，当前只提供设置和退出。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。
 
 ## 当前数据流
@@ -26,21 +26,22 @@
 2. `AppDependencies` 将 `MockQuoteProvider` 注入 ViewModel。
 3. ViewModel 调用 `QuoteProviding.fetchQuote()` 获取 `StockQuote`。
 4. ViewModel 将 `StockQuote` 转成 `DisplayQuote`。
-5. SwiftUI Views 直接消费 `DisplayQuote` 完成展示。
+5. `MenuBarLabelView` 直接消费 `DisplayQuote` 完成菜单栏展示。
+6. `MenuBarContentView` 处理菜单动作，并通过 SwiftUI `Settings` scene 打开设置窗口。
 
 ## 关键职责边界
 - `QuoteProviding` 是数据接入边界。后续接真实行情时，优先新增 provider 实现，而不是改 View。
-- `DisplayQuote` 是展示格式化边界。价格、涨跌幅、更新时间等字符串拼装应尽量集中在这里或 ViewModel。
+- `DisplayQuote` 是展示格式化边界。菜单栏名称、价格、涨跌幅、更新时间等字符串拼装应尽量集中在这里或 ViewModel。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
-- View 负责渲染，不承接业务逻辑、网络逻辑或跨层状态协调。
+- View 负责渲染和有限的系统动作分发，不承接业务逻辑、网络逻辑或跨层状态协调。
 
 ## 当前已知事实
 - `AppDependencies` 是 mock/real provider 切换的自然入口。
-- `MenuBarViewModel` 与 `StockDetailViewModel` 目前存在相似加载逻辑，这是当前实现事实，不必为了“去重”而提前引入复杂抽象。
+- 当前主交互只依赖 `MenuBarViewModel`；`StockDetailViewModel` 和 Detail 组件仍保留在代码中，但不作为菜单点击后的默认路径。
 - `AppDelegate` 通过 `NSApp.setActivationPolicy(.accessory)` 让应用以更符合菜单栏工具的形态运行。
 
 ## 后续优先扩展点
 - 真实行情接入：从 `Providers` 和 `AppDependencies` 开始扩展。
 - 多标的轮播：优先扩展 provider 返回结构和 ViewModel 状态模型。
 - 刷新调度：优先放在 ViewModel 或独立协调层，不要直接写进 View。
-- watchlist 配置：应在不破坏当前分层的前提下新增状态和配置入口。
+- watchlist 与设置配置：应通过 `Settings` scene 扩展入口，同时保持状态与数据边界不下沉到 View。

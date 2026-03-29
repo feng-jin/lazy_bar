@@ -10,8 +10,12 @@ struct DisplayQuote: Equatable {
     let updatedAtText: String
     let change: QuoteChange
 
+    var menuBarNameText: String {
+        companyName
+    }
+
     var menuBarText: String {
-        "\(symbol) \(priceText) \(changePercentText)"
+        "\(menuBarNameText) \(changePercentText)"
     }
 
     var detailChangeText: String {
