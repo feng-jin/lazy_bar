@@ -20,7 +20,7 @@
   - `LazyBarApp`：负责组装依赖，并声明 `MenuBarExtra` 与 `Settings` 两个场景。
   - `MenuBarSettingsStore`：持久化菜单栏展示设置，供菜单栏和设置页共享。
 - `Views`
-  - `MenuBarContentView`：菜单栏点击后弹出的 SwiftUI window 内容，使用 `SettingsLink` 打开设置窗口。
+  - `MenuBarContentView`：菜单栏点击后弹出的 SwiftUI window 内容，通过显式设置打开动作唤起设置窗口。
   - `MenuBarLabelView`：菜单栏标签视图，根据 `MenuBarViewModel` 与展示设置生成紧凑文案。
   - `SettingsView`：设置窗口中的菜单栏字段配置界面。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。

@@ -3,9 +3,11 @@ import AppKit
 import SwiftUI
 
 struct MenuBarContentView: View {
+    @Environment(\.openSettings) private var openSettings
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SettingsLink {
+            Button(action: openSettingsWindow) {
                 Text("设置")
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -28,6 +30,11 @@ struct MenuBarContentView: View {
 
     private func quitApp() {
         NSApp.terminate(nil)
+    }
+
+    private func openSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        openSettings()
     }
 }
 
