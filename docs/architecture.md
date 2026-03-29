@@ -22,7 +22,7 @@
 - `Views`
   - `MenuBarContentView`：菜单栏点击后弹出的 SwiftUI window 内容，负责装配下拉面板行数据和动作。
   - `BarDropdownView`：自定义下拉面板容器，负责组织分组、间距和面板宽度。
-  - `MenuRowView`：下拉面板中的单行交互组件，负责整行命中、hover 高亮和点击行为。
+  - `MenuRowView`：下拉面板中的单行交互组件，负责整行命中、图标与标题排布、hover 高亮和点击行为。
   - `MenuBarLabelView`：菜单栏标签视图，根据 `MenuBarViewModel` 与展示设置生成紧凑文案。
   - `SettingsView`：设置窗口中的菜单栏字段配置界面。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。

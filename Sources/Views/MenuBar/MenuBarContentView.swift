@@ -9,10 +9,10 @@ struct MenuBarContentView: View {
     var body: some View {
         BarDropdownView(
             primaryRows: [
-                .init(title: "设置", action: openSettingsWindow)
+                .init(title: "设置 Settings", systemImage: "gearshape", action: openSettingsWindow)
             ],
             destructiveRows: [
-                .init(title: "退出", role: .destructive, action: quitApp)
+                .init(title: "退出 Quit Lazy Bar", systemImage: "power", role: .destructive, action: quitApp)
             ]
         )
     }

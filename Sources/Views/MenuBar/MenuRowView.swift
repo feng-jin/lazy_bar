@@ -4,11 +4,13 @@ import SwiftUI
 struct MenuRow: Identifiable {
     let id = UUID()
     let title: String
+    let systemImage: String?
     let role: ButtonRole?
     let action: () -> Void
 
-    init(title: String, role: ButtonRole? = nil, action: @escaping () -> Void) {
+    init(title: String, systemImage: String? = nil, role: ButtonRole? = nil, action: @escaping () -> Void) {
         self.title = title
+        self.systemImage = systemImage
         self.role = role
         self.action = action
     }
@@ -22,13 +24,20 @@ struct MenuRowView: View {
     var body: some View {
         Button(role: row.role, action: row.action) {
             HStack(spacing: 8) {
+                if let systemImage = row.systemImage {
+                    Image(systemName: systemImage)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(foregroundStyle)
+                        .frame(width: 14)
+                }
+
                 Text(row.title)
                     .foregroundStyle(foregroundStyle)
 
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, minHeight: 18, alignment: .leading)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 4)
             .padding(.vertical, 2)
             .background(backgroundShape)
         }
@@ -46,16 +55,16 @@ struct MenuRowView: View {
 
     @ViewBuilder
     private var backgroundShape: some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
+        RoundedRectangle(cornerRadius: 8.5, style: .continuous)
             .fill(isHovered ? Color.accentColor : Color.clear)
     }
 }
 
 #Preview {
     VStack(spacing: 4) {
-        MenuRowView(row: .init(title: "设置", action: {}))
-        MenuRowView(row: .init(title: "退出", role: .destructive, action: {}))
+        MenuRowView(row: .init(title: "设置 Settings", systemImage: "gearshape", action: {}))
+        MenuRowView(row: .init(title: "退出 Quit Lazy Bar", systemImage: "power", role: .destructive, action: {}))
     }
     .padding()
-    .frame(width: 172)
+    .frame(width: 185)
 }
