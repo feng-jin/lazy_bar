@@ -31,7 +31,6 @@ struct LazyBarApp: App {
                 settings: menuBarSettingsViewModel.settings
             )
         }
-        .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView(viewModel: menuBarSettingsViewModel)

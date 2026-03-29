@@ -20,9 +20,7 @@
   - `LazyBarApp`：负责组装依赖，并声明 `MenuBarExtra` 与 `Settings` 两个场景。
   - `MenuBarSettingsStore`：持久化菜单栏展示设置，供菜单栏和设置页共享。
 - `Views`
-  - `MenuBarContentView`：菜单栏点击后弹出的 SwiftUI window 内容，负责装配下拉面板行数据和动作。
-  - `BarDropdownView`：自定义下拉面板容器，负责组织分组、间距和面板宽度。
-  - `MenuRowView`：下拉面板中的单行交互组件，负责整行命中、图标与标题排布、hover 高亮和点击行为。
+  - `MenuBarContentView`：菜单栏点击后展示的原生菜单内容，负责装配设置与退出动作。
   - `MenuBarLabelView`：菜单栏标签视图，根据 `MenuBarViewModel` 与展示设置生成紧凑文案。
   - `SettingsView`：设置窗口中的菜单栏字段配置界面。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。
@@ -34,7 +32,7 @@
 4. ViewModel 调用 `QuoteProviding.fetchQuote()` 获取 `StockQuote`。
 5. ViewModel 将 `StockQuote` 转成 `DisplayQuote`。
 6. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
-7. `LazyBarApp` 将 `DisplayQuote` 和展示设置组合到 `MenuBarLabelView`，由 `MenuBarExtra` 渲染菜单栏标签；菜单栏文本的字段拼装继续由 `DisplayQuote` 提供，点击后展示由 `MenuBarContentView` 装配的自定义 window-style 下拉面板。
+7. `LazyBarApp` 将 `DisplayQuote` 和展示设置组合到 `MenuBarLabelView`，由 `MenuBarExtra` 渲染菜单栏标签；菜单栏文本的字段拼装继续由 `DisplayQuote` 提供，点击后展示由 `MenuBarContentView` 装配的原生菜单项。
 
 ## 关键职责边界
 - `QuoteProviding` 是数据接入边界。后续接真实行情时，优先新增 provider 实现，而不是改 View。
