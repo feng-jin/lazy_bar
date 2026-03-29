@@ -3,14 +3,14 @@ import SwiftUI
 
 struct MenuBarLabelView: View {
     @ObservedObject var viewModel: MenuBarViewModel
+    let settings: MenuBarDisplaySettings
 
     var body: some View {
         if let quote = viewModel.displayQuote {
-            Text(quote.menuBarSummaryText(settings: .default))
+            menuBarText(for: quote)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .foregroundStyle(quote.change.tintColor)
         } else if viewModel.isLoading {
             Text("加载中...")
                 .font(.system(size: 12, weight: .medium, design: .rounded))
@@ -19,9 +19,34 @@ struct MenuBarLabelView: View {
                 .font(.system(size: 12, weight: .medium, design: .rounded))
         }
     }
+
+    private func menuBarText(for quote: DisplayQuote) -> Text {
+        let segments = quote.menuBarSegments(settings: settings)
+
+        guard let firstSegment = segments.first else {
+            return Text(quote.menuBarNameText)
+        }
+
+        return segments.dropFirst().reduce(styledText(for: firstSegment, quote: quote)) { partial, segment in
+            partial + Text(" ") + styledText(for: segment, quote: quote)
+        }
+    }
+
+    private func styledText(for segment: DisplayQuote.MenuBarSegment, quote: DisplayQuote) -> Text {
+        let text = Text(segment.text)
+
+        guard settings.usesChangeColor, segment.emphasizesChange else {
+            return text.foregroundColor(.primary)
+        }
+
+        return text.foregroundColor(quote.change.tintColor)
+    }
 }
 
 #Preview {
-    MenuBarLabelView(viewModel: PreviewMocks.menuBarViewModel)
+    MenuBarLabelView(
+        viewModel: PreviewMocks.menuBarViewModel,
+        settings: .default
+    )
         .padding()
 }

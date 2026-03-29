@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A00000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000011 /* AppDelegate.swift */; };
 		A00000000000000000000002 /* AppDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* AppDependencies.swift */; };
 		A00000000000000000000003 /* LazyBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* LazyBarApp.swift */; };
 		A00000000000000000000004 /* DisplayQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000021 /* DisplayQuote.swift */; };
@@ -34,7 +33,6 @@
 
 /* Begin PBXFileReference section */
 		655EF4A22F78C00800474F97 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
-		A00000000000000000000011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A00000000000000000000012 /* AppDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencies.swift; sourceTree = "<group>"; };
 		A00000000000000000000013 /* LazyBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyBarApp.swift; sourceTree = "<group>"; };
 		A00000000000000000000017 /* lazy_bar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lazy_bar.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -115,7 +113,6 @@
 		A00000000000000000000121 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000011 /* AppDelegate.swift */,
 				A00000000000000000000012 /* AppDependencies.swift */,
 				A00000000000000000000013 /* LazyBarApp.swift */,
 				A00000000000000000000024 /* MenuBarSettingsStore.swift */,
@@ -269,7 +266,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A00000000000000000000001 /* AppDelegate.swift in Sources */,
 				A00000000000000000000002 /* AppDependencies.swift in Sources */,
 				A00000000000000000000003 /* LazyBarApp.swift in Sources */,
 				A00000000000000000000004 /* DisplayQuote.swift in Sources */,
@@ -412,7 +408,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -438,7 +434,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
 				PRODUCT_NAME = "$(TARGET_NAME)";

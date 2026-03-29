@@ -7,19 +7,19 @@
 - 如果当前机器只有 Command Line Tools，`xcodebuild` 会因为缺少完整 Xcode 而无法完成工程构建。
 
 ## 当前工程事实
-- 应用主体界面基于 SwiftUI；菜单栏入口通过 AppKit `NSStatusItem` 提供系统级接入。
+- 应用主体界面、设置页和菜单栏入口都基于 SwiftUI；菜单栏场景使用 `MenuBarExtra`。
 - `Resources/Info.plist` 中启用了 `LSUIElement`，应用默认以菜单栏工具形态运行，不显示 Dock 图标。
-- `AppDelegate` 中通过 `NSApp.setActivationPolicy(.accessory)` 进一步强化菜单栏工具行为。
 - 当前 `AppDependencies.live` 注入的是 `MockQuoteProvider`，因此现阶段所有行情都来自 mock 数据。
-- 当前菜单栏点击后展示的是 SwiftUI popover，其中通过 `SettingsLink` 打开设置窗口。
+- 当前菜单栏点击后展示的是 SwiftUI window 内容，其中通过 `SettingsLink` 打开设置窗口。
 - 当前已接入标准 `Settings` scene，设置页支持勾选菜单栏展示字段和颜色开关。
 - 当前菜单栏颜色默认遵循 A 股语义，涨红跌绿，也可以在设置页关闭颜色显示。
+- 当前没有第三方依赖，也没有 Swift Package 依赖。
 
 ## 常见修改入口
 - 要替换数据源：优先查看 `Sources/Providers` 与 `Sources/App/AppDependencies.swift`。
-- 要调整菜单栏展示：优先查看 `Sources/ViewModels/MenuBarViewModel.swift` 和 `Sources/App/AppDelegate.swift`。
-- 如果要继续减少 AppKit 依赖，优先保留菜单栏系统接入层不动，先从 `Sources/Views`、`Sources/Models`、`Sources/ViewModels` 往 SwiftUI 语义收敛。
-- 要调整菜单内容或设置入口：优先查看 `Sources/App/AppDelegate.swift` 和 `Sources/App/LazyBarApp.swift`。
+- 要调整菜单栏展示：优先查看 `Sources/ViewModels/MenuBarViewModel.swift`、`Sources/Views/MenuBar/MenuBarLabelView.swift` 和 `Sources/App/LazyBarApp.swift`。
+- 如果要继续减少 AppKit 依赖，优先从 `Sources/Views/MenuBar/MenuBarContentView.swift` 里的退出行为入手。
+- 要调整菜单内容或设置入口：优先查看 `Sources/Views/MenuBar/MenuBarContentView.swift` 和 `Sources/App/LazyBarApp.swift`。
 - 要调整菜单栏展示配置：优先查看 `Sources/Models/MenuBarDisplaySettings.swift`、`Sources/App/MenuBarSettingsStore.swift`、`Sources/ViewModels/MenuBarSettingsViewModel.swift` 和 `Sources/Views/MenuBar/SettingsView.swift`。
 - 要调整详情面板原型：优先查看 `Sources/ViewModels/StockDetailViewModel.swift` 和 `Sources/Views/Detail`。
 - 要调整展示格式化：优先查看 `Sources/Models/DisplayQuote.swift`。

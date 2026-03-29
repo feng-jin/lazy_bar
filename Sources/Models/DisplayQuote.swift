@@ -2,6 +2,11 @@
 import Foundation
 
 struct DisplayQuote: Equatable {
+    struct MenuBarSegment: Equatable {
+        let text: String
+        let emphasizesChange: Bool
+    }
+
     let symbol: String
     let companyName: String
     let priceText: String
@@ -23,30 +28,30 @@ struct DisplayQuote: Equatable {
     }
 
     func menuBarSummaryText(settings: MenuBarDisplaySettings) -> String {
-        let segments = menuBarSegments(settings: settings)
+        let segments = menuBarSegments(settings: settings).map(\.text)
         if segments.isEmpty {
             return menuBarNameText
         }
         return segments.joined(separator: " ")
     }
 
-    func menuBarSegments(settings: MenuBarDisplaySettings) -> [String] {
-        var segments: [String] = []
+    func menuBarSegments(settings: MenuBarDisplaySettings) -> [MenuBarSegment] {
+        var segments: [MenuBarSegment] = []
 
         if settings.showsSymbol {
-            segments.append(menuBarSymbolText)
+            segments.append(MenuBarSegment(text: menuBarSymbolText, emphasizesChange: false))
         }
 
         if settings.showsCompanyName {
-            segments.append(menuBarNameText)
+            segments.append(MenuBarSegment(text: menuBarNameText, emphasizesChange: false))
         }
 
         if settings.showsPrice {
-            segments.append(menuBarPriceText)
+            segments.append(MenuBarSegment(text: menuBarPriceText, emphasizesChange: false))
         }
 
         if settings.showsChangePercent {
-            segments.append(changePercentText)
+            segments.append(MenuBarSegment(text: changePercentText, emphasizesChange: true))
         }
 
         return segments

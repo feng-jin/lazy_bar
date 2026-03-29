@@ -1,7 +1,6 @@
 /// 提供菜单栏展示字段与颜色策略的设置界面。
 import SwiftUI
 
-@available(macOS 15.0, *)
 struct SettingsView: View {
     @ObservedObject var viewModel: MenuBarSettingsViewModel
 

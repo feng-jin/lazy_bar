@@ -2,7 +2,6 @@
 import AppKit
 import SwiftUI
 
-@available(macOS 15.0, *)
 struct MenuBarContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -32,7 +31,6 @@ struct MenuBarContentView: View {
     }
 }
 
-@available(macOS 15.0, *)
 struct MenuBarContentView_Previews: PreviewProvider {
     static var previews: some View {
         MenuBarContentView()
