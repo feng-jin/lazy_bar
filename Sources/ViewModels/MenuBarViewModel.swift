@@ -3,7 +3,7 @@ import Foundation
 
 @MainActor
 final class MenuBarViewModel: ObservableObject {
-    @Published private(set) var displayQuote: DisplayQuote?
+    @Published private(set) var displayQuotes: [DisplayQuote] = []
     @Published private(set) var isLoading = false
 
     private let provider: any QuoteProviding
@@ -11,6 +11,10 @@ final class MenuBarViewModel: ObservableObject {
 
     init(provider: any QuoteProviding) {
         self.provider = provider
+    }
+
+    var displayQuote: DisplayQuote? {
+        displayQuotes.first
     }
 
     func loadIfNeeded() async {
@@ -24,16 +28,16 @@ final class MenuBarViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let quote = try await provider.fetchQuote()
-            displayQuote = DisplayQuote(quote: quote)
+            let quotes = try await provider.fetchQuotes()
+            displayQuotes = quotes.map(DisplayQuote.init)
             hasLoaded = true
         } catch {
-            displayQuote = nil
+            displayQuotes = []
         }
     }
 
-    func displayQuoteForPreview(_ quote: DisplayQuote) {
-        displayQuote = quote
+    func displayQuotesForPreview(_ quotes: [DisplayQuote]) {
+        displayQuotes = quotes
         hasLoaded = true
     }
 }

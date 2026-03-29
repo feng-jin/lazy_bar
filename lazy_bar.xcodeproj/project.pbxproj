@@ -27,6 +27,7 @@
 		A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* MenuBarDisplaySettings.swift */; };
 		A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000043 /* MenuBarSettingsViewModel.swift */; };
 		A0000000000000000000001C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000053 /* SettingsView.swift */; };
+		A0000000000000000000001D /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* StatusBarController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +40,7 @@
 		A00000000000000000000023 /* StockQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuote.swift; sourceTree = "<group>"; };
 		A00000000000000000000024 /* MenuBarSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsStore.swift; sourceTree = "<group>"; };
 		A00000000000000000000025 /* MenuBarDisplaySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarDisplaySettings.swift; sourceTree = "<group>"; };
+		A00000000000000000000026 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		A00000000000000000000031 /* MockQuoteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockQuoteProvider.swift; sourceTree = "<group>"; };
 		A00000000000000000000032 /* QuoteProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteProviding.swift; sourceTree = "<group>"; };
 		A00000000000000000000041 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				A00000000000000000000012 /* AppDependencies.swift */,
 				A00000000000000000000013 /* LazyBarApp.swift */,
 				A00000000000000000000024 /* MenuBarSettingsStore.swift */,
+				A00000000000000000000026 /* StatusBarController.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -279,6 +282,7 @@
 				A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */,
 				A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */,
 				A0000000000000000000001C /* SettingsView.swift in Sources */,
+				A0000000000000000000001D /* StatusBarController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

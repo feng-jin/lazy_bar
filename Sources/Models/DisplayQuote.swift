@@ -25,6 +25,18 @@ struct DisplayQuote: Equatable {
         symbol
     }
 
+    var menuListTitleText: String {
+        "\(symbol) \(companyName)"
+    }
+
+    var menuListDetailText: String {
+        priceText
+    }
+
+    var menuListTrailingText: String {
+        changePercentText
+    }
+
     func menuBarSummaryText(settings: MenuBarDisplaySettings) -> String {
         let segments = menuBarSegments(settings: settings).map(\.text)
         if segments.isEmpty {

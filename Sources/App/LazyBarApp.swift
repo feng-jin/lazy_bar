@@ -1,10 +1,11 @@
-/// 应用入口，负责创建菜单栏场景并把依赖注入到对应的 ViewModel。
+/// 应用入口，负责创建状态栏控制器并把依赖注入到对应的 ViewModel。
 import SwiftUI
 
 @main
 struct LazyBarApp: App {
     @StateObject private var menuBarViewModel: MenuBarViewModel
     @StateObject private var menuBarSettingsViewModel: MenuBarSettingsViewModel
+    private let statusBarController: StatusBarController
 
     init() {
         let dependencies = AppDependencies.live
@@ -16,6 +17,10 @@ struct LazyBarApp: App {
         _menuBarSettingsViewModel = StateObject(
             wrappedValue: MenuBarSettingsViewModel(store: dependencies.menuBarSettingsStore)
         )
+        statusBarController = StatusBarController(
+            menuBarViewModel: menuBarViewModel,
+            settingsStore: dependencies.menuBarSettingsStore
+        )
 
         Task {
             await menuBarViewModel.loadIfNeeded()
@@ -23,15 +28,6 @@ struct LazyBarApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra {
-            MenuBarContentView()
-        } label: {
-            MenuBarLabelView(
-                viewModel: menuBarViewModel,
-                settings: menuBarSettingsViewModel.settings
-            )
-        }
-
         Settings {
             SettingsView(viewModel: menuBarSettingsViewModel)
         }

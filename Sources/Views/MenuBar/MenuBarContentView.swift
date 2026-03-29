@@ -1,34 +1,75 @@
-/// 点击菜单栏项后展示的原生菜单内容。
-import AppKit
+/// 左键点击状态栏项后展示的股票列表弹层内容。
 import SwiftUI
 
 struct MenuBarContentView: View {
-    @Environment(\.openSettings) private var openSettings
+    @ObservedObject var viewModel: MenuBarViewModel
 
     var body: some View {
         Group {
-            Button(action: openSettingsWindow) {
-                Label("设置 Settings", systemImage: "gearshape")
-            }
+            if viewModel.isLoading {
+                stateView(text: "加载中...")
+            } else if viewModel.displayQuotes.isEmpty {
+                stateView(text: "暂无股票")
+            } else {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(viewModel.displayQuotes.enumerated()), id: \.element.symbol) { index, quote in
+                        quoteRow(for: quote)
 
-            Button(action: quitApp) {
-                Label("退出 Quit Lazy Bar", systemImage: "power")
+                        if index < viewModel.displayQuotes.count - 1 {
+                            Divider()
+                        }
+                    }
+                }
+                .padding(.vertical, 6)
             }
         }
+        .frame(width: 320)
+        .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private func quitApp() {
-        NSApp.terminate(nil)
+    private func stateView(text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, minHeight: 88)
+            .padding(.horizontal, 16)
     }
 
-    private func openSettingsWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        openSettings()
+    private func quoteRow(for quote: DisplayQuote) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(quote.menuListTitleText)
+                    .font(.system(size: 13, weight: .semibold))
+
+                Text(quote.menuListDetailText)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 12)
+
+            Text(quote.menuListTrailingText)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(changeColor(for: quote))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+    }
+
+    private func changeColor(for quote: DisplayQuote) -> Color {
+        if quote.changePercentText.hasPrefix("+") {
+            return .red
+        }
+        if quote.changePercentText.hasPrefix("-") {
+            return .green
+        } else {
+            return .primary
+        }
     }
 }
 
 struct MenuBarContentView_Previews: PreviewProvider {
     static var previews: some View {
-        MenuBarContentView()
+        MenuBarContentView(viewModel: PreviewMocks.menuBarViewModel)
     }
 }
