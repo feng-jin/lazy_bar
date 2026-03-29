@@ -3,8 +3,13 @@ import Foundation
 
 struct AppDependencies {
     let quoteProvider: any QuoteProviding
+    let menuBarSettingsStore: MenuBarSettingsStore
 
-    static let live = AppDependencies(
-        quoteProvider: MockQuoteProvider()
-    )
+    @MainActor
+    static var live: AppDependencies {
+        AppDependencies(
+            quoteProvider: MockQuoteProvider(),
+            menuBarSettingsStore: MenuBarSettingsStore()
+        )
+    }
 }

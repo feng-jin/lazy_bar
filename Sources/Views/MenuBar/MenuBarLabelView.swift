@@ -6,7 +6,7 @@ struct MenuBarLabelView: View {
 
     var body: some View {
         if let quote = viewModel.displayQuote {
-            Text(quote.menuBarSummaryText)
+            Text(quote.menuBarSummaryText(settings: .default))
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .lineLimit(1)
                 .truncationMode(.tail)

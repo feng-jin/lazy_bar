@@ -1,5 +1,4 @@
 /// 描述行情是上涨、下跌还是持平，并提供这三种状态共用的 UI 样式。
-import AppKit
 import SwiftUI
 
 enum QuoteChange: Equatable {
@@ -25,17 +24,6 @@ enum QuoteChange: Equatable {
             .green
         case .flat:
             .secondary
-        }
-    }
-
-    var appKitTintColor: NSColor {
-        switch self {
-        case .up:
-            .systemRed
-        case .down:
-            .systemGreen
-        case .flat:
-            .secondaryLabelColor
         }
     }
 

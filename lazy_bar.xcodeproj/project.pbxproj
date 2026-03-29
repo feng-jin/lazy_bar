@@ -26,6 +26,10 @@
 		A00000000000000000000014 /* SectionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000072 /* SectionCardView.swift */; };
 		A00000000000000000000015 /* PreviewMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000081 /* PreviewMocks.swift */; };
 		A00000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000091 /* Assets.xcassets */; };
+		A00000000000000000000019 /* MenuBarSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000024 /* MenuBarSettingsStore.swift */; };
+		A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* MenuBarDisplaySettings.swift */; };
+		A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000043 /* MenuBarSettingsViewModel.swift */; };
+		A0000000000000000000001C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000053 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,12 +42,16 @@
 		A00000000000000000000021 /* DisplayQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayQuote.swift; sourceTree = "<group>"; };
 		A00000000000000000000022 /* QuoteChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteChange.swift; sourceTree = "<group>"; };
 		A00000000000000000000023 /* StockQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuote.swift; sourceTree = "<group>"; };
+		A00000000000000000000024 /* MenuBarSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsStore.swift; sourceTree = "<group>"; };
+		A00000000000000000000025 /* MenuBarDisplaySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarDisplaySettings.swift; sourceTree = "<group>"; };
 		A00000000000000000000031 /* MockQuoteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockQuoteProvider.swift; sourceTree = "<group>"; };
 		A00000000000000000000032 /* QuoteProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteProviding.swift; sourceTree = "<group>"; };
 		A00000000000000000000041 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000042 /* StockDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockDetailViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000043 /* MenuBarSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000051 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		A00000000000000000000052 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
+		A00000000000000000000053 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A00000000000000000000061 /* PriceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceSummaryCard.swift; sourceTree = "<group>"; };
 		A00000000000000000000062 /* QuoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteRowView.swift; sourceTree = "<group>"; };
 		A00000000000000000000063 /* StockHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockHeaderView.swift; sourceTree = "<group>"; };
@@ -110,6 +118,7 @@
 				A00000000000000000000011 /* AppDelegate.swift */,
 				A00000000000000000000012 /* AppDependencies.swift */,
 				A00000000000000000000013 /* LazyBarApp.swift */,
+				A00000000000000000000024 /* MenuBarSettingsStore.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -118,6 +127,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000021 /* DisplayQuote.swift */,
+				A00000000000000000000025 /* MenuBarDisplaySettings.swift */,
 				A00000000000000000000022 /* QuoteChange.swift */,
 				A00000000000000000000023 /* StockQuote.swift */,
 			);
@@ -136,6 +146,7 @@
 		A00000000000000000000124 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				A00000000000000000000043 /* MenuBarSettingsViewModel.swift */,
 				A00000000000000000000041 /* MenuBarViewModel.swift */,
 				A00000000000000000000042 /* StockDetailViewModel.swift */,
 			);
@@ -165,6 +176,7 @@
 			children = (
 				A00000000000000000000051 /* MenuBarContentView.swift */,
 				A00000000000000000000052 /* MenuBarLabelView.swift */,
+				A00000000000000000000053 /* SettingsView.swift */,
 			);
 			path = MenuBar;
 			sourceTree = "<group>";
@@ -275,6 +287,10 @@
 				A00000000000000000000010 /* ChangeBadgeView.swift in Sources */,
 				A00000000000000000000014 /* SectionCardView.swift in Sources */,
 				A00000000000000000000015 /* PreviewMocks.swift in Sources */,
+				A00000000000000000000019 /* MenuBarSettingsStore.swift in Sources */,
+				A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */,
+				A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */,
+				A0000000000000000000001C /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -325,7 +341,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -372,7 +388,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;

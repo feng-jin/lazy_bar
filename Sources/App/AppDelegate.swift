@@ -1,6 +1,7 @@
 /// 处理不适合放进 SwiftUI 视图里的 macOS 应用级行为。
 import AppKit
 import Combine
+import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -8,15 +9,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+@available(macOS 15.0, *)
 @MainActor
 final class MenuBarStatusItemController {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let viewModel: MenuBarViewModel
+    private let settingsStore: MenuBarSettingsStore
+    private let popover = NSPopover()
     private var cancellables = Set<AnyCancellable>()
 
-    init(viewModel: MenuBarViewModel) {
+    init(viewModel: MenuBarViewModel, settingsStore: MenuBarSettingsStore) {
         self.viewModel = viewModel
+        self.settingsStore = settingsStore
         configureStatusItem()
+        configurePopover()
         bindViewModel()
 
         Task {
@@ -25,48 +31,80 @@ final class MenuBarStatusItemController {
     }
 
     private func configureStatusItem() {
-        statusItem.menu = makeMenu()
         statusItem.button?.appearsDisabled = false
-        updateStatusItemTitle(displayQuote: viewModel.displayQuote, isLoading: viewModel.isLoading)
+        statusItem.button?.target = self
+        statusItem.button?.action = #selector(togglePopover)
+        updateStatusItemTitle(
+            displayQuote: viewModel.displayQuote,
+            isLoading: viewModel.isLoading,
+            settings: settingsStore.settings
+        )
+    }
+
+    private func configurePopover() {
+        popover.behavior = .transient
+        popover.contentSize = NSSize(width: 180, height: 76)
+        popover.contentViewController = NSHostingController(rootView: MenuBarContentView())
     }
 
     private func bindViewModel() {
-        viewModel.$displayQuote
-            .combineLatest(viewModel.$isLoading)
-            .sink { [weak self] displayQuote, isLoading in
-                self?.updateStatusItemTitle(displayQuote: displayQuote, isLoading: isLoading)
+        Publishers.CombineLatest3(
+            viewModel.$displayQuote,
+            viewModel.$isLoading,
+            settingsStore.$settings
+        )
+            .sink { [weak self] displayQuote, isLoading, settings in
+                self?.updateStatusItemTitle(
+                    displayQuote: displayQuote,
+                    isLoading: isLoading,
+                    settings: settings
+                )
             }
             .store(in: &cancellables)
     }
 
-    private func updateStatusItemTitle(displayQuote: DisplayQuote?, isLoading: Bool) {
+    private func updateStatusItemTitle(
+        displayQuote: DisplayQuote?,
+        isLoading: Bool,
+        settings: MenuBarDisplaySettings
+    ) {
         guard let button = statusItem.button else { return }
-        button.attributedTitle = makeStatusItemTitle(displayQuote: displayQuote, isLoading: isLoading)
+        button.attributedTitle = makeStatusItemTitle(
+            displayQuote: displayQuote,
+            isLoading: isLoading,
+            settings: settings
+        )
     }
 
-    private func makeStatusItemTitle(displayQuote: DisplayQuote?, isLoading: Bool) -> NSAttributedString {
+    private func makeStatusItemTitle(
+        displayQuote: DisplayQuote?,
+        isLoading: Bool,
+        settings: MenuBarDisplaySettings
+    ) -> NSAttributedString {
         let baseAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
             .foregroundColor: NSColor.labelColor
         ]
 
         if let quote = displayQuote {
-            let title = NSMutableAttributedString()
-            title.append(
-                NSAttributedString(
-                    string: "\(quote.menuBarNameText) \(quote.menuBarPriceText) ",
-                    attributes: baseAttributes
-                )
+            let title = NSMutableAttributedString(
+                string: quote.menuBarSummaryText(settings: settings),
+                attributes: baseAttributes
             )
-            title.append(
-                NSAttributedString(
-                    string: quote.changePercentText,
-                    attributes: baseAttributes.merging(
-                        [.foregroundColor: quote.change.appKitTintColor],
-                        uniquingKeysWith: { _, new in new }
+
+            if settings.usesChangeColor, settings.showsChangePercent {
+                let summaryText = title.string as NSString
+                let changeRange = summaryText.range(of: quote.changePercentText)
+
+                if changeRange.location != NSNotFound {
+                    title.addAttribute(
+                        .foregroundColor,
+                        value: NSColor(quote.change.tintColor),
+                        range: changeRange
                     )
-                )
-            )
+                }
+            }
+
             return title
         }
 
@@ -74,38 +112,15 @@ final class MenuBarStatusItemController {
         return NSAttributedString(string: fallbackText, attributes: baseAttributes)
     }
 
-    private func makeMenu() -> NSMenu {
-        let menu = NSMenu()
-
-        let settingsItem = NSMenuItem(
-            title: "设置",
-            action: #selector(openSettings),
-            keyEquivalent: ","
-        )
-        settingsItem.target = self
-        menu.addItem(settingsItem)
-
-        menu.addItem(.separator())
-
-        let quitItem = NSMenuItem(
-            title: "退出",
-            action: #selector(quitApp),
-            keyEquivalent: "q"
-        )
-        quitItem.target = self
-        menu.addItem(quitItem)
-
-        return menu
-    }
-
     @objc
-    private func openSettings() {
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        NSApp.activate(ignoringOtherApps: true)
-    }
+    private func togglePopover() {
+        guard let button = statusItem.button else { return }
 
-    @objc
-    private func quitApp() {
-        NSApp.terminate(nil)
+        if popover.isShown {
+            popover.performClose(nil)
+        } else {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.becomeKey()
+        }
     }
 }

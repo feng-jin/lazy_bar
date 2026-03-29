@@ -18,8 +18,38 @@ struct DisplayQuote: Equatable {
         priceText
     }
 
-    var menuBarSummaryText: String {
-        "\(menuBarNameText) \(menuBarPriceText) \(changePercentText)"
+    var menuBarSymbolText: String {
+        symbol
+    }
+
+    func menuBarSummaryText(settings: MenuBarDisplaySettings) -> String {
+        let segments = menuBarSegments(settings: settings)
+        if segments.isEmpty {
+            return menuBarNameText
+        }
+        return segments.joined(separator: " ")
+    }
+
+    func menuBarSegments(settings: MenuBarDisplaySettings) -> [String] {
+        var segments: [String] = []
+
+        if settings.showsSymbol {
+            segments.append(menuBarSymbolText)
+        }
+
+        if settings.showsCompanyName {
+            segments.append(menuBarNameText)
+        }
+
+        if settings.showsPrice {
+            segments.append(menuBarPriceText)
+        }
+
+        if settings.showsChangePercent {
+            segments.append(changePercentText)
+        }
+
+        return segments
     }
 
     var detailChangeText: String {
