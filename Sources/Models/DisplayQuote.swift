@@ -6,6 +6,20 @@ struct DisplayQuote: Equatable {
         let text: String
     }
 
+    struct MenuListColumns: Equatable {
+        let primaryText: String?
+        let secondaryText: String?
+        let priceText: String?
+        let changeText: String?
+    }
+
+    struct MenuBarColumns: Equatable {
+        let primaryText: String
+        let secondaryText: String?
+        let priceText: String?
+        let changeText: String?
+    }
+
     let symbol: String
     let companyName: String
     let priceText: String
@@ -39,6 +53,60 @@ struct DisplayQuote: Equatable {
 
     var menuListSummaryText: String {
         "\(companyName)  \(priceText)  \(changePercentText)"
+    }
+
+    func menuListColumns(settings: MenuBarDisplaySettings) -> MenuListColumns {
+        let primaryText: String?
+        let secondaryText: String?
+
+        switch (settings.showsCompanyName, settings.showsSymbol) {
+        case (true, true):
+            primaryText = companyName
+            secondaryText = symbol
+        case (true, false):
+            primaryText = companyName
+            secondaryText = nil
+        case (false, true):
+            primaryText = symbol
+            secondaryText = nil
+        case (false, false):
+            primaryText = nil
+            secondaryText = nil
+        }
+
+        return MenuListColumns(
+            primaryText: primaryText,
+            secondaryText: secondaryText,
+            priceText: settings.showsPrice ? priceText : nil,
+            changeText: settings.showsChangePercent ? changePercentText : nil
+        )
+    }
+
+    func menuBarColumns(settings: MenuBarDisplaySettings) -> MenuBarColumns {
+        let primaryText: String
+        let secondaryText: String?
+
+        switch (settings.showsCompanyName, settings.showsSymbol) {
+        case (true, true):
+            primaryText = companyName
+            secondaryText = symbol
+        case (true, false):
+            primaryText = companyName
+            secondaryText = nil
+        case (false, true):
+            primaryText = symbol
+            secondaryText = nil
+        case (false, false):
+            primaryText = companyName
+            secondaryText = nil
+        }
+
+        return MenuBarColumns(
+            primaryText: primaryText,
+            secondaryText: secondaryText,
+            priceText: settings.showsPrice ? priceText : nil,
+            changeText: settings.showsChangePercent ? changePercentText : nil
+        )
     }
 
     func menuBarSummaryText(settings: MenuBarDisplaySettings) -> String {

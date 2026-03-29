@@ -31,15 +31,15 @@
 3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. `MenuBarViewModel` 首次加载时调用 `QuoteProviding.fetchQuotes()` 获取 `[StockQuote]`，随后按固定间隔重复拉取。
-6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 条目；定时刷新时直接替换最新展示数据。
+6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 所需的分栏展示条目与动态列宽；列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享；定时刷新时直接替换最新展示数据。
 7. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
-8. `StatusBarController` 将固定宽度的 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，列表项文案继续由 `DisplayQuote` 提供；左键点击后展示的股票列表面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，因此打开期间也会与 bar 同步更新；右键点击后展示系统菜单。
+8. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据 `MenuBarViewModel` 产出的动态列宽同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用 `DisplayQuote` 提供的分栏展示数据对齐渲染股票简称、股价与涨跌幅；左键点击后展示的股票列表面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，并继续复用相同的分栏展示数据与动态列宽，因此打开期间也会与 bar 同步更新；右键点击后展示系统菜单。
 9. 右键选择设置后，由 `SettingsWindowController` 打开承载 `SettingsView` 的 AppKit 窗口。
 
 ## 关键职责边界
 - `QuoteProviding` 是数据接入边界。后续接真实行情时，优先新增 provider 实现，而不是改 View。
 - mock 阶段的“实时感”仍通过 `QuoteProviding` + ViewModel 刷新调度来模拟，不把随机波动或拉取时序写进 View。
-- `DisplayQuote` 是展示格式化边界。菜单栏名称、价格、涨跌幅、更新时间以及下拉列表文案应尽量集中在这里或 ViewModel。
+- `DisplayQuote` 是展示格式化边界。菜单栏 ticker 与左键列表所需的名称、价格、涨跌幅、更新时间以及分栏展示内容应尽量集中在这里或 ViewModel。
 - `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置与持久化，`MenuBarSettingsViewModel` 负责设置页草稿与保存/取消动作，避免把设置状态散落在 View 里。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
 - App 层负责 AppKit 壳层装配，不承接业务逻辑、网络逻辑或行情状态计算。

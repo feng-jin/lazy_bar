@@ -1,6 +1,7 @@
 /// 管理状态栏按钮、左键股票列表面板与右键系统菜单。
 /// 设置入口保持纯 AppKit `NSMenu`，因此不使用 SwiftUI `SettingsLink`。
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
@@ -13,6 +14,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private var quotesPanelController: QuotesPanelController?
     private var localClickMonitor: Any?
     private var globalClickMonitor: Any?
+    private var cancellables: Set<AnyCancellable> = []
 
     init(
         menuBarViewModel: MenuBarViewModel,
@@ -22,10 +24,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         self.menuBarViewModel = menuBarViewModel
         self.settingsStore = settingsStore
         self.openSettingsWindowHandler = openSettingsWindow
-        statusItem = NSStatusBar.system.statusItem(withLength: MenuBarMetrics.itemWidth)
+        let initialWidth = menuBarViewModel.columnLayout(settings: settingsStore.settings).itemWidth
+        statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
         super.init()
 
         configureStatusItem()
+        observeWidthChanges()
     }
 
     private func configureStatusItem() {
@@ -59,6 +63,26 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         ])
 
         hostedLabelView = labelView
+        updateStatusItemWidth()
+    }
+
+    private func observeWidthChanges() {
+        menuBarViewModel.$displayQuotes
+            .sink { [weak self] _ in
+                self?.updateStatusItemWidth()
+            }
+            .store(in: &cancellables)
+
+        settingsStore.$settings
+            .sink { [weak self] _ in
+                self?.updateStatusItemWidth()
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateStatusItemWidth() {
+        let layout = menuBarViewModel.columnLayout(settings: settingsStore.settings)
+        statusItem.length = layout.itemWidth
     }
 
     @objc
@@ -105,14 +129,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     private func quotesPanelSize(quoteCount: Int, isLoading: Bool) -> NSSize {
-        let width: CGFloat = 280
+        let width = menuBarViewModel.columnLayout(settings: settingsStore.settings).itemWidth
 
         guard !isLoading, quoteCount > 0 else {
-            return NSSize(width: width, height: 72)
+            return NSSize(width: width, height: 68)
         }
 
-        let rowHeight: CGFloat = 54
-        let verticalPadding: CGFloat = 20
+        let rowHeight: CGFloat = 38
+        let verticalPadding: CGFloat = 18
         let height = min(360, verticalPadding + CGFloat(quoteCount) * rowHeight)
         return NSSize(width: width, height: height)
     }
@@ -257,6 +281,8 @@ private final class QuotesPanelController: NSWindowController {
 
         panel.contentView = hostingView
         panel.contentView?.wantsLayer = true
+        panel.contentView?.layer?.cornerRadius = 14
+        panel.contentView?.layer?.masksToBounds = true
         panel.setContentSize(contentSize)
 
         super.init(window: panel)
@@ -280,7 +306,7 @@ private final class QuotesPanelController: NSWindowController {
 
         let buttonFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
         var origin = NSPoint(
-            x: buttonFrame.midX - panel.frame.width / 2,
+            x: buttonFrame.minX,
             y: buttonFrame.minY - panel.frame.height - Metrics.verticalGap
         )
 

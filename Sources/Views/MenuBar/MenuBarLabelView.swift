@@ -2,9 +2,7 @@
 import SwiftUI
 
 enum MenuBarMetrics {
-    static let itemWidth: CGFloat = 170
     static let horizontalInset: CGFloat = 10
-    static let contentWidth: CGFloat = itemWidth - (horizontalInset * 2)
     static let contentHeight: CGFloat = 16
     static let fontSize: CGFloat = 12
     static let verticalTextOffset: CGFloat = 1
@@ -17,30 +15,32 @@ struct MenuBarLabelView: View {
     @ObservedObject var settingsStore: MenuBarSettingsStore
 
     var body: some View {
+        let layout = viewModel.columnLayout(settings: settingsStore.settings)
+
         Group {
             let tickerItems = viewModel.menuBarTickerItems(settings: settingsStore.settings)
 
             if !tickerItems.isEmpty {
-                VerticalTickerView(items: tickerItems)
+                VerticalTickerView(items: tickerItems, layout: layout)
             } else if viewModel.isLoading {
-                statusText("加载中...")
+                statusText("加载中...", layout: layout)
             } else {
-                statusText("行情不可用")
+                statusText("行情不可用", layout: layout)
             }
         }
         .frame(
-            width: MenuBarMetrics.contentWidth,
+            width: layout.contentWidth,
             height: MenuBarMetrics.contentHeight,
             alignment: .leading
         )
     }
 
-    private func statusText(_ text: String) -> some View {
+    private func statusText(_ text: String, layout: MenuBarViewModel.ColumnLayout) -> some View {
         Text(text)
             .font(.system(size: MenuBarMetrics.fontSize, weight: .medium, design: .rounded))
             .lineLimit(1)
             .frame(
-                width: MenuBarMetrics.contentWidth,
+                width: layout.contentWidth,
                 height: MenuBarMetrics.contentHeight,
                 alignment: .leading
             )
@@ -49,6 +49,7 @@ struct MenuBarLabelView: View {
 
 private struct VerticalTickerView: View {
     let items: [MenuBarViewModel.MenuBarTickerItem]
+    let layout: MenuBarViewModel.ColumnLayout
 
     @State private var currentIndex = 0
     @State private var currentItemID: String?
@@ -60,22 +61,22 @@ private struct VerticalTickerView: View {
             if items.isEmpty {
                 EmptyView()
             } else if items.count == 1 {
-                tickerText(items[0].text)
+                tickerRow(items[0].columns)
             } else {
                 VStack(spacing: 0) {
-                    tickerText(items[currentIndex].text)
-                    tickerText(items[nextIndex].text)
+                    tickerRow(items[currentIndex].columns)
+                    tickerRow(items[nextIndex].columns)
                 }
                 .offset(y: offsetY)
                 .frame(
-                    width: MenuBarMetrics.contentWidth,
+                    width: layout.contentWidth,
                     height: MenuBarMetrics.contentHeight * 2,
                     alignment: .topLeading
                 )
             }
         }
         .frame(
-            width: MenuBarMetrics.contentWidth,
+            width: layout.contentWidth,
             height: MenuBarMetrics.contentHeight,
             alignment: .topLeading
         )
@@ -97,17 +98,64 @@ private struct VerticalTickerView: View {
         return (currentIndex + 1) % items.count
     }
 
-    private func tickerText(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: MenuBarMetrics.fontSize, weight: .semibold, design: .rounded))
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .frame(
-                width: MenuBarMetrics.contentWidth,
-                height: MenuBarMetrics.contentHeight,
-                alignment: .topLeading
-            )
-            .offset(y: MenuBarMetrics.verticalTextOffset)
+    private func tickerRow(_ columns: DisplayQuote.MenuBarColumns) -> some View {
+        HStack(spacing: 0) {
+            titleColumn(columns: columns)
+                .frame(width: titleColumnWidth, alignment: .leading)
+
+            if let priceText = columns.priceText {
+                Text(priceText)
+                    .font(.system(size: MenuBarMetrics.fontSize - 1, weight: .medium, design: .monospaced))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: layout.priceColumnWidth, alignment: .trailing)
+                    .layoutPriority(1)
+                    .padding(.leading, layout.columnSpacing)
+            }
+
+            if let changeText = columns.changeText {
+                Text(changeText)
+                    .font(.system(size: MenuBarMetrics.fontSize - 1, weight: .medium, design: .monospaced))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(maxWidth: layout.changeColumnWidth, alignment: .trailing)
+                    .layoutPriority(2)
+                    .padding(.leading, layout.columnSpacing)
+            }
+        }
+        .frame(
+            width: layout.contentWidth,
+            height: MenuBarMetrics.contentHeight,
+            alignment: .topLeading
+        )
+        .offset(y: MenuBarMetrics.verticalTextOffset)
+    }
+
+    private var titleColumnWidth: CGFloat {
+        let occupiedWidth = layout.priceWidthWithSpacing + layout.changeWidthWithSpacing
+        return max(0, layout.contentWidth - occupiedWidth)
+    }
+
+    @ViewBuilder
+    private func titleColumn(columns: DisplayQuote.MenuBarColumns) -> some View {
+        HStack(spacing: 0) {
+            Text(columns.primaryText)
+                .font(.system(size: MenuBarMetrics.fontSize, weight: .semibold, design: .rounded))
+                .lineLimit(1)
+                .truncationMode(.tail)
+
+            if let secondaryText = columns.secondaryText {
+                Text(secondaryText)
+                    .font(.system(size: MenuBarMetrics.fontSize - 1, weight: .regular, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .padding(.leading, layout.columnSpacing)
+            }
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .layoutPriority(3)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func restartAnimation() {
