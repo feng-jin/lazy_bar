@@ -10,7 +10,7 @@
 - 应用主体界面、设置页和菜单栏入口都基于 SwiftUI；菜单栏场景使用 `MenuBarExtra`。
 - `Resources/Info.plist` 中启用了 `LSUIElement`，应用默认以菜单栏工具形态运行，不显示 Dock 图标。
 - 当前 `AppDependencies.live` 注入的是 `MockQuoteProvider`，因此现阶段所有行情都来自 mock 数据。
-- 当前菜单栏点击后展示的是 `MenuBarExtra` 原生菜单；bar 顶部 label 保持简单，菜单项使用系统原生高亮、间距和命中行为，并保留带图标的设置与退出入口。
+- 当前菜单栏点击后展示的是 `MenuBarExtra` 原生菜单；bar 顶部 label 保持简单，菜单项使用系统原生高亮、间距和命中行为，并保留带图标的设置与退出入口。设置入口通过显式 `openSettings()` 调用打开设置窗口，避免菜单场景下重复点击失效。
 - 当前已接入标准 `Settings` scene，设置页支持勾选菜单栏展示字段，并通过保存/取消按钮控制是否写回持久化配置。
 - 当前没有第三方依赖，也没有 Swift Package 依赖。
 
