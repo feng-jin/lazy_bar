@@ -10,7 +10,7 @@
 - 应用主体界面、设置页和菜单栏入口都基于 SwiftUI；菜单栏场景使用 `MenuBarExtra`。
 - `Resources/Info.plist` 中启用了 `LSUIElement`，应用默认以菜单栏工具形态运行，不显示 Dock 图标。
 - 当前 `AppDependencies.live` 注入的是 `MockQuoteProvider`，因此现阶段所有行情都来自 mock 数据。
-- 当前菜单栏点击后展示的是 SwiftUI window 内容，其中通过显式设置打开动作唤起设置窗口。
+- 当前菜单栏点击后展示的是自定义 SwiftUI window-style 下拉面板；bar 顶部 label 保持简单，面板行交互通过独立 `MenuRowView` 提供整行点击和 hover 高亮。
 - 当前已接入标准 `Settings` scene，设置页支持勾选菜单栏展示字段，并通过保存/取消按钮控制是否写回持久化配置。
 - 当前没有第三方依赖，也没有 Swift Package 依赖。
 
@@ -18,7 +18,7 @@
 - 要替换数据源：优先查看 `Sources/Providers` 与 `Sources/App/AppDependencies.swift`。
 - 要调整菜单栏展示：优先查看 `Sources/ViewModels/MenuBarViewModel.swift`、`Sources/Views/MenuBar/MenuBarLabelView.swift` 和 `Sources/App/LazyBarApp.swift`。
 - 如果要继续减少 AppKit 依赖，优先从 `Sources/Views/MenuBar/MenuBarContentView.swift` 里的退出行为入手。
-- 要调整菜单内容或设置入口：优先查看 `Sources/Views/MenuBar/MenuBarContentView.swift` 和 `Sources/App/LazyBarApp.swift`。
+- 要调整菜单内容或设置入口：优先查看 `Sources/Views/MenuBar/MenuBarContentView.swift`、`Sources/Views/MenuBar/BarDropdownView.swift`、`Sources/Views/MenuBar/MenuRowView.swift` 和 `Sources/App/LazyBarApp.swift`。
 - 要调整菜单栏展示配置：优先查看 `Sources/Models/MenuBarDisplaySettings.swift`、`Sources/App/MenuBarSettingsStore.swift`、`Sources/ViewModels/MenuBarSettingsViewModel.swift` 和 `Sources/Views/MenuBar/SettingsView.swift`。
 - 要调整详情面板原型：优先查看 `Sources/ViewModels/StockDetailViewModel.swift` 和 `Sources/Views/Detail`。
 - 要调整展示格式化：优先查看 `Sources/Models/DisplayQuote.swift`。

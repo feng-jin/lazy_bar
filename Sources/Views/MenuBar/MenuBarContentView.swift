@@ -6,26 +6,14 @@ struct MenuBarContentView: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button(action: openSettingsWindow) {
-                Text("设置")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            Divider()
-
-            Button(role: .destructive, action: quitApp) {
-                Text("退出")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-        }
-        .frame(width: 180)
+        BarDropdownView(
+            primaryRows: [
+                .init(title: "设置", action: openSettingsWindow)
+            ],
+            destructiveRows: [
+                .init(title: "退出", role: .destructive, action: quitApp)
+            ]
+        )
     }
 
     private func quitApp() {

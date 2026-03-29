@@ -27,6 +27,8 @@
 		A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* MenuBarDisplaySettings.swift */; };
 		A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000043 /* MenuBarSettingsViewModel.swift */; };
 		A0000000000000000000001C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000053 /* SettingsView.swift */; };
+		A0000000000000000000001D /* BarDropdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000054 /* BarDropdownView.swift */; };
+		A0000000000000000000001E /* MenuRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000055 /* MenuRowView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +49,8 @@
 		A00000000000000000000051 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		A00000000000000000000052 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
 		A00000000000000000000053 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A00000000000000000000054 /* BarDropdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarDropdownView.swift; sourceTree = "<group>"; };
+		A00000000000000000000055 /* MenuRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuRowView.swift; sourceTree = "<group>"; };
 		A00000000000000000000061 /* PriceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceSummaryCard.swift; sourceTree = "<group>"; };
 		A00000000000000000000062 /* QuoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteRowView.swift; sourceTree = "<group>"; };
 		A00000000000000000000063 /* StockHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockHeaderView.swift; sourceTree = "<group>"; };
@@ -166,8 +170,10 @@
 		A00000000000000000000131 /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
+				A00000000000000000000054 /* BarDropdownView.swift */,
 				A00000000000000000000051 /* MenuBarContentView.swift */,
 				A00000000000000000000052 /* MenuBarLabelView.swift */,
+				A00000000000000000000055 /* MenuRowView.swift */,
 				A00000000000000000000053 /* SettingsView.swift */,
 			);
 			path = MenuBar;
@@ -279,6 +285,8 @@
 				A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */,
 				A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */,
 				A0000000000000000000001C /* SettingsView.swift in Sources */,
+				A0000000000000000000001D /* BarDropdownView.swift in Sources */,
+				A0000000000000000000001E /* MenuRowView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
