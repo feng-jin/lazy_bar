@@ -1,4 +1,4 @@
-/// 左键点击状态栏后展示的股票列表 popover 内容。
+/// 左键点击状态栏后展示的股票列表面板内容。
 import SwiftUI
 
 struct QuotesPopoverView: View {

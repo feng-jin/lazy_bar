@@ -1,7 +1,7 @@
 # Architecture
 
 ## 当前实现概览
-当前工程是一个单 target 的 macOS 原生应用，主体界面内容仍由 SwiftUI 构建；菜单栏入口和设置窗口都由 AppKit 承载。状态栏入口使用 `NSStatusItem`，左键通过 `NSPopover` 承载股票列表，右键通过 `NSMenu` 承载操作菜单；设置窗口则由独立 `NSWindowController` 管理。
+当前工程是一个单 target 的 macOS 原生应用，主体界面内容仍由 SwiftUI 构建；菜单栏入口和设置窗口都由 AppKit 承载。状态栏入口使用 `NSStatusItem`，左键通过无箭头的自定义面板承载股票列表，右键通过 `NSMenu` 承载操作菜单；设置窗口则由独立 `NSWindowController` 管理。
 
 应用入口在 `LazyBarApp`，负责创建状态栏控制器、设置窗口控制器，并将依赖注入到对应的 ViewModel。
 
@@ -19,7 +19,7 @@
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
   - `MenuBarSettingsStore`：持久化菜单栏展示设置，供菜单栏和设置页共享。
-  - `StatusBarController`：负责状态栏按钮、左键股票列表 popover、右键系统菜单，以及状态栏标题同步。
+  - `StatusBarController`：负责状态栏按钮、左键股票列表面板、右键系统菜单，以及状态栏标题同步。
   - `SettingsWindowController`：负责设置窗口的创建、展示和关闭。
 - `Views`
   - `SettingsView`：设置窗口中的菜单栏字段配置界面。
@@ -33,7 +33,7 @@
 5. `MenuBarViewModel` 首次加载时调用 `QuoteProviding.fetchQuotes()` 获取 `[StockQuote]`，随后按固定间隔重复拉取。
 6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 条目；定时刷新时直接替换最新展示数据。
 7. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
-8. `StatusBarController` 将固定宽度的 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，列表项文案继续由 `DisplayQuote` 提供；左键点击后展示的股票列表 popover 直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，因此打开期间也会与 bar 同步更新；右键点击后展示系统菜单。
+8. `StatusBarController` 将固定宽度的 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，列表项文案继续由 `DisplayQuote` 提供；左键点击后展示的股票列表面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，因此打开期间也会与 bar 同步更新；右键点击后展示系统菜单。
 9. 右键选择设置后，由 `SettingsWindowController` 打开承载 `SettingsView` 的 AppKit 窗口。
 
 ## 关键职责边界
