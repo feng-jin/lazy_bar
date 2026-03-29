@@ -4,7 +4,6 @@ import Foundation
 struct DisplayQuote: Equatable {
     struct MenuBarSegment: Equatable {
         let text: String
-        let emphasizesChange: Bool
     }
 
     let symbol: String
@@ -13,7 +12,6 @@ struct DisplayQuote: Equatable {
     let changeAmountText: String
     let changePercentText: String
     let updatedAtText: String
-    let change: QuoteChange
 
     var menuBarNameText: String {
         companyName
@@ -39,19 +37,19 @@ struct DisplayQuote: Equatable {
         var segments: [MenuBarSegment] = []
 
         if settings.showsSymbol {
-            segments.append(MenuBarSegment(text: menuBarSymbolText, emphasizesChange: false))
+            segments.append(MenuBarSegment(text: menuBarSymbolText))
         }
 
         if settings.showsCompanyName {
-            segments.append(MenuBarSegment(text: menuBarNameText, emphasizesChange: false))
+            segments.append(MenuBarSegment(text: menuBarNameText))
         }
 
         if settings.showsPrice {
-            segments.append(MenuBarSegment(text: menuBarPriceText, emphasizesChange: false))
+            segments.append(MenuBarSegment(text: menuBarPriceText))
         }
 
         if settings.showsChangePercent {
-            segments.append(MenuBarSegment(text: changePercentText, emphasizesChange: true))
+            segments.append(MenuBarSegment(text: changePercentText))
         }
 
         return segments
@@ -72,7 +70,6 @@ struct DisplayQuote: Equatable {
                 .hour(.twoDigits(amPM: .omitted))
                 .minute(.twoDigits)
         )
-        change = quote.change
     }
 
     private static func priceFormatter(_ value: Double) -> String {

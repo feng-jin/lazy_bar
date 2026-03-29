@@ -1,4 +1,4 @@
-/// 提供菜单栏展示字段与颜色策略的设置界面。
+/// 提供菜单栏展示字段的设置界面。
 import SwiftUI
 
 struct SettingsView: View {
@@ -33,16 +33,6 @@ struct SettingsView: View {
                     isOn: binding(
                         get: \.showsChangePercent,
                         set: viewModel.setShowsChangePercent
-                    )
-                )
-            }
-
-            Section("显示样式") {
-                Toggle(
-                    "显示颜色",
-                    isOn: binding(
-                        get: \.usesChangeColor,
-                        set: viewModel.setUsesChangeColor
                     )
                 )
             }

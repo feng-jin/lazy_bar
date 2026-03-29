@@ -27,19 +27,9 @@ struct MenuBarLabelView: View {
             return Text(quote.menuBarNameText)
         }
 
-        return segments.dropFirst().reduce(styledText(for: firstSegment, quote: quote)) { partial, segment in
-            partial + Text(" ") + styledText(for: segment, quote: quote)
+        return segments.dropFirst().reduce(Text(firstSegment.text)) { partial, segment in
+            partial + Text(" ") + Text(segment.text)
         }
-    }
-
-    private func styledText(for segment: DisplayQuote.MenuBarSegment, quote: DisplayQuote) -> Text {
-        let text = Text(segment.text)
-
-        guard settings.usesChangeColor, segment.emphasizesChange else {
-            return text.foregroundColor(.primary)
-        }
-
-        return text.foregroundColor(quote.change.tintColor)
     }
 }
 

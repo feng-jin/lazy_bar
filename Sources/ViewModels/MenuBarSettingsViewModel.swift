@@ -36,10 +36,6 @@ final class MenuBarSettingsViewModel: ObservableObject {
         updateSettings { $0.showsChangePercent = isEnabled }
     }
 
-    func setUsesChangeColor(_ isEnabled: Bool) {
-        updateSettings { $0.usesChangeColor = isEnabled }
-    }
-
     private func updateSettings(_ mutation: (inout MenuBarDisplaySettings) -> Void) {
         var updatedSettings = settings
         mutation(&updatedSettings)

@@ -9,8 +9,7 @@
 - `Models`
   - `StockQuote`：provider 返回的原始行情领域模型。
   - `DisplayQuote`：面向 UI 的展示模型，负责把数值和时间格式化成可直接展示的内容。
-  - `MenuBarDisplaySettings`：菜单栏字段与颜色开关配置。
-  - `QuoteChange`：涨跌方向与 SwiftUI 样式语义。
+  - `MenuBarDisplaySettings`：菜单栏字段配置。
 - `Providers`
   - `QuoteProviding`：数据来源边界协议。
   - `MockQuoteProvider`：当前 UI prototype 使用的 mock 数据源。
@@ -23,7 +22,7 @@
 - `Views`
   - `MenuBarContentView`：菜单栏点击后弹出的 SwiftUI window 内容，使用 `SettingsLink` 打开设置窗口。
   - `MenuBarLabelView`：菜单栏标签视图，根据 `MenuBarViewModel` 与展示设置生成紧凑文案。
-  - `SettingsView`：设置窗口中的菜单栏字段与颜色配置界面。
+  - `SettingsView`：设置窗口中的菜单栏字段配置界面。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。
 
 ## 当前数据流
@@ -39,7 +38,6 @@
 - `QuoteProviding` 是数据接入边界。后续接真实行情时，优先新增 provider 实现，而不是改 View。
 - `DisplayQuote` 是展示格式化边界。菜单栏名称、价格、涨跌幅、更新时间等字符串拼装应尽量集中在这里或 ViewModel。
 - `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置与持久化，避免把设置状态散落在 View 里。
-- `QuoteChange` 负责涨跌方向对应的 SwiftUI 样式语义，当前菜单栏与详情展示都复用同一套红涨绿跌颜色约定。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
 - App 层只负责场景装配，不承接业务逻辑、网络逻辑或跨层状态协调。
 - View 继续负责详情类和设置类 SwiftUI 界面的渲染，不承接业务逻辑、网络逻辑或跨层状态协调。

@@ -8,8 +8,4 @@ struct StockQuote: Equatable, Sendable {
     let changeAmount: Double
     let changePercent: Double
     let updatedAt: Date
-
-    var change: QuoteChange {
-        QuoteChange(value: changeAmount)
-    }
 }

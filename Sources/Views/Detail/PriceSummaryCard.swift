@@ -11,14 +11,14 @@ struct PriceSummaryCard: View {
                     .font(.system(size: 32, weight: .bold, design: .rounded))
 
                 HStack(spacing: 10) {
-                    ChangeBadgeView(
-                        text: displayQuote.changePercentText,
-                        change: displayQuote.change
-                    )
+                    Text(displayQuote.changePercentText)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.quaternary, in: Capsule())
 
                     Text(displayQuote.changeAmountText)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(displayQuote.change.tintColor)
                 }
 
                 Text("当日涨跌 \(displayQuote.detailChangeText)")

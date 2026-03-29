@@ -10,7 +10,6 @@
 		A00000000000000000000002 /* AppDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* AppDependencies.swift */; };
 		A00000000000000000000003 /* LazyBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000013 /* LazyBarApp.swift */; };
 		A00000000000000000000004 /* DisplayQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000021 /* DisplayQuote.swift */; };
-		A00000000000000000000005 /* QuoteChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000022 /* QuoteChange.swift */; };
 		A00000000000000000000006 /* StockQuote.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000023 /* StockQuote.swift */; };
 		A00000000000000000000007 /* MockQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000031 /* MockQuoteProvider.swift */; };
 		A00000000000000000000008 /* QuoteProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000032 /* QuoteProviding.swift */; };
@@ -21,7 +20,6 @@
 		A0000000000000000000000D /* PriceSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000061 /* PriceSummaryCard.swift */; };
 		A0000000000000000000000E /* QuoteRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000062 /* QuoteRowView.swift */; };
 		A0000000000000000000000F /* StockHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000063 /* StockHeaderView.swift */; };
-		A00000000000000000000010 /* ChangeBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000071 /* ChangeBadgeView.swift */; };
 		A00000000000000000000014 /* SectionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000072 /* SectionCardView.swift */; };
 		A00000000000000000000015 /* PreviewMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000081 /* PreviewMocks.swift */; };
 		A00000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000091 /* Assets.xcassets */; };
@@ -38,7 +36,6 @@
 		A00000000000000000000017 /* lazy_bar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lazy_bar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000018 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = Resources/Info.plist; sourceTree = SOURCE_ROOT; };
 		A00000000000000000000021 /* DisplayQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayQuote.swift; sourceTree = "<group>"; };
-		A00000000000000000000022 /* QuoteChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteChange.swift; sourceTree = "<group>"; };
 		A00000000000000000000023 /* StockQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuote.swift; sourceTree = "<group>"; };
 		A00000000000000000000024 /* MenuBarSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsStore.swift; sourceTree = "<group>"; };
 		A00000000000000000000025 /* MenuBarDisplaySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarDisplaySettings.swift; sourceTree = "<group>"; };
@@ -53,7 +50,6 @@
 		A00000000000000000000061 /* PriceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceSummaryCard.swift; sourceTree = "<group>"; };
 		A00000000000000000000062 /* QuoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteRowView.swift; sourceTree = "<group>"; };
 		A00000000000000000000063 /* StockHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockHeaderView.swift; sourceTree = "<group>"; };
-		A00000000000000000000071 /* ChangeBadgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeBadgeView.swift; sourceTree = "<group>"; };
 		A00000000000000000000072 /* SectionCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCardView.swift; sourceTree = "<group>"; };
 		A00000000000000000000081 /* PreviewMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewMocks.swift; sourceTree = "<group>"; };
 		A00000000000000000000091 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
@@ -125,7 +121,6 @@
 			children = (
 				A00000000000000000000021 /* DisplayQuote.swift */,
 				A00000000000000000000025 /* MenuBarDisplaySettings.swift */,
-				A00000000000000000000022 /* QuoteChange.swift */,
 				A00000000000000000000023 /* StockQuote.swift */,
 			);
 			path = Models;
@@ -191,7 +186,6 @@
 		A00000000000000000000133 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000071 /* ChangeBadgeView.swift */,
 				A00000000000000000000072 /* SectionCardView.swift */,
 			);
 			path = Shared;
@@ -269,7 +263,6 @@
 				A00000000000000000000002 /* AppDependencies.swift in Sources */,
 				A00000000000000000000003 /* LazyBarApp.swift in Sources */,
 				A00000000000000000000004 /* DisplayQuote.swift in Sources */,
-				A00000000000000000000005 /* QuoteChange.swift in Sources */,
 				A00000000000000000000006 /* StockQuote.swift in Sources */,
 				A00000000000000000000007 /* MockQuoteProvider.swift in Sources */,
 				A00000000000000000000008 /* QuoteProviding.swift in Sources */,
@@ -280,7 +273,6 @@
 				A0000000000000000000000D /* PriceSummaryCard.swift in Sources */,
 				A0000000000000000000000E /* QuoteRowView.swift in Sources */,
 				A0000000000000000000000F /* StockHeaderView.swift in Sources */,
-				A00000000000000000000010 /* ChangeBadgeView.swift in Sources */,
 				A00000000000000000000014 /* SectionCardView.swift in Sources */,
 				A00000000000000000000015 /* PreviewMocks.swift in Sources */,
 				A00000000000000000000019 /* MenuBarSettingsStore.swift in Sources */,

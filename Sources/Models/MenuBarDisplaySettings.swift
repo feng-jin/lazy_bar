@@ -1,4 +1,4 @@
-/// 定义菜单栏可配置的展示字段与颜色策略。
+/// 定义菜单栏可配置的展示字段。
 import Foundation
 
 struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
@@ -6,7 +6,6 @@ struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
     var showsCompanyName = true
     var showsPrice = true
     var showsChangePercent = true
-    var usesChangeColor = true
 
     static let `default` = MenuBarDisplaySettings()
 }

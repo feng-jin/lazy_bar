@@ -11,8 +11,7 @@
 - `Resources/Info.plist` 中启用了 `LSUIElement`，应用默认以菜单栏工具形态运行，不显示 Dock 图标。
 - 当前 `AppDependencies.live` 注入的是 `MockQuoteProvider`，因此现阶段所有行情都来自 mock 数据。
 - 当前菜单栏点击后展示的是 SwiftUI window 内容，其中通过 `SettingsLink` 打开设置窗口。
-- 当前已接入标准 `Settings` scene，设置页支持勾选菜单栏展示字段和颜色开关。
-- 当前菜单栏颜色默认遵循 A 股语义，涨红跌绿，也可以在设置页关闭颜色显示。
+- 当前已接入标准 `Settings` scene，设置页支持勾选菜单栏展示字段。
 - 当前没有第三方依赖，也没有 Swift Package 依赖。
 
 ## 常见修改入口
