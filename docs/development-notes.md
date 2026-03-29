@@ -7,11 +7,12 @@
 - 如果当前机器只有 Command Line Tools，`xcodebuild` 会因为缺少完整 Xcode 而无法完成工程构建。
 
 ## 当前工程事实
-- 应用主体界面和设置页基于 SwiftUI；菜单栏入口使用 `NSStatusItem`，左键通过 `NSPopover` 展示股票列表，右键通过 `NSMenu` 展示操作菜单。
+- 应用主体界面内容基于 SwiftUI；菜单栏入口和设置窗口壳层使用 AppKit。状态栏入口使用 `NSStatusItem`，左键通过 `NSPopover` 展示股票列表，右键通过 `NSMenu` 展示系统菜单。
 - `Resources/Info.plist` 中启用了 `LSUIElement`，应用默认以菜单栏工具形态运行，不显示 Dock 图标。
 - 当前 `AppDependencies.live` 注入的是 `MockQuoteProvider`，因此现阶段所有行情都来自 mock 数据；当前 mock 数据一次返回多只示例股票。
-- 当前状态栏标题使用第一只股票摘要；左键点击后展示股票列表弹层，每项展示代码、名称、价格和涨跌幅；右键点击后展示设置和退出菜单。
-- 当前已接入标准 `Settings` scene，设置页支持勾选菜单栏展示字段，并通过保存/取消按钮控制是否写回持久化配置。
+- 当前状态栏标题使用第一只股票摘要；左键点击后展示股票列表弹层，每项展示代码、名称、价格和涨跌幅；右键点击后展示设置和退出系统菜单。
+- 当前右键菜单保持纯 AppKit `NSMenu`；设置入口通过 `SettingsWindowController` 打开独立 AppKit 窗口，不使用 `SettingsLink` 或 `Settings` scene。
+- 设置页支持勾选菜单栏展示字段，并通过保存/取消按钮控制是否写回持久化配置。
 - 当前没有第三方依赖，也没有 Swift Package 依赖。
 
 ## 常见修改入口
@@ -21,7 +22,7 @@
 - 要调整菜单栏展示配置：优先查看 `Sources/Models/MenuBarDisplaySettings.swift`、`Sources/App/MenuBarSettingsStore.swift`、`Sources/ViewModels/MenuBarSettingsViewModel.swift` 和 `Sources/Views/MenuBar/SettingsView.swift`。
 - 要调整详情面板原型：优先查看 `Sources/ViewModels/StockDetailViewModel.swift` 和 `Sources/Views/Detail`。
 - 要调整展示格式化：优先查看 `Sources/Models/DisplayQuote.swift`。
-- 要确认应用启动、状态栏装配与设置场景：优先查看 `Sources/App/LazyBarApp.swift` 和 `Sources/App/StatusBarController.swift`。
+- 要确认应用启动、状态栏装配与设置窗口：优先查看 `Sources/App/LazyBarApp.swift`、`Sources/App/StatusBarController.swift` 和 `Sources/App/SettingsWindowController.swift`。
 
 ## 已知限制
 - 当前还没有真实行情。

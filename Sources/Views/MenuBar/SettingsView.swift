@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: MenuBarSettingsViewModel
+    let onClose: (() -> Void)?
 
     var body: some View {
         Form {
@@ -50,12 +51,12 @@ struct SettingsView: View {
 
                     Button("取消") {
                         viewModel.cancel()
-                        dismiss()
+                        close()
                     }
 
                     Button("保存") {
                         viewModel.save()
-                        dismiss()
+                        close()
                     }
                     .keyboardShortcut(.defaultAction)
                     .disabled(!viewModel.hasUnsavedChanges)
@@ -78,5 +79,13 @@ struct SettingsView: View {
             get: { viewModel.draftSettings[keyPath: keyPath] },
             set: setter
         )
+    }
+
+    private func close() {
+        if let onClose {
+            onClose()
+        } else {
+            dismiss()
+        }
     }
 }

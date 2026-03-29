@@ -5,21 +5,27 @@ import SwiftUI
 struct LazyBarApp: App {
     @StateObject private var menuBarViewModel: MenuBarViewModel
     @StateObject private var menuBarSettingsViewModel: MenuBarSettingsViewModel
+    private let settingsWindowController: SettingsWindowController
     private let statusBarController: StatusBarController
 
     init() {
         let dependencies = AppDependencies.live
         let menuBarViewModel = MenuBarViewModel(provider: dependencies.quoteProvider)
+        let menuBarSettingsViewModel = MenuBarSettingsViewModel(store: dependencies.menuBarSettingsStore)
 
         _menuBarViewModel = StateObject(
             wrappedValue: menuBarViewModel
         )
         _menuBarSettingsViewModel = StateObject(
-            wrappedValue: MenuBarSettingsViewModel(store: dependencies.menuBarSettingsStore)
+            wrappedValue: menuBarSettingsViewModel
         )
+        settingsWindowController = SettingsWindowController(viewModel: menuBarSettingsViewModel)
         statusBarController = StatusBarController(
             menuBarViewModel: menuBarViewModel,
-            settingsStore: dependencies.menuBarSettingsStore
+            settingsStore: dependencies.menuBarSettingsStore,
+            openSettingsWindow: { [settingsWindowController] in
+                settingsWindowController.show()
+            }
         )
 
         Task {
@@ -28,8 +34,9 @@ struct LazyBarApp: App {
     }
 
     var body: some Scene {
-        Settings {
-            SettingsView(viewModel: menuBarSettingsViewModel)
+        WindowGroup {
+            EmptyView()
         }
+        .defaultLaunchBehavior(.suppressed)
     }
 }

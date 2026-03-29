@@ -1,4 +1,5 @@
-/// 管理状态栏按钮、左键股票弹层和右键操作菜单。
+/// 管理状态栏按钮、左键股票弹层和右键系统菜单。
+/// 当前右键入口保持纯 AppKit `NSMenu`，因此不使用 SwiftUI `SettingsLink`。
 import AppKit
 import Combine
 import SwiftUI
@@ -7,18 +8,21 @@ import SwiftUI
 final class StatusBarController: NSObject {
     private let menuBarViewModel: MenuBarViewModel
     private let settingsStore: MenuBarSettingsStore
+    private let openSettingsWindowHandler: () -> Void
     private let statusItem: NSStatusItem
-    private let popover: NSPopover
+    private let quotesPopover: NSPopover
     private var cancellables = Set<AnyCancellable>()
 
     init(
         menuBarViewModel: MenuBarViewModel,
-        settingsStore: MenuBarSettingsStore
+        settingsStore: MenuBarSettingsStore,
+        openSettingsWindow: @escaping () -> Void
     ) {
         self.menuBarViewModel = menuBarViewModel
         self.settingsStore = settingsStore
+        self.openSettingsWindowHandler = openSettingsWindow
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        popover = NSPopover()
+        quotesPopover = NSPopover()
         super.init()
 
         configureStatusItem()
@@ -35,9 +39,9 @@ final class StatusBarController: NSObject {
     }
 
     private func configurePopover() {
-        popover.behavior = .transient
-        popover.contentSize = NSSize(width: 320, height: 220)
-        popover.contentViewController = NSHostingController(
+        quotesPopover.behavior = .transient
+        quotesPopover.contentSize = NSSize(width: 320, height: 220)
+        quotesPopover.contentViewController = NSHostingController(
             rootView: MenuBarContentView(viewModel: menuBarViewModel)
         )
     }
@@ -77,27 +81,27 @@ final class StatusBarController: NSObject {
 
         switch event.type {
         case .rightMouseUp:
-            showContextMenu()
+            showContextMenu(with: event)
         default:
-            togglePopover(sender)
+            toggleQuotesPopover(sender)
         }
     }
 
-    private func togglePopover(_ sender: AnyObject?) {
+    private func toggleQuotesPopover(_ sender: AnyObject?) {
         guard let button = statusItem.button else { return }
 
-        if popover.isShown {
-            popover.performClose(sender)
+        if quotesPopover.isShown {
+            quotesPopover.performClose(sender)
         } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+            quotesPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            quotesPopover.contentViewController?.view.window?.makeKey()
         }
     }
 
-    private func showContextMenu() {
-        popover.performClose(nil)
-
+    private func showContextMenu(with event: NSEvent) {
         guard let button = statusItem.button else { return }
+
+        quotesPopover.performClose(nil)
 
         let menu = NSMenu()
         menu.addItem(
@@ -112,15 +116,13 @@ final class StatusBarController: NSObject {
             keyEquivalent: ""
         ).target = self
 
-        statusItem.menu = menu
-        button.performClick(nil)
-        statusItem.menu = nil
+        NSMenu.popUpContextMenu(menu, with: event, for: button)
+        button.highlight(false)
     }
 
     @objc
     private func openSettingsWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        openSettingsWindowHandler()
     }
 
     @objc
