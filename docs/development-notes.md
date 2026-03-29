@@ -10,14 +10,14 @@
 - 应用主体界面内容基于 SwiftUI；菜单栏入口和设置窗口壳层使用 AppKit。状态栏入口使用 `NSStatusItem`，左键和右键都通过 `NSMenu` 展示各自的系统菜单。
 - `Resources/Info.plist` 中启用了 `LSUIElement`，应用默认以菜单栏工具形态运行，不显示 Dock 图标。
 - 当前 `AppDependencies.live` 注入的是 `MockQuoteProvider`，因此现阶段所有行情都来自 mock 数据；当前 mock 数据会按固定节奏重复拉取，并围绕基准价生成小幅波动，模拟准实时更新。
-- 当前状态栏标题会按顺序轮播所有股票摘要；左键点击后会从状态栏图标下方展开极简股票列表系统菜单，每项仅展示名称、价格和涨跌幅；列表内容取打开瞬间的稳定快照，右键点击后会从状态栏图标下方展开设置和退出系统菜单。
+- 当前状态栏使用固定宽度的 SwiftUI ticker view 按股票上下循环播放摘要；左键点击后会从状态栏图标下方展开极简股票列表系统菜单，每项仅展示名称、价格和涨跌幅；列表内容取打开瞬间的稳定快照，右键点击后会从状态栏图标下方展开设置和退出系统菜单。
 - 当前右键菜单保持纯 AppKit `NSMenu`；设置入口通过 `SettingsWindowController` 打开独立 AppKit 窗口，不使用 `SettingsLink` 或 `Settings` scene。
 - 设置页支持勾选菜单栏展示字段，并通过保存/取消按钮控制是否写回持久化配置。
 - 当前没有第三方依赖，也没有 Swift Package 依赖。
 
 ## 常见修改入口
 - 要替换数据源：优先查看 `Sources/Providers` 与 `Sources/App/AppDependencies.swift`。
-- 要调整状态栏标题或点击行为：优先查看 `Sources/App/StatusBarController.swift`、`Sources/ViewModels/MenuBarViewModel.swift` 和 `Sources/Models/DisplayQuote.swift`。
+- 要调整状态栏标题、ticker 动画或点击行为：优先查看 `Sources/App/StatusBarController.swift`、`Sources/Views/MenuBar/MenuBarLabelView.swift`、`Sources/ViewModels/MenuBarViewModel.swift` 和 `Sources/Models/DisplayQuote.swift`。
 - 要调整菜单内容或股票列表项：优先查看 `Sources/App/StatusBarController.swift`、`Sources/ViewModels/MenuBarViewModel.swift` 和 `Sources/Models/DisplayQuote.swift`。
 - 要调整菜单栏展示配置：优先查看 `Sources/Models/MenuBarDisplaySettings.swift`、`Sources/App/MenuBarSettingsStore.swift`、`Sources/ViewModels/MenuBarSettingsViewModel.swift` 和 `Sources/Views/MenuBar/SettingsView.swift`。
 - 要调整详情面板原型：优先查看 `Sources/ViewModels/StockDetailViewModel.swift` 和 `Sources/Views/Detail`。

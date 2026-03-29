@@ -1,7 +1,7 @@
 /// 管理状态栏按钮，以及左右键统一使用的系统菜单。
 /// 当前菜单入口保持纯 AppKit `NSMenu`，因此不使用 SwiftUI `SettingsLink`。
 import AppKit
-import Combine
+import SwiftUI
 
 @MainActor
 final class StatusBarController: NSObject {
@@ -9,7 +9,7 @@ final class StatusBarController: NSObject {
     private let settingsStore: MenuBarSettingsStore
     private let openSettingsWindowHandler: () -> Void
     private let statusItem: NSStatusItem
-    private var cancellables = Set<AnyCancellable>()
+    private var hostedLabelView: MouseTransparentHostingView<MenuBarLabelView>?
 
     init(
         menuBarViewModel: MenuBarViewModel,
@@ -19,12 +19,10 @@ final class StatusBarController: NSObject {
         self.menuBarViewModel = menuBarViewModel
         self.settingsStore = settingsStore
         self.openSettingsWindowHandler = openSettingsWindow
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(withLength: MenuBarMetrics.itemWidth)
         super.init()
 
         configureStatusItem()
-        bindState()
-        updateStatusItemTitle()
     }
 
     private func configureStatusItem() {
@@ -32,47 +30,32 @@ final class StatusBarController: NSObject {
         button.target = self
         button.action = #selector(handleStatusItemClick(_:))
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-    }
+        button.title = ""
+        button.image = nil
 
-    private func bindState() {
-        menuBarViewModel.$displayQuotes
-            .sink { [weak self] _ in
-                self?.updateStatusItemTitle()
-            }
-            .store(in: &cancellables)
+        let labelView = MouseTransparentHostingView(
+            rootView: MenuBarLabelView(
+                viewModel: menuBarViewModel,
+                settingsStore: settingsStore
+            )
+        )
+        labelView.translatesAutoresizingMaskIntoConstraints = false
 
-        menuBarViewModel.$currentDisplayQuote
-            .sink { [weak self] _ in
-                self?.updateStatusItemTitle()
-            }
-            .store(in: &cancellables)
+        button.addSubview(labelView)
+        NSLayoutConstraint.activate([
+            labelView.leadingAnchor.constraint(
+                equalTo: button.leadingAnchor,
+                constant: MenuBarMetrics.horizontalInset
+            ),
+            labelView.trailingAnchor.constraint(
+                equalTo: button.trailingAnchor,
+                constant: -MenuBarMetrics.horizontalInset
+            ),
+            labelView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            labelView.heightAnchor.constraint(equalToConstant: MenuBarMetrics.contentHeight)
+        ])
 
-        menuBarViewModel.$isLoading
-            .sink { [weak self] _ in
-                self?.updateStatusItemTitle()
-            }
-            .store(in: &cancellables)
-
-        settingsStore.$settings
-            .sink { [weak self] _ in
-                self?.updateStatusItemTitle()
-            }
-            .store(in: &cancellables)
-    }
-
-    private func updateStatusItemTitle() {
-        guard let button = statusItem.button else { return }
-
-        if let quote = menuBarViewModel.displayQuote {
-            button.title = quote.menuBarSummaryText(settings: settingsStore.settings)
-        } else if menuBarViewModel.isLoading {
-            button.title = "加载中..."
-        } else {
-            button.title = "行情不可用"
-        }
-
-        button.font = .systemFont(ofSize: 12, weight: .semibold)
-        button.lineBreakMode = .byTruncatingTail
+        hostedLabelView = labelView
     }
 
     @objc
@@ -161,5 +144,11 @@ final class StatusBarController: NSObject {
     @objc
     private func quitApp() {
         NSApp.terminate(nil)
+    }
+}
+
+private final class MouseTransparentHostingView<Content: View>: NSHostingView<Content> {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
     }
 }

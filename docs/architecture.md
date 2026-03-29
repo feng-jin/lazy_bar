@@ -14,7 +14,7 @@
   - `QuoteProviding`：数据来源边界协议，当前返回股票列表。
   - `MockQuoteProvider`：当前 UI prototype 使用的 mock 数据源；每次拉取都会基于基准价生成小幅波动后的最新报价。
 - `ViewModels`
-  - `MenuBarViewModel`：负责菜单栏紧凑标签状态、当前轮播股票、下拉股票列表状态，以及 mock 阶段的定时刷新调度。
+  - `MenuBarViewModel`：负责菜单栏 ticker 条目来源、下拉股票列表状态，以及 mock 阶段的定时刷新调度。
   - `StockDetailViewModel`：保留为后续详情扩展使用，当前不接入主交互路径。
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
@@ -31,9 +31,9 @@
 3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. `MenuBarViewModel` 首次加载时调用 `QuoteProviding.fetchQuotes()` 获取 `[StockQuote]`，随后按固定间隔重复拉取。
-6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并在内部维护当前轮播中的状态栏摘要项；定时刷新后会保留当前轮播位置，只替换对应股票的最新展示数据。
+6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 条目；定时刷新时直接替换最新展示数据。
 7. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
-8. `StatusBarController` 将当前轮播摘要 `DisplayQuote` 和展示设置组合成状态栏标题；列表项文案继续由 `DisplayQuote` 提供，左键点击后展示股票列表菜单，右键点击后展示系统菜单。
+8. `StatusBarController` 将固定宽度的 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，列表项文案继续由 `DisplayQuote` 提供，左键点击后展示股票列表菜单，右键点击后展示系统菜单。
 9. 右键选择设置后，由 `SettingsWindowController` 打开承载 `SettingsView` 的 AppKit 窗口。
 
 ## 关键职责边界
@@ -43,7 +43,7 @@
 - `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置与持久化，`MenuBarSettingsViewModel` 负责设置页草稿与保存/取消动作，避免把设置状态散落在 View 里。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
 - App 层负责 AppKit 壳层装配，不承接业务逻辑、网络逻辑或行情状态计算。
-- View 继续负责详情类和设置类 SwiftUI 界面的渲染，不承接业务逻辑、网络逻辑或跨层状态协调。
+- View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现。
 
 ## 当前已知事实
 - `AppDependencies` 是 mock/real provider 切换的自然入口。
