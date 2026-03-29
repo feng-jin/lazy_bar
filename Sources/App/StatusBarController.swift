@@ -106,16 +106,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         }
 
         let panelController = QuotesPanelController(
-            contentSize: quotesPanelSize(
-            quoteCount: menuBarViewModel.displayQuotes.count,
-            isLoading: menuBarViewModel.isLoading
-        ),
+            contentWidth: menuBarViewModel.columnLayout(settings: settingsStore.settings).itemWidth,
+            maximumContentHeight: 360,
             rootView: AnyView(
                 QuotesPopoverView(
-                viewModel: menuBarViewModel,
-                settingsStore: settingsStore
+                    viewModel: menuBarViewModel,
+                    settingsStore: settingsStore
+                )
             )
-        )
         )
         panelController.show(relativeTo: button)
         quotesPanelController = panelController
@@ -126,19 +124,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         quotesPanelController?.close()
         quotesPanelController = nil
         removeClickMonitors()
-    }
-
-    private func quotesPanelSize(quoteCount: Int, isLoading: Bool) -> NSSize {
-        let width = menuBarViewModel.columnLayout(settings: settingsStore.settings).itemWidth
-
-        guard !isLoading, quoteCount > 0 else {
-            return NSSize(width: width, height: 68)
-        }
-
-        let rowHeight: CGFloat = 38
-        let verticalPadding: CGFloat = 18
-        let height = min(360, verticalPadding + CGFloat(quoteCount) * rowHeight)
-        return NSSize(width: width, height: height)
     }
 
     private func installClickMonitors() {
@@ -256,9 +241,11 @@ private final class QuotesPanelController: NSWindowController {
     private enum Metrics {
         static let verticalGap: CGFloat = 4
         static let screenInset: CGFloat = 8
+        static let minimumContentHeight: CGFloat = 68
     }
 
     private let panel: QuotesPanel
+    private let hostingView: NSHostingView<AnyView>
 
     var isVisible: Bool {
         panel.isVisible
@@ -268,8 +255,14 @@ private final class QuotesPanelController: NSWindowController {
         panel.frame
     }
 
-    init(contentSize: NSSize, rootView: AnyView) {
-        let hostingView = NSHostingView(rootView: rootView)
+    init(contentWidth: CGFloat, maximumContentHeight: CGFloat, rootView: AnyView) {
+        hostingView = NSHostingView(rootView: rootView)
+        let measuredHeight = Self.measuredContentHeight(
+            for: hostingView,
+            width: contentWidth,
+            maximumContentHeight: maximumContentHeight
+        )
+        let contentSize = NSSize(width: contentWidth, height: measuredHeight)
         hostingView.frame = NSRect(origin: .zero, size: contentSize)
 
         panel = QuotesPanel(
@@ -299,6 +292,28 @@ private final class QuotesPanelController: NSWindowController {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    private static func measuredContentHeight(
+        for hostingView: NSHostingView<AnyView>,
+        width: CGFloat,
+        maximumContentHeight: CGFloat
+    ) -> CGFloat {
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        hostingView.frame = NSRect(
+            x: 0,
+            y: 0,
+            width: width,
+            height: maximumContentHeight
+        )
+        hostingView.layoutSubtreeIfNeeded()
+
+        let fittedHeight = hostingView.fittingSize.height
+        let clampedHeight = min(
+            maximumContentHeight,
+            max(Metrics.minimumContentHeight, ceil(fittedHeight))
+        )
+        return clampedHeight
     }
 
     func show(relativeTo button: NSStatusBarButton) {
