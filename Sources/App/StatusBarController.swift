@@ -1,5 +1,5 @@
-/// 管理状态栏按钮，以及左右键统一使用的系统菜单。
-/// 当前菜单入口保持纯 AppKit `NSMenu`，因此不使用 SwiftUI `SettingsLink`。
+/// 管理状态栏按钮、左键股票列表 popover 与右键系统菜单。
+/// 设置入口保持纯 AppKit `NSMenu`，因此不使用 SwiftUI `SettingsLink`。
 import AppKit
 import SwiftUI
 
@@ -10,6 +10,7 @@ final class StatusBarController: NSObject {
     private let openSettingsWindowHandler: () -> Void
     private let statusItem: NSStatusItem
     private var hostedLabelView: MouseTransparentHostingView<MenuBarLabelView>?
+    private var quotesPopover: NSPopover?
 
     init(
         menuBarViewModel: MenuBarViewModel,
@@ -66,55 +67,51 @@ final class StatusBarController: NSObject {
         case .rightMouseUp:
             showContextMenu()
         default:
-            showQuotesMenu()
+            toggleQuotesPopover()
         }
     }
 
-    private func showQuotesMenu() {
-        guard statusItem.button != nil else { return }
+    private func toggleQuotesPopover() {
+        guard let button = statusItem.button else { return }
 
-        let menu = makeQuotesMenu()
-        statusItem.popUpMenu(menu)
-        statusItem.button?.highlight(false)
-    }
-
-    private func makeQuotesMenu() -> NSMenu {
-        let menu = NSMenu()
-        menu.autoenablesItems = false
-        populateQuotesMenu(menu)
-        return menu
-    }
-
-    private func populateQuotesMenu(_ menu: NSMenu) {
-        menu.removeAllItems()
-
-        if menuBarViewModel.isLoading {
-            let item = NSMenuItem(title: "加载中...", action: nil, keyEquivalent: "")
-            item.isEnabled = false
-            menu.addItem(item)
+        if quotesPopover?.isShown == true {
+            quotesPopover?.performClose(nil)
             return
         }
 
-        if menuBarViewModel.displayQuotes.isEmpty {
-            let item = NSMenuItem(title: "暂无股票", action: nil, keyEquivalent: "")
-            item.isEnabled = false
-            menu.addItem(item)
-            return
-        }
-
-        for quote in menuBarViewModel.displayQuotes {
-            let item = NSMenuItem(
-                title: quote.menuListSummaryText,
-                action: #selector(ignoreMenuSelection),
-                keyEquivalent: ""
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = false
+        popover.contentSize = quotesPopoverSize(
+            quoteCount: menuBarViewModel.displayQuotes.count,
+            isLoading: menuBarViewModel.isLoading
+        )
+        popover.contentViewController = NSHostingController(
+            rootView: QuotesPopoverView(
+                viewModel: menuBarViewModel,
+                settingsStore: settingsStore
             )
-            item.target = self
-            menu.addItem(item)
+        )
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        quotesPopover = popover
+    }
+
+    private func quotesPopoverSize(quoteCount: Int, isLoading: Bool) -> NSSize {
+        let width: CGFloat = 280
+
+        guard !isLoading, quoteCount > 0 else {
+            return NSSize(width: width, height: 72)
         }
+
+        let rowHeight: CGFloat = 54
+        let verticalPadding: CGFloat = 20
+        let height = min(360, verticalPadding + CGFloat(quoteCount) * rowHeight)
+        return NSSize(width: width, height: height)
     }
 
     private func showContextMenu() {
         guard statusItem.button != nil else { return }
+        quotesPopover?.performClose(nil)
 
         let menu = NSMenu()
         menu.addItem(
@@ -137,9 +134,6 @@ final class StatusBarController: NSObject {
     private func openSettingsWindow() {
         openSettingsWindowHandler()
     }
-
-    @objc
-    private func ignoreMenuSelection() {}
 
     @objc
     private func quitApp() {

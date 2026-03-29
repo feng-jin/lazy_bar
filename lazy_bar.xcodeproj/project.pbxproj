@@ -28,6 +28,7 @@
 		A0000000000000000000001C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000053 /* SettingsView.swift */; };
 		A0000000000000000000001D /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* StatusBarController.swift */; };
 		A0000000000000000000001E /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000027 /* SettingsWindowController.swift */; };
+		A0000000000000000000001F /* QuotesPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000054 /* QuotesPopoverView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		A00000000000000000000043 /* MenuBarSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000052 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
 		A00000000000000000000053 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A00000000000000000000054 /* QuotesPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotesPopoverView.swift; sourceTree = "<group>"; };
 		A00000000000000000000061 /* PriceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceSummaryCard.swift; sourceTree = "<group>"; };
 		A00000000000000000000062 /* QuoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteRowView.swift; sourceTree = "<group>"; };
 		A00000000000000000000063 /* StockHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockHeaderView.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000052 /* MenuBarLabelView.swift */,
+				A00000000000000000000054 /* QuotesPopoverView.swift */,
 				A00000000000000000000053 /* SettingsView.swift */,
 			);
 			path = MenuBar;
@@ -272,6 +275,7 @@
 				A00000000000000000000009 /* MenuBarViewModel.swift in Sources */,
 				A0000000000000000000000A /* StockDetailViewModel.swift in Sources */,
 				A0000000000000000000000C /* MenuBarLabelView.swift in Sources */,
+				A0000000000000000000001F /* QuotesPopoverView.swift in Sources */,
 				A0000000000000000000000D /* PriceSummaryCard.swift in Sources */,
 				A0000000000000000000000E /* QuoteRowView.swift in Sources */,
 				A0000000000000000000000F /* StockHeaderView.swift in Sources */,
