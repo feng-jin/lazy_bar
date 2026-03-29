@@ -6,22 +6,24 @@ struct BarDropdownView: View {
     let destructiveRows: [MenuRow]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 0) {
             ForEach(primaryRows) { row in
                 MenuRowView(row: row)
             }
 
             if !primaryRows.isEmpty && !destructiveRows.isEmpty {
                 Divider()
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 6)
             }
 
             ForEach(destructiveRows) { row in
                 MenuRowView(row: row)
             }
         }
-        .padding(6)
-        .frame(width: 188)
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+        .frame(width: 160)
         .background(.regularMaterial)
     }
 }
@@ -36,4 +38,5 @@ struct BarDropdownView: View {
         ]
     )
     .padding()
+    .frame(width: 160)
 }

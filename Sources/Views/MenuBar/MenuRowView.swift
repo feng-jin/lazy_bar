@@ -27,29 +27,26 @@ struct MenuRowView: View {
 
                 Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
-            .padding(.horizontal, 10)
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity, minHeight: 18, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 2)
             .background(backgroundShape)
-            .onHover { hovering in
-                isHovered = hovering
-            }
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 
     private var foregroundStyle: AnyShapeStyle {
-        if row.role == .destructive {
-            return AnyShapeStyle(isHovered ? Color.white : Color.red)
-        }
-
         return AnyShapeStyle(isHovered ? Color.white : Color.primary)
     }
 
     @ViewBuilder
     private var backgroundShape: some View {
-        RoundedRectangle(cornerRadius: 6, style: .continuous)
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
             .fill(isHovered ? Color.accentColor : Color.clear)
     }
 }
@@ -60,5 +57,5 @@ struct MenuRowView: View {
         MenuRowView(row: .init(title: "退出", role: .destructive, action: {}))
     }
     .padding()
-    .frame(width: 188)
+    .frame(width: 172)
 }

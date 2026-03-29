@@ -3,6 +3,7 @@ import AppKit
 import SwiftUI
 
 struct MenuBarContentView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
@@ -21,8 +22,12 @@ struct MenuBarContentView: View {
     }
 
     private func openSettingsWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        openSettings()
+        dismiss()
+
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            openSettings()
+        }
     }
 }
 
