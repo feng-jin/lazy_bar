@@ -37,7 +37,7 @@ struct QuotesPopoverView: View {
                 .scrollIndicators(.hidden)
             }
         }
-        .padding(MenuBarStyle.Metrics.panelOuterPadding)
+        .padding(.vertical, MenuBarStyle.Metrics.panelOuterVerticalPadding)
         .frame(width: layout.itemWidth)
         .background(.thickMaterial)
         .clipShape(RoundedRectangle(cornerRadius: MenuBarStyle.Metrics.panelCornerRadius, style: .continuous))
