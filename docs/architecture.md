@@ -14,7 +14,7 @@
   - `QuoteProviding`：数据来源边界协议，当前返回股票列表。
   - `MockQuoteProvider`：当前 UI prototype 使用的 mock 数据源。
 - `ViewModels`
-  - `MenuBarViewModel`：负责菜单栏紧凑标签状态和下拉股票列表状态。
+  - `MenuBarViewModel`：负责菜单栏紧凑标签状态、当前轮播股票和下拉股票列表状态。
   - `StockDetailViewModel`：保留为后续详情扩展使用，当前不接入主交互路径。
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
@@ -32,9 +32,9 @@
 3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. ViewModel 调用 `QuoteProviding.fetchQuotes()` 获取 `[StockQuote]`。
-6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，其中第一只继续作为状态栏摘要来源。
+6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并在内部维护当前轮播中的状态栏摘要项。
 7. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
-8. `StatusBarController` 将当前摘要 `DisplayQuote` 和展示设置组合成状态栏标题；列表项文案继续由 `DisplayQuote` 提供，左键点击后通过 `MenuBarContentView` 渲染股票列表，右键点击后展示系统菜单。
+8. `StatusBarController` 将当前轮播摘要 `DisplayQuote` 和展示设置组合成状态栏标题；列表项文案继续由 `DisplayQuote` 提供，左键点击后通过 `MenuBarContentView` 渲染股票列表，右键点击后展示系统菜单。
 9. 右键选择设置后，由 `SettingsWindowController` 打开承载 `SettingsView` 的 AppKit 窗口。
 
 ## 关键职责边界
@@ -52,6 +52,5 @@
 
 ## 后续优先扩展点
 - 真实行情接入：从 `Providers` 和 `AppDependencies` 开始扩展。
-- 多标的轮播：优先扩展 provider 返回结构和 ViewModel 状态模型。
 - 刷新调度：优先放在 ViewModel 或独立协调层，不要直接写进 View。
 - watchlist 与设置配置：应通过 `Settings` scene 扩展入口，同时保持状态与数据边界不下沉到 View。

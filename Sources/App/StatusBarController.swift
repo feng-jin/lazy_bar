@@ -53,6 +53,12 @@ final class StatusBarController: NSObject {
             }
             .store(in: &cancellables)
 
+        menuBarViewModel.$currentDisplayQuote
+            .sink { [weak self] _ in
+                self?.updateStatusItemTitle()
+            }
+            .store(in: &cancellables)
+
         settingsStore.$settings
             .sink { [weak self] _ in
                 self?.updateStatusItemTitle()
