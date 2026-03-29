@@ -29,6 +29,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		655EF4A22F78C00800474F97 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		A00000000000000000000011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A00000000000000000000012 /* AppDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencies.swift; sourceTree = "<group>"; };
 		A00000000000000000000013 /* LazyBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyBarApp.swift; sourceTree = "<group>"; };
@@ -69,6 +70,7 @@
 				A00000000000000000000112 /* Sources */,
 				A00000000000000000000113 /* Resources */,
 				A00000000000000000000114 /* Products */,
+				655EF4A22F78C00800474F97 /* AGENTS.md */,
 			);
 			sourceTree = "<group>";
 		};
