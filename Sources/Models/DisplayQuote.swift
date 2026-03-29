@@ -14,8 +14,12 @@ struct DisplayQuote: Equatable {
         companyName
     }
 
-    var menuBarText: String {
-        "\(menuBarNameText) \(changePercentText)"
+    var menuBarPriceText: String {
+        priceText
+    }
+
+    var menuBarSummaryText: String {
+        "\(menuBarNameText) \(menuBarPriceText) \(changePercentText)"
     }
 
     var detailChangeText: String {
