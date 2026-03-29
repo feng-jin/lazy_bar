@@ -26,7 +26,7 @@ struct DisplayQuote: Equatable {
     }
 
     var menuListTitleText: String {
-        "\(symbol) \(companyName)"
+        companyName
     }
 
     var menuListDetailText: String {
@@ -35,6 +35,10 @@ struct DisplayQuote: Equatable {
 
     var menuListTrailingText: String {
         changePercentText
+    }
+
+    var menuListSummaryText: String {
+        "\(companyName)  \(priceText)  \(changePercentText)"
     }
 
     func menuBarSummaryText(settings: MenuBarDisplaySettings) -> String {

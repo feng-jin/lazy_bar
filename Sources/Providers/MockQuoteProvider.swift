@@ -2,42 +2,87 @@
 import Foundation
 
 struct MockQuoteProvider: QuoteProviding {
-    static let sampleQuotes: [StockQuote] = [
-        StockQuote(
+    private struct SeedQuote: Sendable {
+        let symbol: String
+        let companyName: String
+        let previousClose: Double
+        let basePrice: Double
+        let maxSwingRatio: Double
+    }
+
+    private static let seedQuotes: [SeedQuote] = [
+        SeedQuote(
             symbol: "600519",
             companyName: "贵州茅台",
-            lastPrice: 1688.88,
-            changeAmount: 23.56,
-            changePercent: 0.0141,
-            updatedAt: Date()
+            previousClose: 1665.32,
+            basePrice: 1688.88,
+            maxSwingRatio: 0.006
         ),
-        StockQuote(
+        SeedQuote(
             symbol: "000858",
             companyName: "五粮液",
-            lastPrice: 138.42,
-            changeAmount: -1.87,
-            changePercent: -0.0133,
-            updatedAt: Date()
+            previousClose: 140.29,
+            basePrice: 138.42,
+            maxSwingRatio: 0.007
         ),
-        StockQuote(
+        SeedQuote(
             symbol: "300750",
             companyName: "宁德时代",
-            lastPrice: 201.65,
-            changeAmount: 5.22,
-            changePercent: 0.0266,
-            updatedAt: Date()
+            previousClose: 196.43,
+            basePrice: 201.65,
+            maxSwingRatio: 0.009
         ),
-        StockQuote(
+        SeedQuote(
             symbol: "601318",
             companyName: "中国平安",
-            lastPrice: 52.31,
-            changeAmount: 0.18,
-            changePercent: 0.0035,
-            updatedAt: Date()
+            previousClose: 52.13,
+            basePrice: 52.31,
+            maxSwingRatio: 0.005
         )
     ]
 
+    static var sampleQuotes: [StockQuote] {
+        let timestamp = Date()
+
+        return seedQuotes.map { quote in
+            let changeAmount = (quote.basePrice - quote.previousClose).roundedToScale(2)
+            let changePercent = quote.previousClose == 0 ? 0 : changeAmount / quote.previousClose
+
+            return StockQuote(
+                symbol: quote.symbol,
+                companyName: quote.companyName,
+                lastPrice: quote.basePrice,
+                changeAmount: changeAmount,
+                changePercent: changePercent,
+                updatedAt: timestamp
+            )
+        }
+    }
+
     func fetchQuotes() async throws -> [StockQuote] {
-        Self.sampleQuotes
+        let timestamp = Date()
+
+        return Self.seedQuotes.map { quote in
+            let swingRatio = Double.random(in: -quote.maxSwingRatio...quote.maxSwingRatio)
+            let price = (quote.basePrice * (1 + swingRatio)).roundedToScale(2)
+            let changeAmount = (price - quote.previousClose).roundedToScale(2)
+            let changePercent = quote.previousClose == 0 ? 0 : changeAmount / quote.previousClose
+
+            return StockQuote(
+                symbol: quote.symbol,
+                companyName: quote.companyName,
+                lastPrice: price,
+                changeAmount: changeAmount,
+                changePercent: changePercent,
+                updatedAt: timestamp
+            )
+        }
+    }
+}
+
+private extension Double {
+    func roundedToScale(_ scale: Int) -> Double {
+        let multiplier = pow(10, Double(scale))
+        return (self * multiplier).rounded() / multiplier
     }
 }

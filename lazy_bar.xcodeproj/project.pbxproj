@@ -15,7 +15,6 @@
 		A00000000000000000000008 /* QuoteProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000032 /* QuoteProviding.swift */; };
 		A00000000000000000000009 /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000041 /* MenuBarViewModel.swift */; };
 		A0000000000000000000000A /* StockDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000042 /* StockDetailViewModel.swift */; };
-		A0000000000000000000000B /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000051 /* MenuBarContentView.swift */; };
 		A0000000000000000000000C /* MenuBarLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000052 /* MenuBarLabelView.swift */; };
 		A0000000000000000000000D /* PriceSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000061 /* PriceSummaryCard.swift */; };
 		A0000000000000000000000E /* QuoteRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000062 /* QuoteRowView.swift */; };
@@ -48,7 +47,6 @@
 		A00000000000000000000041 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000042 /* StockDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockDetailViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000043 /* MenuBarSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsViewModel.swift; sourceTree = "<group>"; };
-		A00000000000000000000051 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		A00000000000000000000052 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
 		A00000000000000000000053 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A00000000000000000000061 /* PriceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceSummaryCard.swift; sourceTree = "<group>"; };
@@ -172,7 +170,6 @@
 		A00000000000000000000131 /* MenuBar */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000051 /* MenuBarContentView.swift */,
 				A00000000000000000000052 /* MenuBarLabelView.swift */,
 				A00000000000000000000053 /* SettingsView.swift */,
 			);
@@ -274,7 +271,6 @@
 				A00000000000000000000008 /* QuoteProviding.swift in Sources */,
 				A00000000000000000000009 /* MenuBarViewModel.swift in Sources */,
 				A0000000000000000000000A /* StockDetailViewModel.swift in Sources */,
-				A0000000000000000000000B /* MenuBarContentView.swift in Sources */,
 				A0000000000000000000000C /* MenuBarLabelView.swift in Sources */,
 				A0000000000000000000000D /* PriceSummaryCard.swift in Sources */,
 				A0000000000000000000000E /* QuoteRowView.swift in Sources */,

@@ -11,8 +11,10 @@ final class MenuBarViewModel: ObservableObject {
     private var hasLoaded = false
     private var currentQuoteIndex = 0
     private var rotationTask: Task<Void, Never>?
+    private var refreshTask: Task<Void, Never>?
 
     private let rotationIntervalNanoseconds: UInt64 = 2_500_000_000
+    private let refreshIntervalNanoseconds: UInt64 = 3_000_000_000
 
     init(provider: any QuoteProviding) {
         self.provider = provider
@@ -24,6 +26,7 @@ final class MenuBarViewModel: ObservableObject {
 
     deinit {
         rotationTask?.cancel()
+        refreshTask?.cancel()
     }
 
     func loadIfNeeded() async {
@@ -40,6 +43,7 @@ final class MenuBarViewModel: ObservableObject {
             let quotes = try await provider.fetchQuotes()
             displayQuotes = quotes.map(DisplayQuote.init)
             resetRotationState()
+            startRefreshIfNeeded()
             hasLoaded = true
         } catch {
             displayQuotes = []
@@ -53,6 +57,29 @@ final class MenuBarViewModel: ObservableObject {
         displayQuotes = quotes
         resetRotationState()
         hasLoaded = true
+    }
+
+    private func startRefreshIfNeeded() {
+        guard refreshTask == nil else { return }
+        let intervalNanoseconds = refreshIntervalNanoseconds
+
+        refreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: intervalNanoseconds)
+                guard !Task.isCancelled else { return }
+                await self?.refreshQuotes()
+            }
+        }
+    }
+
+    private func refreshQuotes() async {
+        do {
+            let quotes = try await provider.fetchQuotes()
+            displayQuotes = quotes.map(DisplayQuote.init)
+            syncCurrentDisplayQuoteAfterRefresh()
+        } catch {
+            // Keep the last successful snapshot when periodic refresh fails.
+        }
     }
 
     private func resetRotationState() {
@@ -80,6 +107,20 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         currentQuoteIndex = (currentQuoteIndex + 1) % displayQuotes.count
+        currentDisplayQuote = displayQuotes[currentQuoteIndex]
+    }
+
+    private func syncCurrentDisplayQuoteAfterRefresh() {
+        guard !displayQuotes.isEmpty else {
+            currentQuoteIndex = 0
+            currentDisplayQuote = nil
+            return
+        }
+
+        if currentQuoteIndex >= displayQuotes.count {
+            currentQuoteIndex = 0
+        }
+
         currentDisplayQuote = displayQuotes[currentQuoteIndex]
     }
 }
