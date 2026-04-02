@@ -7,9 +7,11 @@ struct SettingsView: View {
     let onClose: (() -> Void)?
 
     private enum LayoutMetrics {
-        static let watchlistMaxVisibleRows = 5
-        static let watchlistRowHeight: CGFloat = 30
+        static let watchlistMaxVisibleRows = 7
+        static let watchlistRowHeight: CGFloat = 36
         static let watchlistListVerticalPadding: CGFloat = 8
+        static let symbolColumnWidth: CGFloat = 96
+        static let actionColumnWidth: CGFloat = 28
     }
 
     var body: some View {
@@ -19,56 +21,71 @@ struct SettingsView: View {
                     TextField(
                         "股票简称",
                         text: Binding(
-                            get: { viewModel.watchlistNameInput },
-                            set: viewModel.updateWatchlistNameInput
+                            get: { viewModel.watchlistCompanyNameInput },
+                            set: viewModel.updateWatchlistCompanyNameInput
                         )
                     )
                     .textFieldStyle(.roundedBorder)
 
                     TextField(
-                        "输入 6 位股票代码",
+                        "代码",
                         text: Binding(
                             get: { viewModel.watchlistSymbolInput },
                             set: viewModel.updateWatchlistSymbolInput
                         )
                     )
                     .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 140)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(width: LayoutMetrics.symbolColumnWidth)
 
-                    Button("添加") {
+                    Spacer(minLength: 0)
+
+                    Button("+") {
                         viewModel.addWatchlistEntry()
                     }
-                    .disabled(
-                        normalizedWatchlistSymbolInput.count != 6 ||
-                        normalizedWatchlistNameInput.isEmpty
-                    )
+                    .frame(width: LayoutMetrics.actionColumnWidth)
+                    .disabled(!viewModel.canAddWatchlistEntry)
                 }
 
-                if viewModel.draftSettings.watchlist.isEmpty {
+                if viewModel.draftWatchlist.isEmpty {
                     Text("当前未配置监控股票，保存后菜单栏和主面板会显示为空。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ForEach(viewModel.draftSettings.watchlist, id: \.symbol) { entry in
+                            ForEach(viewModel.draftWatchlist) { entry in
                                 HStack(spacing: 12) {
-                                    Text(entry.companyName)
-                                        .lineLimit(1)
+                                    TextField(
+                                        "股票简称",
+                                        text: Binding(
+                                            get: { currentCompanyName(for: entry.id) },
+                                            set: { viewModel.updateWatchlistEntryCompanyName(id: entry.id, input: $0) }
+                                        )
+                                    )
+                                    .textFieldStyle(.roundedBorder)
 
-                                    Text(entry.symbol)
-                                        .font(.system(.body, design: .monospaced))
-                                        .foregroundStyle(.secondary)
+                                    TextField(
+                                        "代码",
+                                        text: Binding(
+                                            get: { currentSymbol(for: entry.id) },
+                                            set: { viewModel.updateWatchlistEntrySymbol(id: entry.id, input: $0) }
+                                        )
+                                    )
+                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(.body, design: .monospaced))
+                                    .frame(width: LayoutMetrics.symbolColumnWidth)
 
-                                    Spacer()
-
-                                    Button("删除") {
-                                        viewModel.removeWatchlistEntry(symbol: entry.symbol)
+                                    Button("-") {
+                                        viewModel.removeWatchlistEntry(id: entry.id)
                                     }
+                                    .frame(width: LayoutMetrics.actionColumnWidth)
                                     .buttonStyle(.borderless)
                                 }
                                 .frame(minHeight: LayoutMetrics.watchlistRowHeight)
 
-                                if entry.symbol != viewModel.draftSettings.watchlist.last?.symbol {
+                                if entry.id != viewModel.draftWatchlist.last?.id {
                                     Divider()
                                 }
                             }
@@ -77,43 +94,56 @@ struct SettingsView: View {
                     }
                     .frame(maxHeight: watchlistListHeight)
                 }
+
+                HStack {
+                    Spacer()
+
+                    Button("恢复 Base 列表") {
+                        viewModel.resetWatchlistToBase()
+                    }
+                    .disabled(!viewModel.canResetWatchlistToBase)
+                }
             }
 
             Section("展示字段") {
                 Toggle(
                     "股票简称",
                     isOn: binding(
-                        get: \.showsCompanyName,
+                        get: { viewModel.draftShowsCompanyName },
                         set: viewModel.setShowsCompanyName
                     )
                 )
                 Toggle(
                     "股票代码",
                     isOn: binding(
-                        get: \.showsSymbol,
+                        get: { viewModel.draftShowsSymbol },
                         set: viewModel.setShowsSymbol
                     )
                 )
                 Toggle(
                     "当前股价",
                     isOn: binding(
-                        get: \.showsPrice,
+                        get: { viewModel.draftShowsPrice },
                         set: viewModel.setShowsPrice
                     )
                 )
                 Toggle(
                     "涨跌幅",
                     isOn: binding(
-                        get: \.showsChangePercent,
+                        get: { viewModel.draftShowsChangePercent },
                         set: viewModel.setShowsChangePercent
                     )
                 )
             }
 
             Section {
-                Text("设置页会先保留未保存的草稿；点击保存后菜单栏和监控列表才会更新。监控列表通过股票简称和 6 位股票代码维护，重复代码会自动忽略。如果把所有展示字段都关闭，会自动回退为显示股票简称。")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 6) {
+                    if let validationMessage = viewModel.validationMessage {
+                        Text(validationMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
             }
 
             Section {
@@ -124,7 +154,7 @@ struct SettingsView: View {
                         viewModel.save()
                     }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(!viewModel.hasUnsavedChanges)
+                    .disabled(!viewModel.canSave)
 
                     Button("取消") {
                         viewModel.cancel()
@@ -142,13 +172,21 @@ struct SettingsView: View {
     }
 
     private func binding(
-        get keyPath: KeyPath<MenuBarDisplaySettings, Bool>,
+        get getter: @escaping () -> Bool,
         set setter: @escaping (Bool) -> Void
     ) -> Binding<Bool> {
         Binding(
-            get: { viewModel.draftSettings[keyPath: keyPath] },
+            get: getter,
             set: setter
         )
+    }
+
+    private func currentCompanyName(for id: MenuBarSettingsViewModel.EditableWatchlistEntry.ID) -> String {
+        viewModel.draftWatchlist.first(where: { $0.id == id })?.companyName ?? ""
+    }
+
+    private func currentSymbol(for id: MenuBarSettingsViewModel.EditableWatchlistEntry.ID) -> String {
+        viewModel.draftWatchlist.first(where: { $0.id == id })?.symbol ?? ""
     }
 
     private func close() {
@@ -159,17 +197,9 @@ struct SettingsView: View {
         }
     }
 
-    private var normalizedWatchlistSymbolInput: String {
-        viewModel.watchlistSymbolInput.filter(\.isNumber)
-    }
-
-    private var normalizedWatchlistNameInput: String {
-        viewModel.watchlistNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
     private var watchlistListHeight: CGFloat {
         let visibleRowCount = min(
-            viewModel.draftSettings.watchlist.count,
+            viewModel.draftWatchlist.count,
             LayoutMetrics.watchlistMaxVisibleRows
         )
         return CGFloat(visibleRowCount) * LayoutMetrics.watchlistRowHeight + LayoutMetrics.watchlistListVerticalPadding

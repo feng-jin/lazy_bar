@@ -92,11 +92,15 @@ private struct VerticalTickerView: View {
             if items.isEmpty {
                 EmptyView()
             } else if items.count == 1 {
-                tickerRow(items[0].columns)
+                if let currentItem {
+                    tickerRow(currentItem.columns)
+                }
             } else {
                 VStack(spacing: 0) {
-                    tickerRow(items[currentIndex].columns)
-                    tickerRow(items[nextIndex].columns)
+                    if let currentItem, let nextItem {
+                        tickerRow(currentItem.columns)
+                        tickerRow(nextItem.columns)
+                    }
                 }
                 .offset(y: offsetY)
                 .frame(
@@ -126,7 +130,22 @@ private struct VerticalTickerView: View {
 
     private var nextIndex: Int {
         guard !items.isEmpty else { return 0 }
-        return (currentIndex + 1) % items.count
+        return (safeCurrentIndex + 1) % items.count
+    }
+
+    private var safeCurrentIndex: Int {
+        guard !items.isEmpty else { return 0 }
+        return min(max(currentIndex, 0), items.count - 1)
+    }
+
+    private var currentItem: MenuBarViewModel.MenuBarTickerItem? {
+        guard !items.isEmpty else { return nil }
+        return items[safeCurrentIndex]
+    }
+
+    private var nextItem: MenuBarViewModel.MenuBarTickerItem? {
+        guard items.count > 1 else { return currentItem }
+        return items[nextIndex]
     }
 
     private func tickerRow(_ columns: DisplayQuote.MenuBarColumns) -> some View {
@@ -213,7 +232,7 @@ private struct VerticalTickerView: View {
                 guard !Task.isCancelled else { return }
 
                 currentIndex = nextIndex
-                currentItemID = items[currentIndex].id
+                currentItemID = currentItem?.id
                 offsetY = 0
             }
         }
@@ -235,7 +254,7 @@ private struct VerticalTickerView: View {
         } else if currentIndex >= items.count {
             currentIndex = 0
         }
-        currentItemID = items[currentIndex].id
+        currentItemID = currentItem?.id
 
         if items.count == 1 {
             animationTask?.cancel()

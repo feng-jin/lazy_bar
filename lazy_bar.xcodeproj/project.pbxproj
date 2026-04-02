@@ -22,6 +22,7 @@
 		A00000000000000000000014 /* SectionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000072 /* SectionCardView.swift */; };
 		A00000000000000000000015 /* PreviewMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000081 /* PreviewMocks.swift */; };
 		A00000000000000000000016 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000091 /* Assets.xcassets */; };
+		A00000000000000000000093 /* watchlist-base.json in Resources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000092 /* watchlist-base.json */; };
 		A00000000000000000000019 /* MenuBarSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000024 /* MenuBarSettingsStore.swift */; };
 		A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000025 /* MenuBarDisplaySettings.swift */; };
 		A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000043 /* MenuBarSettingsViewModel.swift */; };
@@ -29,6 +30,8 @@
 		A0000000000000000000001D /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* StatusBarController.swift */; };
 		A0000000000000000000001E /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000027 /* SettingsWindowController.swift */; };
 		A0000000000000000000001F /* QuotesPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000054 /* QuotesPopoverView.swift */; };
+		A0000000000000000000002A /* WatchlistBaseLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002B /* WatchlistBaseLoader.swift */; };
+		A00000000000000000000037 /* SinaQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000038 /* SinaQuoteProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,8 +46,10 @@
 		A00000000000000000000025 /* MenuBarDisplaySettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarDisplaySettings.swift; sourceTree = "<group>"; };
 		A00000000000000000000026 /* StatusBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarController.swift; sourceTree = "<group>"; };
 		A00000000000000000000027 /* SettingsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		A0000000000000000000002B /* WatchlistBaseLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchlistBaseLoader.swift; sourceTree = "<group>"; };
 		A00000000000000000000031 /* MockQuoteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockQuoteProvider.swift; sourceTree = "<group>"; };
 		A00000000000000000000032 /* QuoteProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteProviding.swift; sourceTree = "<group>"; };
+		A00000000000000000000038 /* SinaQuoteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinaQuoteProvider.swift; sourceTree = "<group>"; };
 		A00000000000000000000041 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000042 /* StockDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockDetailViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000043 /* MenuBarSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsViewModel.swift; sourceTree = "<group>"; };
@@ -57,6 +62,7 @@
 		A00000000000000000000072 /* SectionCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCardView.swift; sourceTree = "<group>"; };
 		A00000000000000000000081 /* PreviewMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewMocks.swift; sourceTree = "<group>"; };
 		A00000000000000000000091 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		A00000000000000000000092 /* watchlist-base.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "watchlist-base.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +104,7 @@
 			children = (
 				A00000000000000000000091 /* Assets.xcassets */,
 				A00000000000000000000018 /* Info.plist */,
+				A00000000000000000000092 /* watchlist-base.json */,
 			);
 			path = Resources;
 			sourceTree = SOURCE_ROOT;
@@ -116,6 +123,7 @@
 				A00000000000000000000012 /* AppDependencies.swift */,
 				A00000000000000000000013 /* LazyBarApp.swift */,
 				A00000000000000000000024 /* MenuBarSettingsStore.swift */,
+				A0000000000000000000002B /* WatchlistBaseLoader.swift */,
 				A00000000000000000000026 /* StatusBarController.swift */,
 				A00000000000000000000027 /* SettingsWindowController.swift */,
 			);
@@ -137,6 +145,7 @@
 			children = (
 				A00000000000000000000031 /* MockQuoteProvider.swift */,
 				A00000000000000000000032 /* QuoteProviding.swift */,
+				A00000000000000000000038 /* SinaQuoteProvider.swift */,
 			);
 			path = Providers;
 			sourceTree = "<group>";
@@ -256,6 +265,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A00000000000000000000016 /* Assets.xcassets in Resources */,
+				A00000000000000000000093 /* watchlist-base.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -272,6 +282,7 @@
 				A00000000000000000000006 /* StockQuote.swift in Sources */,
 				A00000000000000000000007 /* MockQuoteProvider.swift in Sources */,
 				A00000000000000000000008 /* QuoteProviding.swift in Sources */,
+				A00000000000000000000037 /* SinaQuoteProvider.swift in Sources */,
 				A00000000000000000000009 /* MenuBarViewModel.swift in Sources */,
 				A0000000000000000000000A /* StockDetailViewModel.swift in Sources */,
 				A0000000000000000000000C /* MenuBarLabelView.swift in Sources */,
@@ -282,6 +293,7 @@
 				A00000000000000000000014 /* SectionCardView.swift in Sources */,
 				A00000000000000000000015 /* PreviewMocks.swift in Sources */,
 				A00000000000000000000019 /* MenuBarSettingsStore.swift in Sources */,
+				A0000000000000000000002A /* WatchlistBaseLoader.swift in Sources */,
 				A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */,
 				A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */,
 				A0000000000000000000001C /* SettingsView.swift in Sources */,

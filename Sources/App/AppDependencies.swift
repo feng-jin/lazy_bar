@@ -7,9 +7,12 @@ struct AppDependencies {
 
     @MainActor
     static var live: AppDependencies {
-        AppDependencies(
-            quoteProvider: MockQuoteProvider(),
-            menuBarSettingsStore: MenuBarSettingsStore()
+        let baseWatchlist = WatchlistBaseLoader().load()
+        let menuBarSettingsStore = MenuBarSettingsStore(baseWatchlist: baseWatchlist)
+
+        return AppDependencies(
+            quoteProvider: SinaQuoteProvider(),
+            menuBarSettingsStore: menuBarSettingsStore
         )
     }
 }

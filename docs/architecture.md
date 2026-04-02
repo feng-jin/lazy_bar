@@ -12,13 +12,16 @@
   - `MenuBarDisplaySettings`：菜单栏字段配置与 watchlist 条目列表；每个条目包含股票简称和股票代码。
 - `Providers`
   - `QuoteProviding`：数据来源边界协议，按当前 watchlist 中的股票代码返回股票列表。
-  - `MockQuoteProvider`：当前 UI prototype 使用的 mock 数据源；每次拉取都会基于基准价生成小幅波动后的最新报价，并按请求的股票代码返回对应 mock 股票。
+  - `SinaQuoteProvider`：当前 live 环境默认使用的真实行情 provider；通过新浪财经未公开快照接口按股票代码批量拉取 A 股准实时行情。
+  - `MockQuoteProvider`：保留用于 Preview、调试或未来兜底的 mock 数据源；每次拉取都会基于基准价生成小幅波动后的最新报价，并按请求的股票代码返回对应 mock 股票。
 - `ViewModels`
   - `MenuBarViewModel`：负责菜单栏 ticker 条目来源、下拉股票列表状态，以及 mock 阶段的定时刷新调度。
+  - `MenuBarSettingsViewModel`：负责设置弹窗草稿、股票代码录入、watchlist 编辑校验，以及保存/取消动作。
   - `StockDetailViewModel`：保留为后续详情扩展使用，当前不接入主交互路径。
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
-  - `MenuBarSettingsStore`：持久化菜单栏展示设置，供菜单栏和设置页共享。
+  - `MenuBarSettingsStore`：持久化菜单栏展示设置，供菜单栏和设置页共享，并负责把项目内 base watchlist 作为首次默认值。
+  - `WatchlistBaseLoader`：从 bundle 内的 JSON 资源读取基础 watchlist。
   - `StatusBarController`：负责状态栏按钮、左键主面板，以及状态栏标题同步。
   - `SettingsWindowController`：负责设置弹窗的创建、展示和关闭。
 - `Views`
@@ -27,28 +30,30 @@
 
 ## 当前数据流
 1. `LazyBarApp` 通过 `AppDependencies.live` 组装依赖。
-2. `AppDependencies` 将 `MockQuoteProvider` 注入 `MenuBarViewModel`，并将 `MenuBarSettingsStore` 注入 `MenuBarSettingsViewModel`。
+2. `AppDependencies` 先通过 `WatchlistBaseLoader` 从 bundle 读取基础 watchlist，再将 `SinaQuoteProvider` 注入 `MenuBarViewModel`，并把带有 base watchlist 的 `MenuBarSettingsStore` 注入 `MenuBarSettingsViewModel`。
 3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. `MenuBarViewModel` 首次加载时读取已保存的 watchlist 条目，并调用 `QuoteProviding.fetchQuotes(symbols:)` 获取 `[StockQuote]`，随后按固定间隔重复拉取。
-6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 所需的分栏展示条目与动态列宽；列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；定时刷新时直接替换最新展示数据。
-7. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置与 watchlist 条目，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
-8. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据 `MenuBarViewModel` 产出的动态列宽同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用 `DisplayQuote` 提供的分栏展示数据对齐渲染股票简称、股价与涨跌幅；左键点击后展示的主面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，上半部分继续复用相同的分栏展示数据、动态列宽与共享样式 token，下半部分只承载设置入口、退出和后续少量操作。
-9. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口。
+6. `MenuBarSettingsViewModel` 读取 `MenuBarSettingsStore`；watchlist 的初始值来自项目内 base JSON，设置页支持在草稿态里新增、删除、直接编辑代码和简称，并可恢复到 base 列表；保存前会统一做代码长度、重复值和空值校验。
+8. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 所需的分栏展示条目与动态列宽；列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；定时刷新时直接替换最新展示数据。
+9. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据 `MenuBarViewModel` 产出的动态列宽同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用 `DisplayQuote` 提供的分栏展示数据对齐渲染股票简称、股价与涨跌幅；左键点击后展示的主面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，上半部分继续复用相同的分栏展示数据、动态列宽与共享样式 token，下半部分只承载设置入口、退出和后续少量操作。
+10. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口。
 
 ## 关键职责边界
-- `QuoteProviding` 是数据接入边界。后续接真实行情时，优先新增 provider 实现，而不是改 View。
+- `QuoteProviding` 是数据接入边界。当前真实行情通过 `SinaQuoteProvider` 落在这一层，后续若要切换到授权源或增加 fallback，优先继续新增或替换 provider 实现，而不是改 View。
 - mock 阶段的“实时感”仍通过 `QuoteProviding` + ViewModel 刷新调度来模拟，不把随机波动或拉取时序写进 View。
 - `DisplayQuote` 是展示格式化边界。菜单栏 ticker 与左键列表所需的名称、价格、涨跌幅、更新时间以及分栏展示内容应尽量集中在这里或 ViewModel；当 watchlist 中配置了自定义股票简称时，由 ViewModel 在这里统一覆盖展示名称。
-- `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置、watchlist 配置与持久化，`MenuBarSettingsViewModel` 负责设置弹窗中的草稿、股票简称/代码编辑以及保存/取消动作，避免把设置状态散落在 View 里。
+- `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置、watchlist 配置与持久化；base watchlist 的来源集中在 `WatchlistBaseLoader`，不要把项目内 JSON 读取散落到 View 或其他层。`MenuBarSettingsViewModel` 负责设置弹窗中的草稿、股票代码编辑、base 列表恢复、校验，以及保存/取消动作，避免把设置状态散落在 View 里。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
 - App 层负责 AppKit 壳层装配，不承接业务逻辑、网络逻辑或行情状态计算。
 - View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；bar 与左键主面板的视觉常量应集中管理并优先共享，滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现。
 
 ## 当前已知事实
-- `AppDependencies` 是 mock/real provider 切换的自然入口。
+- `AppDependencies` 是真实 provider、mock provider 与后续 fallback 切换的自然入口。
+- watchlist 的基础数据当前由 bundle 内 `Resources/watchlist-base.json` 提供；用户保存后的自定义结果仍通过 `MenuBarSettingsStore` 持久化到 `UserDefaults`。
 - 当前主交互只依赖 `MenuBarViewModel` 和 `MenuBarSettingsViewModel`；`StockDetailViewModel` 和 Detail 组件仍保留在代码中，但不作为菜单点击后的默认路径。
 - 工程没有第三方依赖，运行时只依赖系统框架 `SwiftUI`、`Foundation` 和 `AppKit`。
+- 新浪行情实现当前通过 HTTP 批量请求按 `sh/sz + 代码` 拉取快照文本，再在 provider 层解析为 `StockQuote`；其稳定性和合规性低于授权数据源。
 
 ## 后续优先扩展点
 - 真实行情接入：从 `Providers` 和 `AppDependencies` 开始扩展。
