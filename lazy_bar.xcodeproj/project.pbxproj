@@ -29,6 +29,8 @@
 		A0000000000000000000001D /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* StatusBarController.swift */; };
 		A0000000000000000000001E /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000027 /* SettingsWindowController.swift */; };
 		A0000000000000000000001F /* QuotesPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000054 /* QuotesPopoverView.swift */; };
+		A00000000000000000000057 /* QuoteColumnLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000058 /* QuoteColumnLayout.swift */; };
+		A00000000000000000000059 /* QuoteColumnsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000005A /* QuoteColumnsRowView.swift */; };
 		A00000000000000000000037 /* SinaQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000038 /* SinaQuoteProvider.swift */; };
 /* End PBXBuildFile section */
 
@@ -53,6 +55,8 @@
 		A00000000000000000000052 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
 		A00000000000000000000053 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A00000000000000000000054 /* QuotesPopoverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotesPopoverView.swift; sourceTree = "<group>"; };
+		A00000000000000000000058 /* QuoteColumnLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteColumnLayout.swift; sourceTree = "<group>"; };
+		A0000000000000000000005A /* QuoteColumnsRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteColumnsRowView.swift; sourceTree = "<group>"; };
 		A00000000000000000000061 /* PriceSummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceSummaryCard.swift; sourceTree = "<group>"; };
 		A00000000000000000000062 /* QuoteRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteRowView.swift; sourceTree = "<group>"; };
 		A00000000000000000000063 /* StockHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockHeaderView.swift; sourceTree = "<group>"; };
@@ -176,6 +180,8 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000052 /* MenuBarLabelView.swift */,
+				A00000000000000000000058 /* QuoteColumnLayout.swift */,
+				A0000000000000000000005A /* QuoteColumnsRowView.swift */,
 				A00000000000000000000054 /* QuotesPopoverView.swift */,
 				A00000000000000000000053 /* SettingsView.swift */,
 			);
@@ -279,6 +285,8 @@
 				A00000000000000000000009 /* MenuBarViewModel.swift in Sources */,
 				A0000000000000000000000A /* StockDetailViewModel.swift in Sources */,
 				A0000000000000000000000C /* MenuBarLabelView.swift in Sources */,
+				A00000000000000000000057 /* QuoteColumnLayout.swift in Sources */,
+				A00000000000000000000059 /* QuoteColumnsRowView.swift in Sources */,
 				A0000000000000000000001F /* QuotesPopoverView.swift in Sources */,
 				A0000000000000000000000D /* PriceSummaryCard.swift in Sources */,
 				A0000000000000000000000E /* QuoteRowView.swift in Sources */,

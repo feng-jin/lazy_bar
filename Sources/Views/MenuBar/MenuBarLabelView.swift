@@ -46,16 +46,23 @@ struct MenuBarLabelView: View {
     @ObservedObject var settingsStore: MenuBarSettingsStore
 
     var body: some View {
-        let layout = viewModel.columnLayout(settings: settingsStore.settings)
+        let settings = settingsStore.settings
+        let layout = QuoteColumnLayoutCalculator.layout(
+            displayQuotes: viewModel.displayQuotes,
+            settings: settings,
+            statusText: viewModel.statusMessage(settings: settings)
+        )
 
         Group {
-            let tickerItems = viewModel.menuBarTickerItems(settings: settingsStore.settings)
+            let tickerItems = viewModel.displayQuotes.map {
+                VerticalTickerView.TickerItem(id: $0.symbol, columns: $0.columns(settings: settings))
+            }
 
             if !tickerItems.isEmpty {
                 VerticalTickerView(items: tickerItems, layout: layout)
             } else {
                 statusText(
-                    viewModel.statusMessage(settings: settingsStore.settings),
+                    viewModel.statusMessage(settings: settings),
                     layout: layout
                 )
             }
@@ -67,7 +74,7 @@ struct MenuBarLabelView: View {
         )
     }
 
-    private func statusText(_ text: String, layout: MenuBarViewModel.ColumnLayout) -> some View {
+    private func statusText(_ text: String, layout: QuoteColumnLayout) -> some View {
         Text(text)
             .font(MenuBarStyle.statusTextFont(size: MenuBarStyle.Metrics.primaryFontSize))
             .lineLimit(1)
@@ -80,8 +87,13 @@ struct MenuBarLabelView: View {
 }
 
 private struct VerticalTickerView: View {
-    let items: [MenuBarViewModel.MenuBarTickerItem]
-    let layout: MenuBarViewModel.ColumnLayout
+    struct TickerItem: Equatable, Identifiable {
+        let id: String
+        let columns: DisplayQuote.QuoteColumns
+    }
+
+    let items: [TickerItem]
+    let layout: QuoteColumnLayout
 
     @State private var currentIndex = 0
     @State private var currentItemID: String?
@@ -139,76 +151,24 @@ private struct VerticalTickerView: View {
         return min(max(currentIndex, 0), items.count - 1)
     }
 
-    private var currentItem: MenuBarViewModel.MenuBarTickerItem? {
-        guard !items.isEmpty else { return nil }
-        return items[safeCurrentIndex]
-    }
-
-    private var nextItem: MenuBarViewModel.MenuBarTickerItem? {
+    private var nextItem: TickerItem? {
         guard items.count > 1 else { return currentItem }
         return items[nextIndex]
     }
 
-    private func tickerRow(_ columns: DisplayQuote.MenuBarColumns) -> some View {
-        HStack(spacing: 0) {
-            nameColumn(columns: columns)
-                .frame(width: nameColumnWidth, alignment: .leading)
+    private var currentItem: TickerItem? {
+        guard !items.isEmpty else { return nil }
+        return items[safeCurrentIndex]
+    }
 
-            if let symbolText = columns.symbolText {
-                Text(symbolText)
-                    .font(MenuBarStyle.identitySecondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
-                    .foregroundStyle(MenuBarStyle.identityTextColor)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: layout.symbolColumnWidth, alignment: .leading)
-                    .padding(.leading, layout.columnSpacing)
-            }
-
-            if let priceText = columns.priceText {
-                Text(priceText)
-                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: layout.priceColumnWidth, alignment: .trailing)
-                    .layoutPriority(1)
-                    .padding(.leading, layout.columnSpacing)
-            }
-
-            if let changeText = columns.changeText {
-                Text(changeText)
-                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: layout.changeColumnWidth, alignment: .trailing)
-                    .layoutPriority(2)
-                    .padding(.leading, layout.columnSpacing)
-            }
-        }
-        .frame(
-            width: layout.contentWidth,
+    private func tickerRow(_ columns: DisplayQuote.QuoteColumns) -> some View {
+        QuoteColumnsRowView(
+            columns: columns,
+            layout: layout,
+            typography: .menuBar,
             height: MenuBarStyle.Metrics.contentHeight,
-            alignment: .topLeading
+            verticalOffset: MenuBarStyle.Metrics.verticalTextOffset
         )
-        .offset(y: MenuBarStyle.Metrics.verticalTextOffset)
-    }
-
-    private var nameColumnWidth: CGFloat {
-        let occupiedWidth =
-            layout.symbolWidthWithSpacing +
-            layout.priceWidthWithSpacing +
-            layout.changeWidthWithSpacing
-        return max(0, layout.contentWidth - occupiedWidth)
-    }
-
-    @ViewBuilder
-    private func nameColumn(columns: DisplayQuote.MenuBarColumns) -> some View {
-        Text(columns.nameText ?? "")
-            .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.primaryFontSize))
-            .foregroundStyle(MenuBarStyle.identityTextColor)
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .layoutPriority(3)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func restartAnimation() {

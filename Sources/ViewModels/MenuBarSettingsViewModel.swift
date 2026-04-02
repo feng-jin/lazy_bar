@@ -10,12 +10,26 @@ final class MenuBarSettingsViewModel: ObservableObject {
         var companyName: String
     }
 
+    struct DraftSettings: Equatable {
+        var watchlist: [EditableWatchlistEntry]
+        var showsSymbol: Bool
+        var showsCompanyName: Bool
+        var showsPrice: Bool
+        var showsChangePercent: Bool
+
+        init(settings: MenuBarDisplaySettings) {
+            watchlist = settings.watchlist.map {
+                EditableWatchlistEntry(symbol: $0.symbol, companyName: $0.companyName)
+            }
+            showsSymbol = settings.showsSymbol
+            showsCompanyName = settings.showsCompanyName
+            showsPrice = settings.showsPrice
+            showsChangePercent = settings.showsChangePercent
+        }
+    }
+
     @Published private(set) var settings: MenuBarDisplaySettings
-    @Published private(set) var draftWatchlist: [EditableWatchlistEntry]
-    @Published private(set) var draftShowsSymbol: Bool
-    @Published private(set) var draftShowsCompanyName: Bool
-    @Published private(set) var draftShowsPrice: Bool
-    @Published private(set) var draftShowsChangePercent: Bool
+    @Published private(set) var draftSettings: DraftSettings
     @Published var watchlistCompanyNameInput = ""
     @Published var watchlistSymbolInput = ""
 
@@ -25,11 +39,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
     init(store: MenuBarSettingsStore) {
         self.store = store
         settings = store.settings
-        draftWatchlist = Self.editableWatchlist(from: store.settings.watchlist)
-        draftShowsSymbol = store.settings.showsSymbol
-        draftShowsCompanyName = store.settings.showsCompanyName
-        draftShowsPrice = store.settings.showsPrice
-        draftShowsChangePercent = store.settings.showsChangePercent
+        draftSettings = DraftSettings(settings: store.settings)
 
         store.$settings
             .sink { [weak self] settings in
@@ -37,7 +47,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
                 self.settings = settings
 
                 if !self.hasUnsavedChanges {
-                    self.replaceDraft(with: settings)
+                    self.draftSettings = DraftSettings(settings: settings)
                     self.watchlistCompanyNameInput = ""
                     self.watchlistSymbolInput = ""
                 }
@@ -46,19 +56,19 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     func setShowsSymbol(_ isEnabled: Bool) {
-        draftShowsSymbol = isEnabled
+        draftSettings.showsSymbol = isEnabled
     }
 
     func setShowsCompanyName(_ isEnabled: Bool) {
-        draftShowsCompanyName = isEnabled
+        draftSettings.showsCompanyName = isEnabled
     }
 
     func setShowsPrice(_ isEnabled: Bool) {
-        draftShowsPrice = isEnabled
+        draftSettings.showsPrice = isEnabled
     }
 
     func setShowsChangePercent(_ isEnabled: Bool) {
-        draftShowsChangePercent = isEnabled
+        draftSettings.showsChangePercent = isEnabled
     }
 
     func updateWatchlistCompanyNameInput(_ input: String) {
@@ -74,8 +84,8 @@ final class MenuBarSettingsViewModel: ObservableObject {
         guard symbol.count == 6 else { return }
         let companyName = watchlistCompanyNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !draftWatchlist.contains(where: { $0.symbol == symbol }) else { return }
-        draftWatchlist.append(
+        guard !draftSettings.watchlist.contains(where: { $0.symbol == symbol }) else { return }
+        draftSettings.watchlist.append(
             EditableWatchlistEntry(
                 symbol: symbol,
                 companyName: companyName.isEmpty ? symbol : companyName
@@ -86,23 +96,23 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     func removeWatchlistEntry(id: EditableWatchlistEntry.ID) {
-        draftWatchlist.removeAll { $0.id == id }
+        draftSettings.watchlist.removeAll { $0.id == id }
     }
 
     func updateWatchlistEntrySymbol(id: EditableWatchlistEntry.ID, input: String) {
-        guard let index = draftWatchlist.firstIndex(where: { $0.id == id }) else { return }
+        guard let index = draftSettings.watchlist.firstIndex(where: { $0.id == id }) else { return }
 
         let normalizedSymbol = String(Self.normalizedSymbol(from: input).prefix(6))
-        draftWatchlist[index].symbol = normalizedSymbol
+        draftSettings.watchlist[index].symbol = normalizedSymbol
 
-        if draftWatchlist[index].companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            draftWatchlist[index].companyName = normalizedSymbol
+        if draftSettings.watchlist[index].companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            draftSettings.watchlist[index].companyName = normalizedSymbol
         }
     }
 
     func updateWatchlistEntryCompanyName(id: EditableWatchlistEntry.ID, input: String) {
-        guard let index = draftWatchlist.firstIndex(where: { $0.id == id }) else { return }
-        draftWatchlist[index].companyName = input
+        guard let index = draftSettings.watchlist.firstIndex(where: { $0.id == id }) else { return }
+        draftSettings.watchlist[index].companyName = input
     }
 
     var hasUnsavedChanges: Bool {
@@ -119,14 +129,14 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     func cancel() {
-        replaceDraft(with: settings)
+        draftSettings = DraftSettings(settings: settings)
         watchlistCompanyNameInput = ""
         watchlistSymbolInput = ""
     }
 
     func beginEditing() {
         guard !hasUnsavedChanges else { return }
-        replaceDraft(with: settings)
+        draftSettings = DraftSettings(settings: settings)
         watchlistCompanyNameInput = ""
         watchlistSymbolInput = ""
     }
@@ -134,11 +144,11 @@ final class MenuBarSettingsViewModel: ObservableObject {
     var canAddWatchlistEntry: Bool {
         let symbol = Self.normalizedSymbol(from: watchlistSymbolInput)
         guard symbol.count == 6 else { return false }
-        return !draftWatchlist.contains(where: { $0.symbol == symbol })
+        return !draftSettings.watchlist.contains(where: { $0.symbol == symbol })
     }
 
     var validationMessage: String? {
-        let entries = draftWatchlist
+        let entries = draftSettings.watchlist
         var seenSymbols = Set<String>()
 
         for entry in entries {
@@ -161,17 +171,17 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     private func currentDraftSettings() -> MenuBarDisplaySettings {
         MenuBarDisplaySettings(
-            watchlist: draftWatchlist.map(Self.watchlistEntry(from:)),
-            showsSymbol: draftShowsSymbol,
-            showsCompanyName: draftShowsCompanyName,
-            showsPrice: draftShowsPrice,
-            showsChangePercent: draftShowsChangePercent
+            watchlist: draftSettings.watchlist.map(Self.watchlistEntry(from:)),
+            showsSymbol: draftSettings.showsSymbol,
+            showsCompanyName: draftSettings.showsCompanyName,
+            showsPrice: draftSettings.showsPrice,
+            showsChangePercent: draftSettings.showsChangePercent
         )
     }
 
     private func sanitizedDraftSettings() -> MenuBarDisplaySettings? {
         guard validationMessage == nil else { return nil }
-        let watchlist = draftWatchlist.map { entry in
+        let watchlist = draftSettings.watchlist.map { entry in
             let symbol = Self.normalizedSymbol(from: entry.symbol)
             let companyName = entry.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -182,25 +192,11 @@ final class MenuBarSettingsViewModel: ObservableObject {
         }
         return MenuBarDisplaySettings(
             watchlist: watchlist,
-            showsSymbol: draftShowsSymbol,
-            showsCompanyName: draftShowsCompanyName,
-            showsPrice: draftShowsPrice,
-            showsChangePercent: draftShowsChangePercent
+            showsSymbol: draftSettings.showsSymbol,
+            showsCompanyName: draftSettings.showsCompanyName,
+            showsPrice: draftSettings.showsPrice,
+            showsChangePercent: draftSettings.showsChangePercent
         )
-    }
-
-    private func replaceDraft(with settings: MenuBarDisplaySettings) {
-        draftWatchlist = Self.editableWatchlist(from: settings.watchlist)
-        draftShowsSymbol = settings.showsSymbol
-        draftShowsCompanyName = settings.showsCompanyName
-        draftShowsPrice = settings.showsPrice
-        draftShowsChangePercent = settings.showsChangePercent
-    }
-
-    private static func editableWatchlist(from watchlist: [WatchlistEntry]) -> [EditableWatchlistEntry] {
-        watchlist.map {
-            EditableWatchlistEntry(symbol: $0.symbol, companyName: $0.companyName)
-        }
     }
 
     private static func watchlistEntry(from editableEntry: EditableWatchlistEntry) -> WatchlistEntry {

@@ -172,7 +172,7 @@ struct SettingsView: View {
 
                 Spacer(minLength: 0)
 
-                Text("\(viewModel.draftWatchlist.count) 只")
+                Text("\(viewModel.draftSettings.watchlist.count) 只")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -186,7 +186,7 @@ struct SettingsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
 
-            if viewModel.draftWatchlist.isEmpty {
+            if viewModel.draftSettings.watchlist.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("当前还没有股票")
                         .font(.headline)
@@ -203,10 +203,10 @@ struct SettingsView: View {
 
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(viewModel.draftWatchlist) { entry in
+                        ForEach(viewModel.draftSettings.watchlist) { entry in
                             watchlistRow(for: entry)
 
-                            if entry.id != viewModel.draftWatchlist.last?.id {
+                            if entry.id != viewModel.draftSettings.watchlist.last?.id {
                                 Divider()
                                     .padding(.leading, 16)
                             }
@@ -349,7 +349,7 @@ struct SettingsView: View {
     private func currentEntry(
         for id: MenuBarSettingsViewModel.EditableWatchlistEntry.ID
     ) -> MenuBarSettingsViewModel.EditableWatchlistEntry? {
-        viewModel.draftWatchlist.first(where: { $0.id == id })
+        viewModel.draftSettings.watchlist.first(where: { $0.id == id })
     }
 
     private func close() {
@@ -374,28 +374,28 @@ struct SettingsView: View {
                 id: "companyName",
                 title: "股票简称",
                 description: "优先显示你自定义维护的股票名称，适合快速扫一眼识别标的。",
-                isOn: { viewModel.draftShowsCompanyName },
+                isOn: { viewModel.draftSettings.showsCompanyName },
                 setIsOn: viewModel.setShowsCompanyName
             ),
             DisplayFieldOption(
                 id: "symbol",
                 title: "股票代码",
                 description: "展示 6 位代码，适合区分同名或相近简称的股票。",
-                isOn: { viewModel.draftShowsSymbol },
+                isOn: { viewModel.draftSettings.showsSymbol },
                 setIsOn: viewModel.setShowsSymbol
             ),
             DisplayFieldOption(
                 id: "price",
                 title: "当前股价",
                 description: "显示最新价格，是菜单栏和主面板里的核心数值字段。",
-                isOn: { viewModel.draftShowsPrice },
+                isOn: { viewModel.draftSettings.showsPrice },
                 setIsOn: viewModel.setShowsPrice
             ),
             DisplayFieldOption(
                 id: "changePercent",
                 title: "涨跌幅",
                 description: "显示相对昨收的百分比变化，便于快速判断强弱。",
-                isOn: { viewModel.draftShowsChangePercent },
+                isOn: { viewModel.draftSettings.showsChangePercent },
                 setIsOn: viewModel.setShowsChangePercent
             )
         ]

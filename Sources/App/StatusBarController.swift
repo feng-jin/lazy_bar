@@ -23,7 +23,11 @@ final class StatusBarController: NSObject {
         self.menuBarViewModel = menuBarViewModel
         self.settingsStore = settingsStore
         self.openSettingsWindowHandler = openSettingsWindow
-        let initialWidth = menuBarViewModel.columnLayout(settings: settingsStore.settings).itemWidth
+        let initialWidth = QuoteColumnLayoutCalculator.layout(
+            displayQuotes: menuBarViewModel.displayQuotes,
+            settings: settingsStore.settings,
+            statusText: menuBarViewModel.statusMessage(settings: settingsStore.settings)
+        ).itemWidth
         statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
         super.init()
 
@@ -80,8 +84,7 @@ final class StatusBarController: NSObject {
     }
 
     private func updateStatusItemWidth() {
-        let layout = menuBarViewModel.columnLayout(settings: settingsStore.settings)
-        statusItem.length = layout.itemWidth
+        statusItem.length = currentLayout().itemWidth
     }
 
     @objc
@@ -98,7 +101,7 @@ final class StatusBarController: NSObject {
         }
 
         let panelController = QuotesPanelController(
-            contentWidth: menuBarViewModel.columnLayout(settings: settingsStore.settings).itemWidth,
+            contentWidth: currentLayout().itemWidth,
             maximumContentHeight: 360,
             rootView: AnyView(
                 QuotesPopoverView(
@@ -122,6 +125,14 @@ final class StatusBarController: NSObject {
         quotesPanelController?.close()
         quotesPanelController = nil
         removeClickMonitors()
+    }
+
+    private func currentLayout() -> QuoteColumnLayout {
+        QuoteColumnLayoutCalculator.layout(
+            displayQuotes: menuBarViewModel.displayQuotes,
+            settings: settingsStore.settings,
+            statusText: menuBarViewModel.statusMessage(settings: settingsStore.settings)
+        )
     }
 
     private func installClickMonitors() {

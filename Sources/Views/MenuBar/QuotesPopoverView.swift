@@ -15,7 +15,11 @@ struct QuotesPopoverView: View {
     var body: some View {
         let settings = settingsStore.settings
         let displayQuotes = viewModel.displayQuotes
-        let layout = viewModel.columnLayout(settings: settings)
+        let layout = QuoteColumnLayoutCalculator.layout(
+            displayQuotes: displayQuotes,
+            settings: settings,
+            statusText: viewModel.statusMessage(settings: settings)
+        )
 
         VStack(spacing: 0) {
             Group {
@@ -150,46 +154,15 @@ private struct ActionRowView: View {
 private struct QuotePopoverRowView: View {
     let quote: DisplayQuote
     let settings: MenuBarDisplaySettings
-    let layout: MenuBarViewModel.ColumnLayout
+    let layout: QuoteColumnLayout
     @State private var isHovering = false
 
     var body: some View {
-        let columns = quote.menuListColumns(settings: settings)
-
-        HStack(spacing: 0) {
-            nameColumn(columns: columns)
-                .frame(width: nameColumnWidth, alignment: .leading)
-
-            if let symbolText = columns.symbolText {
-                Text(symbolText)
-                    .font(MenuBarStyle.identitySecondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
-                    .foregroundStyle(MenuBarStyle.identityTextColor)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: layout.symbolColumnWidth, alignment: .leading)
-                    .padding(.leading, layout.columnSpacing)
-            }
-
-            if let priceText = columns.priceText {
-                Text(priceText)
-                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.popoverValueFontSize))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: layout.priceColumnWidth, alignment: .trailing)
-                    .layoutPriority(1)
-                    .padding(.leading, layout.columnSpacing)
-            }
-
-            if let changeText = columns.changeText {
-                Text(changeText)
-                    .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.popoverValueFontSize))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: layout.changeColumnWidth, alignment: .trailing)
-                    .layoutPriority(2)
-                    .padding(.leading, layout.columnSpacing)
-            }
-        }
+        QuoteColumnsRowView(
+            columns: quote.columns(settings: settings),
+            layout: layout,
+            typography: .popover
+        )
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, MenuBarStyle.Metrics.panelRowHorizontalPadding)
         .padding(.vertical, MenuBarStyle.Metrics.panelRowVerticalPadding)
@@ -205,25 +178,6 @@ private struct QuotePopoverRowView: View {
         .onHover { hovering in
             isHovering = hovering
         }
-    }
-
-    private var nameColumnWidth: CGFloat {
-        let occupiedWidth =
-            layout.symbolWidthWithSpacing +
-            layout.priceWidthWithSpacing +
-            layout.changeWidthWithSpacing
-        return max(0, layout.contentWidth - occupiedWidth)
-    }
-
-    @ViewBuilder
-    private func nameColumn(columns: DisplayQuote.MenuListColumns) -> some View {
-        Text(columns.nameText ?? "")
-            .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.popoverPrimaryFontSize))
-            .foregroundStyle(MenuBarStyle.identityTextColor)
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .layoutPriority(3)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

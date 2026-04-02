@@ -2,18 +2,7 @@
 import Foundation
 
 struct DisplayQuote: Equatable {
-    struct MenuBarSegment: Equatable {
-        let text: String
-    }
-
-    struct MenuListColumns: Equatable {
-        let nameText: String?
-        let symbolText: String?
-        let priceText: String?
-        let changeText: String?
-    }
-
-    struct MenuBarColumns: Equatable {
+    struct QuoteColumns: Equatable {
         let nameText: String?
         let symbolText: String?
         let priceText: String?
@@ -27,86 +16,19 @@ struct DisplayQuote: Equatable {
     let changePercentText: String
     let updatedAtText: String
 
-    var menuBarNameText: String {
-        companyName
-    }
-
-    var menuBarPriceText: String {
-        priceText
-    }
-
-    var menuBarSymbolText: String {
-        symbol
-    }
-
-    var menuListTitleText: String {
-        companyName
-    }
-
-    var menuListDetailText: String {
-        priceText
-    }
-
-    var menuListTrailingText: String {
-        changePercentText
-    }
-
-    var menuListSummaryText: String {
-        "\(companyName)  \(priceText)  \(changePercentText)"
-    }
-
-    func menuListColumns(settings: MenuBarDisplaySettings) -> MenuListColumns {
-        return MenuListColumns(
-            nameText: settings.showsCompanyName ? companyName : nil,
-            symbolText: settings.showsSymbol ? symbol : nil,
-            priceText: settings.showsPrice ? priceText : nil,
-            changeText: settings.showsChangePercent ? changePercentText : nil
-        )
-    }
-
-    func menuBarColumns(settings: MenuBarDisplaySettings) -> MenuBarColumns {
+    func columns(settings: MenuBarDisplaySettings) -> QuoteColumns {
         let showsAnyField =
             settings.showsCompanyName ||
             settings.showsSymbol ||
             settings.showsPrice ||
             settings.showsChangePercent
 
-        return MenuBarColumns(
+        return QuoteColumns(
             nameText: showsAnyField ? (settings.showsCompanyName ? companyName : nil) : companyName,
             symbolText: settings.showsSymbol ? symbol : nil,
             priceText: settings.showsPrice ? priceText : nil,
             changeText: settings.showsChangePercent ? changePercentText : nil
         )
-    }
-
-    func menuBarSummaryText(settings: MenuBarDisplaySettings) -> String {
-        let segments = menuBarSegments(settings: settings).map(\.text)
-        if segments.isEmpty {
-            return menuBarNameText
-        }
-        return segments.joined(separator: " ")
-    }
-
-    func menuBarSegments(settings: MenuBarDisplaySettings) -> [MenuBarSegment] {
-        var segments: [MenuBarSegment] = []
-
-        if settings.showsSymbol {
-            segments.append(MenuBarSegment(text: menuBarSymbolText))
-        }
-
-        if settings.showsCompanyName {
-            segments.append(MenuBarSegment(text: menuBarNameText))
-        }
-
-        if settings.showsPrice {
-            segments.append(MenuBarSegment(text: menuBarPriceText))
-        }
-
-        if settings.showsChangePercent {
-            segments.append(MenuBarSegment(text: changePercentText))
-        }
-
-        return segments
     }
 
     var detailChangeText: String {
