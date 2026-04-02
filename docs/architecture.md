@@ -1,7 +1,7 @@
 # Architecture
 
 ## 当前实现概览
-当前工程是一个单 target 的 macOS 原生应用，主体界面内容仍由 SwiftUI 构建；菜单栏入口和设置窗口都由 AppKit 承载。状态栏入口使用 `NSStatusItem`，左键通过无箭头的自定义面板承载股票列表，右键通过 `NSMenu` 承载操作菜单；设置窗口则由独立 `NSWindowController` 管理。
+当前工程是一个单 target 的 macOS 原生应用，主体界面内容仍由 SwiftUI 构建；菜单栏入口和设置弹窗都由 AppKit 承载。状态栏入口使用 `NSStatusItem`，左键通过无箭头的自定义面板承载主面板；主面板分成上半部分的股票列表和下半部分的轻量操作区。SwiftUI scene 仅保留最小生命周期占位，不承接实际设置内容。
 
 应用入口在 `LazyBarApp`，负责创建状态栏控制器、设置窗口控制器，并将依赖注入到对应的 ViewModel。
 
@@ -19,10 +19,10 @@
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
   - `MenuBarSettingsStore`：持久化菜单栏展示设置，供菜单栏和设置页共享。
-  - `StatusBarController`：负责状态栏按钮、左键股票列表面板、右键系统菜单，以及状态栏标题同步。
-  - `SettingsWindowController`：负责设置窗口的创建、展示和关闭。
+  - `StatusBarController`：负责状态栏按钮、左键主面板，以及状态栏标题同步。
+  - `SettingsWindowController`：负责设置弹窗的创建、展示和关闭。
 - `Views`
-  - `SettingsView`：设置窗口中的菜单栏字段配置界面。
+  - `SettingsView`：设置弹窗中的菜单栏字段配置视图。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。
 
 ## 当前数据流
@@ -31,19 +31,19 @@
 3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. `MenuBarViewModel` 首次加载时调用 `QuoteProviding.fetchQuotes()` 获取 `[StockQuote]`，随后按固定间隔重复拉取。
-6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 所需的分栏展示条目与动态列宽；列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享；定时刷新时直接替换最新展示数据。
+6. ViewModel 将 `[StockQuote]` 转成 `[DisplayQuote]`，并按当前菜单栏展示设置生成 ticker 所需的分栏展示条目与动态列宽；列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；定时刷新时直接替换最新展示数据。
 7. `MenuBarSettingsStore` 从 `UserDefaults` 读取菜单栏展示设置，并由 `MenuBarSettingsViewModel` 同时维护已保存设置和设置页草稿。
-8. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据 `MenuBarViewModel` 产出的动态列宽同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用 `DisplayQuote` 提供的分栏展示数据对齐渲染股票简称、股价与涨跌幅；左键点击后展示的股票列表面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，并继续复用相同的分栏展示数据、动态列宽与共享样式 token，因此打开期间也会与 bar 同步更新；右键点击后展示系统菜单。
-9. 右键选择设置后，由 `SettingsWindowController` 打开承载 `SettingsView` 的 AppKit 窗口。
+8. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据 `MenuBarViewModel` 产出的动态列宽同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用 `DisplayQuote` 提供的分栏展示数据对齐渲染股票简称、股价与涨跌幅；左键点击后展示的主面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，上半部分继续复用相同的分栏展示数据、动态列宽与共享样式 token，下半部分只承载设置入口、退出和后续少量操作。
+9. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口。
 
 ## 关键职责边界
 - `QuoteProviding` 是数据接入边界。后续接真实行情时，优先新增 provider 实现，而不是改 View。
 - mock 阶段的“实时感”仍通过 `QuoteProviding` + ViewModel 刷新调度来模拟，不把随机波动或拉取时序写进 View。
 - `DisplayQuote` 是展示格式化边界。菜单栏 ticker 与左键列表所需的名称、价格、涨跌幅、更新时间以及分栏展示内容应尽量集中在这里或 ViewModel。
-- `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置与持久化，`MenuBarSettingsViewModel` 负责设置页草稿与保存/取消动作，避免把设置状态散落在 View 里。
+- `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置与持久化，`MenuBarSettingsViewModel` 负责设置弹窗中的草稿与保存/取消动作，避免把设置状态散落在 View 里。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
 - App 层负责 AppKit 壳层装配，不承接业务逻辑、网络逻辑或行情状态计算。
-- View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；bar 与左键列表的视觉常量应集中管理并优先共享，滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现。
+- View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；bar 与左键主面板的视觉常量应集中管理并优先共享，滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现。
 
 ## 当前已知事实
 - `AppDependencies` 是 mock/real provider 切换的自然入口。

@@ -34,9 +34,8 @@ struct LazyBarApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        Settings {
             EmptyView()
         }
-        .defaultLaunchBehavior(.suppressed)
     }
 }

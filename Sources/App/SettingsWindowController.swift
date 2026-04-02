@@ -39,9 +39,20 @@ final class SettingsWindowController: NSWindowController {
     }
 
     func show() {
-        window?.center()
-        showWindow(nil)
-        window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        guard let window else { return }
+
+        NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
+
+        DispatchQueue.main.async {
+            if window.isMiniaturized {
+                window.deminiaturize(nil)
+            }
+
+            window.center()
+            self.showWindow(nil)
+            window.orderFrontRegardless()
+            window.makeKeyAndOrderFront(nil)
+            window.makeMain()
+        }
     }
 }

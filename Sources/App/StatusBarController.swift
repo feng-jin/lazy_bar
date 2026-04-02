@@ -1,11 +1,10 @@
-/// 管理状态栏按钮、左键股票列表面板与右键系统菜单。
-/// 设置入口保持纯 AppKit `NSMenu`，因此不使用 SwiftUI `SettingsLink`。
+/// 管理状态栏按钮与左键主面板。
 import AppKit
 import Combine
 import SwiftUI
 
 @MainActor
-final class StatusBarController: NSObject, NSMenuDelegate {
+final class StatusBarController: NSObject {
     private let menuBarViewModel: MenuBarViewModel
     private let settingsStore: MenuBarSettingsStore
     private let openSettingsWindowHandler: () -> Void
@@ -36,7 +35,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         guard let button = statusItem.button else { return }
         button.target = self
         button.action = #selector(handleStatusItemClick(_:))
-        button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        button.sendAction(on: [.leftMouseUp])
         button.title = ""
         button.image = nil
 
@@ -87,14 +86,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc
     private func handleStatusItemClick(_ sender: AnyObject?) {
-        guard let event = NSApp.currentEvent else { return }
-
-        switch event.type {
-        case .rightMouseUp:
-            showContextMenu()
-        default:
-            toggleQuotesPanel()
-        }
+        toggleQuotesPanel()
     }
 
     private func toggleQuotesPanel() {
@@ -111,7 +103,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             rootView: AnyView(
                 QuotesPopoverView(
                     viewModel: menuBarViewModel,
-                    settingsStore: settingsStore
+                    settingsStore: settingsStore,
+                    onOpenSettings: { [weak self] in
+                        self?.openSettings()
+                    },
+                    onQuit: { [weak self] in
+                        self?.quitApp()
+                    }
                 )
             )
         )
@@ -191,37 +189,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         return window.convertToScreen(rectInWindow)
     }
 
-    private func showContextMenu() {
-        guard let button = statusItem.button else { return }
-        closeQuotesPanel()
-
-        let menu = NSMenu()
-        menu.delegate = self
-        menu.addItem(
-            withTitle: "设置 Settings",
-            action: #selector(openSettingsWindow),
-            keyEquivalent: ""
-        ).target = self
-        menu.addItem(.separator())
-        menu.addItem(
-            withTitle: "退出 Quit Lazy Bar",
-            action: #selector(quitApp),
-            keyEquivalent: ""
-        ).target = self
-
-        statusItem.menu = menu
-        button.performClick(nil)
-    }
-
-    func menuDidClose(_ menu: NSMenu) {
-        if statusItem.menu === menu {
-            statusItem.menu = nil
-        }
-        statusItem.button?.highlight(false)
-    }
-
     @objc
-    private func openSettingsWindow() {
+    private func openSettings() {
+        closeQuotesPanel()
         openSettingsWindowHandler()
     }
 

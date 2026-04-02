@@ -7,9 +7,15 @@ final class MenuBarViewModel: ObservableObject {
     struct ColumnLayout: Equatable {
         let itemWidth: CGFloat
         let contentWidth: CGFloat
+        let symbolColumnWidth: CGFloat
         let priceColumnWidth: CGFloat
         let changeColumnWidth: CGFloat
         let columnSpacing: CGFloat
+
+        var symbolWidthWithSpacing: CGFloat {
+            guard symbolColumnWidth > 0 else { return 0 }
+            return columnSpacing + symbolColumnWidth
+        }
 
         var priceWidthWithSpacing: CGFloat {
             guard priceColumnWidth > 0 else { return 0 }
@@ -28,7 +34,6 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     private enum LayoutMetrics {
-        static let minimumItemWidth: CGFloat = 170
         static let horizontalInset = MenuBarStyle.Metrics.statusItemHorizontalInset
         static let contentHorizontalInset: CGFloat = horizontalInset * 2
         static let columnSpacing = MenuBarStyle.Metrics.columnSpacing
@@ -94,20 +99,30 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func columnLayout(settings: MenuBarDisplaySettings) -> ColumnLayout {
-        let titleWidth = displayQuotes
+        let nameColumnWidth = displayQuotes
             .map { quote in
                 let listColumns = quote.menuListColumns(settings: settings)
                 let barColumns = quote.menuBarColumns(settings: settings)
 
                 return max(
-                    Self.barTitleWidth(columns: barColumns),
-                    Self.listTitleWidth(
-                        primaryText: listColumns.primaryText,
-                        secondaryText: listColumns.secondaryText
-                    )
+                    Self.optionalTextWidth(barColumns.nameText, font: LayoutMetrics.barTitleFont),
+                    Self.optionalTextWidth(listColumns.nameText, font: LayoutMetrics.listPrimaryFont)
                 )
             }
             .max() ?? 0
+
+        let symbolColumnWidth = settings.showsSymbol
+            ? max(
+                displayQuotes
+                    .compactMap { $0.menuBarColumns(settings: settings).symbolText }
+                    .map { Self.textWidth($0, font: LayoutMetrics.barSecondaryFont) }
+                    .max() ?? 0,
+                displayQuotes
+                    .compactMap { $0.menuListColumns(settings: settings).symbolText }
+                    .map { Self.textWidth($0, font: LayoutMetrics.listSecondaryFont) }
+                    .max() ?? 0
+            )
+            : 0
 
         let priceColumnWidth = settings.showsPrice
             ? max(
@@ -135,7 +150,11 @@ final class MenuBarViewModel: ObservableObject {
             )
             : 0
 
-        var contentWidth = ceil(titleWidth)
+        var contentWidth = ceil(nameColumnWidth)
+
+        if symbolColumnWidth > 0 {
+            contentWidth += LayoutMetrics.columnSpacing + ceil(symbolColumnWidth)
+        }
 
         if priceColumnWidth > 0 {
             contentWidth += LayoutMetrics.columnSpacing + ceil(priceColumnWidth)
@@ -145,14 +164,12 @@ final class MenuBarViewModel: ObservableObject {
             contentWidth += LayoutMetrics.columnSpacing + ceil(changeColumnWidth)
         }
 
-        let itemWidth = max(
-            LayoutMetrics.minimumItemWidth,
-            contentWidth + LayoutMetrics.contentHorizontalInset
-        )
+        let itemWidth = contentWidth + LayoutMetrics.contentHorizontalInset
 
         return ColumnLayout(
             itemWidth: itemWidth,
             contentWidth: itemWidth - LayoutMetrics.contentHorizontalInset,
+            symbolColumnWidth: ceil(symbolColumnWidth),
             priceColumnWidth: ceil(priceColumnWidth),
             changeColumnWidth: ceil(changeColumnWidth),
             columnSpacing: LayoutMetrics.columnSpacing
@@ -181,32 +198,9 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
-    private static func listTitleWidth(primaryText: String?, secondaryText: String?) -> CGFloat {
-        var width: CGFloat = 0
-
-        if let primaryText {
-            width += textWidth(primaryText, font: LayoutMetrics.listPrimaryFont)
-        }
-
-        if let secondaryText {
-            if primaryText != nil {
-                width += LayoutMetrics.columnSpacing
-            }
-            width += textWidth(secondaryText, font: LayoutMetrics.listSecondaryFont)
-        }
-
-        return width
-    }
-
-    private static func barTitleWidth(columns: DisplayQuote.MenuBarColumns) -> CGFloat {
-        var width = textWidth(columns.primaryText, font: LayoutMetrics.barTitleFont)
-
-        if let secondaryText = columns.secondaryText {
-            width += LayoutMetrics.columnSpacing
-            width += textWidth(secondaryText, font: LayoutMetrics.barSecondaryFont)
-        }
-
-        return width
+    private static func optionalTextWidth(_ text: String?, font: NSFont) -> CGFloat {
+        guard let text else { return 0 }
+        return textWidth(text, font: font)
     }
 
     private static func textWidth(_ text: String, font: NSFont) -> CGFloat {

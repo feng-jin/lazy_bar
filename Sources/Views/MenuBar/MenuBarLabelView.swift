@@ -129,8 +129,18 @@ private struct VerticalTickerView: View {
 
     private func tickerRow(_ columns: DisplayQuote.MenuBarColumns) -> some View {
         HStack(spacing: 0) {
-            titleColumn(columns: columns)
-                .frame(width: titleColumnWidth, alignment: .leading)
+            nameColumn(columns: columns)
+                .frame(width: nameColumnWidth, alignment: .leading)
+
+            if let symbolText = columns.symbolText {
+                Text(symbolText)
+                    .font(MenuBarStyle.secondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(width: layout.symbolColumnWidth, alignment: .leading)
+                    .padding(.leading, layout.columnSpacing)
+            }
 
             if let priceText = columns.priceText {
                 Text(priceText)
@@ -160,31 +170,22 @@ private struct VerticalTickerView: View {
         .offset(y: MenuBarStyle.Metrics.verticalTextOffset)
     }
 
-    private var titleColumnWidth: CGFloat {
-        let occupiedWidth = layout.priceWidthWithSpacing + layout.changeWidthWithSpacing
+    private var nameColumnWidth: CGFloat {
+        let occupiedWidth =
+            layout.symbolWidthWithSpacing +
+            layout.priceWidthWithSpacing +
+            layout.changeWidthWithSpacing
         return max(0, layout.contentWidth - occupiedWidth)
     }
 
     @ViewBuilder
-    private func titleColumn(columns: DisplayQuote.MenuBarColumns) -> some View {
-        HStack(spacing: 0) {
-            Text(columns.primaryText)
-                .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.primaryFontSize))
-                .lineLimit(1)
-                .truncationMode(.tail)
-
-            if let secondaryText = columns.secondaryText {
-                Text(secondaryText)
-                    .font(MenuBarStyle.secondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .padding(.leading, layout.columnSpacing)
-            }
-        }
-        .fixedSize(horizontal: true, vertical: false)
-        .layoutPriority(3)
-        .frame(maxWidth: .infinity, alignment: .leading)
+    private func nameColumn(columns: DisplayQuote.MenuBarColumns) -> some View {
+        Text(columns.nameText ?? "")
+            .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.primaryFontSize))
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .layoutPriority(3)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func restartAnimation() {
