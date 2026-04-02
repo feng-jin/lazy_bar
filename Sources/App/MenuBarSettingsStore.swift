@@ -6,17 +6,11 @@ import Foundation
 final class MenuBarSettingsStore: ObservableObject {
     @Published private(set) var settings: MenuBarDisplaySettings
 
-    let baseWatchlist: [WatchlistEntry]
-
     private let userDefaults: UserDefaults
     private let storageKey = "menuBarDisplaySettings"
 
-    init(
-        userDefaults: UserDefaults = .standard,
-        baseWatchlist: [WatchlistEntry] = MenuBarDisplaySettings.fallbackWatchlist
-    ) {
+    init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
-        self.baseWatchlist = baseWatchlist.isEmpty ? MenuBarDisplaySettings.fallbackWatchlist : baseWatchlist
 
         if
             let data = userDefaults.data(forKey: storageKey),
@@ -24,7 +18,7 @@ final class MenuBarSettingsStore: ObservableObject {
         {
             self.settings = settings
         } else {
-            self.settings = MenuBarDisplaySettings(watchlist: self.baseWatchlist)
+            self.settings = .default
         }
     }
 
@@ -33,17 +27,5 @@ final class MenuBarSettingsStore: ObservableObject {
 
         guard let data = try? JSONEncoder().encode(settings) else { return }
         userDefaults.set(data, forKey: storageKey)
-    }
-
-    func resetToBaseWatchlist() {
-        update(
-            MenuBarDisplaySettings(
-                watchlist: baseWatchlist,
-                showsSymbol: settings.showsSymbol,
-                showsCompanyName: settings.showsCompanyName,
-                showsPrice: settings.showsPrice,
-                showsChangePercent: settings.showsChangePercent
-            )
-        )
     }
 }

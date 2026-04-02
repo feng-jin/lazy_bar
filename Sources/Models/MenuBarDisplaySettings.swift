@@ -13,12 +13,5 @@ struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
     var showsPrice = true
     var showsChangePercent = true
 
-    static let fallbackWatchlist = [
-        WatchlistEntry(symbol: "600519", companyName: "贵州茅台"),
-        WatchlistEntry(symbol: "000858", companyName: "五粮液"),
-        WatchlistEntry(symbol: "300750", companyName: "宁德时代"),
-        WatchlistEntry(symbol: "601318", companyName: "中国平安")
-    ]
-
-    static let `default` = MenuBarDisplaySettings(watchlist: fallbackWatchlist)
+    static let `default` = MenuBarDisplaySettings(watchlist: [])
 }

@@ -105,10 +105,6 @@ final class MenuBarSettingsViewModel: ObservableObject {
         draftWatchlist[index].companyName = input
     }
 
-    func resetWatchlistToBase() {
-        draftWatchlist = Self.editableWatchlist(from: store.baseWatchlist)
-    }
-
     var hasUnsavedChanges: Bool {
         currentDraftSettings() != settings
     }
@@ -161,10 +157,6 @@ final class MenuBarSettingsViewModel: ObservableObject {
         }
 
         return nil
-    }
-
-    var canResetWatchlistToBase: Bool {
-        draftWatchlist.map(Self.watchlistEntry(from:)) != store.baseWatchlist
     }
 
     private func currentDraftSettings() -> MenuBarDisplaySettings {

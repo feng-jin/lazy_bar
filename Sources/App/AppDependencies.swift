@@ -7,8 +7,7 @@ struct AppDependencies {
 
     @MainActor
     static var live: AppDependencies {
-        let baseWatchlist = WatchlistBaseLoader().load()
-        let menuBarSettingsStore = MenuBarSettingsStore(baseWatchlist: baseWatchlist)
+        let menuBarSettingsStore = MenuBarSettingsStore()
 
         return AppDependencies(
             quoteProvider: SinaQuoteProvider(),
