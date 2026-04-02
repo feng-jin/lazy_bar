@@ -26,7 +26,7 @@ final class StatusBarController: NSObject {
         let initialWidth = QuoteColumnLayoutCalculator.layout(
             displayQuotes: menuBarViewModel.displayQuotes,
             settings: settingsStore.settings,
-            statusText: menuBarViewModel.statusMessage(settings: settingsStore.settings)
+            statusText: menuBarViewModel.statusText
         ).itemWidth
         statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
         super.init()
@@ -70,7 +70,7 @@ final class StatusBarController: NSObject {
     }
 
     private func observeWidthChanges() {
-        menuBarViewModel.$displayQuotes
+        menuBarViewModel.$viewState
             .sink { [weak self] _ in
                 self?.updateStatusItemWidth()
             }
@@ -131,7 +131,7 @@ final class StatusBarController: NSObject {
         QuoteColumnLayoutCalculator.layout(
             displayQuotes: menuBarViewModel.displayQuotes,
             settings: settingsStore.settings,
-            statusText: menuBarViewModel.statusMessage(settings: settingsStore.settings)
+            statusText: menuBarViewModel.statusText
         )
     }
 

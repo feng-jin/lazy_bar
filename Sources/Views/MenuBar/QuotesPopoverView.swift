@@ -18,16 +18,13 @@ struct QuotesPopoverView: View {
         let layout = QuoteColumnLayoutCalculator.layout(
             displayQuotes: displayQuotes,
             settings: settings,
-            statusText: viewModel.statusMessage(settings: settings)
+            statusText: viewModel.statusText
         )
 
         VStack(spacing: 0) {
             Group {
-                if viewModel.isLoading {
-                    stateView(text: "加载中...")
-                } else if displayQuotes.isEmpty {
-                    stateView(text: "暂无股票")
-                } else {
+                switch viewModel.viewState {
+                case .loaded:
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(Array(displayQuotes.enumerated()), id: \.element.symbol) { index, quote in
@@ -47,6 +44,8 @@ struct QuotesPopoverView: View {
                     }
                     .scrollIndicators(.hidden)
                     .frame(maxHeight: LayoutMetrics.maxQuotesListHeight)
+                case .loading, .emptyWatchlist, .failed:
+                    stateView(text: viewModel.statusText)
                 }
             }
             .frame(maxWidth: .infinity)

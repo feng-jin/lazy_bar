@@ -31,10 +31,6 @@ struct DisplayQuote: Equatable {
         )
     }
 
-    var detailChangeText: String {
-        "\(changeAmountText) (\(changePercentText))"
-    }
-
     init(quote: StockQuote, preferredCompanyName: String? = nil) {
         symbol = quote.symbol
         companyName = preferredCompanyName ?? quote.companyName

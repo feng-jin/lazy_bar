@@ -34,7 +34,7 @@ struct SectionCardView<Content: View>: View {
 
 #Preview {
     SectionCardView(title: "概览") {
-        QuoteRowView(title: "代码", value: "AAPL")
+        Text("示例内容")
     }
     .padding()
 }

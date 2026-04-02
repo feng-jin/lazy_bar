@@ -50,7 +50,7 @@ struct MenuBarLabelView: View {
         let layout = QuoteColumnLayoutCalculator.layout(
             displayQuotes: viewModel.displayQuotes,
             settings: settings,
-            statusText: viewModel.statusMessage(settings: settings)
+            statusText: viewModel.statusText
         )
 
         Group {
@@ -62,7 +62,7 @@ struct MenuBarLabelView: View {
                 VerticalTickerView(items: tickerItems, layout: layout)
             } else {
                 statusText(
-                    viewModel.statusMessage(settings: settings),
+                    viewModel.statusText,
                     layout: layout
                 )
             }

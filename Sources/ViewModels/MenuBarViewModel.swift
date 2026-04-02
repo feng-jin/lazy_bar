@@ -4,12 +4,19 @@ import Foundation
 
 @MainActor
 final class MenuBarViewModel: ObservableObject {
-    @Published private(set) var displayQuotes: [DisplayQuote] = []
-    @Published private(set) var isLoading = false
+    enum ViewState: Equatable {
+        case loading
+        case emptyWatchlist
+        case failed
+        case loaded([DisplayQuote])
+    }
+
+    @Published private(set) var viewState: ViewState
 
     private let provider: any QuoteProviding
     private let settingsStore: MenuBarSettingsStore
     private var hasLoaded = false
+    private var isLoading = false
     private var refreshTask: Task<Void, Never>?
     private let refreshIntervalNanoseconds: UInt64 = 3_000_000_000
     private var cancellables = Set<AnyCancellable>()
@@ -17,6 +24,7 @@ final class MenuBarViewModel: ObservableObject {
     init(provider: any QuoteProviding, settingsStore: MenuBarSettingsStore) {
         self.provider = provider
         self.settingsStore = settingsStore
+        viewState = settingsStore.settings.watchlist.isEmpty ? .emptyWatchlist : .loading
 
         settingsStore.$settings
             .map(\.watchlist)
@@ -24,7 +32,7 @@ final class MenuBarViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] _ in
                 guard let self else { return }
-                Task { await self.load() }
+                Task { await self.handleWatchlistChange() }
             }
             .store(in: &cancellables)
     }
@@ -40,34 +48,51 @@ final class MenuBarViewModel: ObservableObject {
 
     func load() async {
         guard !isLoading else { return }
+        let symbols = currentSymbols
+
+        guard !symbols.isEmpty else {
+            stopRefresh()
+            hasLoaded = true
+            viewState = .emptyWatchlist
+            return
+        }
+
         isLoading = true
         defer { isLoading = false }
+        viewState = .loading
 
         do {
-            let quotes = try await provider.fetchQuotes(symbols: settingsStore.settings.watchlist.map(\.symbol))
-            displayQuotes = displayQuotes(from: quotes)
+            let quotes = try await provider.fetchQuotes(symbols: symbols)
+            let displayQuotes = displayQuotes(from: quotes)
+            viewState = displayQuotes.isEmpty ? .failed : .loaded(displayQuotes)
             startRefreshIfNeeded()
             hasLoaded = true
         } catch {
-            displayQuotes = []
+            viewState = .failed
         }
     }
 
     func displayQuotesForPreview(_ quotes: [DisplayQuote]) {
-        displayQuotes = quotes
+        viewState = .loaded(quotes)
         hasLoaded = true
     }
 
-    func statusMessage(settings: MenuBarDisplaySettings) -> String {
-        if isLoading {
+    var displayQuotes: [DisplayQuote] {
+        guard case let .loaded(quotes) = viewState else { return [] }
+        return quotes
+    }
+
+    var statusText: String {
+        switch viewState {
+        case .loading:
             return "加载中..."
-        }
-
-        if settings.watchlist.isEmpty {
+        case .emptyWatchlist:
             return "请先添加股票"
+        case .failed:
+            return "行情不可用"
+        case .loaded:
+            return ""
         }
-
-        return "行情不可用"
     }
 
     private func startRefreshIfNeeded() {
@@ -83,12 +108,45 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
+    private func stopRefresh() {
+        refreshTask?.cancel()
+        refreshTask = nil
+    }
+
+    private func handleWatchlistChange() async {
+        guard !currentSymbols.isEmpty else {
+            stopRefresh()
+            hasLoaded = true
+            viewState = .emptyWatchlist
+            return
+        }
+
+        await load()
+    }
+
     private func refreshQuotes() async {
+        let symbols = currentSymbols
+        guard !symbols.isEmpty else {
+            stopRefresh()
+            hasLoaded = true
+            viewState = .emptyWatchlist
+            return
+        }
+
         do {
-            let quotes = try await provider.fetchQuotes(symbols: settingsStore.settings.watchlist.map(\.symbol))
-            displayQuotes = displayQuotes(from: quotes)
+            let quotes = try await provider.fetchQuotes(symbols: symbols)
+            let displayQuotes = displayQuotes(from: quotes)
+
+            if !displayQuotes.isEmpty {
+                viewState = .loaded(displayQuotes)
+            } else if self.displayQuotes.isEmpty {
+                viewState = .failed
+            }
         } catch {
             // Keep the last successful snapshot when periodic refresh fails.
+            if displayQuotes.isEmpty {
+                viewState = .failed
+            }
         }
     }
 
@@ -101,5 +159,9 @@ final class MenuBarViewModel: ObservableObject {
             let displayName = watchlistNamesBySymbol[quote.symbol] ?? quote.companyName
             return DisplayQuote(quote: quote, preferredCompanyName: displayName)
         }
+    }
+
+    private var currentSymbols: [String] {
+        settingsStore.settings.watchlist.map(\.symbol)
     }
 }
