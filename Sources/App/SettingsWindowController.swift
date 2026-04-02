@@ -5,8 +5,8 @@ import SwiftUI
 @MainActor
 final class SettingsWindowController: NSWindowController {
     private enum Metrics {
-        static let contentWidth: CGFloat = 360
-        static let minimumContentHeight: CGFloat = 240
+        static let contentWidth: CGFloat = 500
+        static let minimumContentHeight: CGFloat = 320
     }
 
     private let hostingView: NSHostingView<SettingsView>

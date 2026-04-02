@@ -12,6 +12,15 @@ struct SettingsView: View {
         static let watchlistListVerticalPadding: CGFloat = 8
         static let symbolColumnWidth: CGFloat = 96
         static let actionColumnWidth: CGFloat = 28
+        static let fieldCardCornerRadius: CGFloat = 12
+    }
+
+    private struct DisplayFieldOption: Identifiable {
+        let id: String
+        let title: String
+        let description: String
+        let isOn: () -> Bool
+        let setIsOn: (Bool) -> Void
     }
 
     var body: some View {
@@ -106,34 +115,47 @@ struct SettingsView: View {
             }
 
             Section("展示字段") {
-                Toggle(
-                    "股票简称",
-                    isOn: binding(
-                        get: { viewModel.draftShowsCompanyName },
-                        set: viewModel.setShowsCompanyName
-                    )
-                )
-                Toggle(
-                    "股票代码",
-                    isOn: binding(
-                        get: { viewModel.draftShowsSymbol },
-                        set: viewModel.setShowsSymbol
-                    )
-                )
-                Toggle(
-                    "当前股价",
-                    isOn: binding(
-                        get: { viewModel.draftShowsPrice },
-                        set: viewModel.setShowsPrice
-                    )
-                )
-                Toggle(
-                    "涨跌幅",
-                    isOn: binding(
-                        get: { viewModel.draftShowsChangePercent },
-                        set: viewModel.setShowsChangePercent
-                    )
-                )
+                Text("控制 bar 和主面板股票列表里要显示的字段组合。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 12, alignment: .top),
+                        GridItem(.flexible(), spacing: 12, alignment: .top)
+                    ],
+                    alignment: .leading,
+                    spacing: 12
+                ) {
+                    ForEach(displayFieldOptions) { option in
+                        Toggle(
+                            isOn: binding(
+                                get: option.isOn,
+                                set: option.setIsOn
+                            )
+                        ) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(option.title)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+
+                                Text(option.description)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .background(cardBackground(for: option.isOn()))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
+                                    .strokeBorder(cardBorderColor(for: option.isOn()), lineWidth: 1)
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius))
+                        }
+                        .toggleStyle(.checkbox)
+                    }
+                }
             }
 
             Section {
@@ -165,7 +187,7 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .padding(20)
-        .frame(width: 420)
+        .frame(width: 500)
         .onAppear {
             viewModel.beginEditing()
         }
@@ -203,5 +225,48 @@ struct SettingsView: View {
             LayoutMetrics.watchlistMaxVisibleRows
         )
         return CGFloat(visibleRowCount) * LayoutMetrics.watchlistRowHeight + LayoutMetrics.watchlistListVerticalPadding
+    }
+
+    private var displayFieldOptions: [DisplayFieldOption] {
+        [
+            DisplayFieldOption(
+                id: "companyName",
+                title: "股票简称",
+                description: "优先显示你自定义维护的股票名称，适合快速扫一眼识别标的。",
+                isOn: { viewModel.draftShowsCompanyName },
+                setIsOn: viewModel.setShowsCompanyName
+            ),
+            DisplayFieldOption(
+                id: "symbol",
+                title: "股票代码",
+                description: "展示 6 位代码，适合区分同名或相近简称的股票。",
+                isOn: { viewModel.draftShowsSymbol },
+                setIsOn: viewModel.setShowsSymbol
+            ),
+            DisplayFieldOption(
+                id: "price",
+                title: "当前股价",
+                description: "显示最新价格，是菜单栏和主面板里的核心数值字段。",
+                isOn: { viewModel.draftShowsPrice },
+                setIsOn: viewModel.setShowsPrice
+            ),
+            DisplayFieldOption(
+                id: "changePercent",
+                title: "涨跌幅",
+                description: "显示相对昨收的百分比变化，便于快速判断强弱。",
+                isOn: { viewModel.draftShowsChangePercent },
+                setIsOn: viewModel.setShowsChangePercent
+            )
+        ]
+    }
+
+    private func cardBackground(for isSelected: Bool) -> some ShapeStyle {
+        isSelected
+            ? AnyShapeStyle(.tint.opacity(0.12))
+            : AnyShapeStyle(.quaternary.opacity(0.18))
+    }
+
+    private func cardBorderColor(for isSelected: Bool) -> Color {
+        isSelected ? .accentColor.opacity(0.45) : .secondary.opacity(0.14)
     }
 }

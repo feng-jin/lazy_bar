@@ -25,7 +25,7 @@
   - `StatusBarController`：负责状态栏按钮、左键主面板，以及状态栏标题同步。
   - `SettingsWindowController`：负责设置弹窗的创建、展示和关闭。
 - `Views`
-  - `SettingsView`：设置弹窗中的菜单栏字段配置视图。
+  - `SettingsView`：设置弹窗中的菜单栏字段配置视图；当前用带说明的两列卡片式字段选择区承载展示字段勾选。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。
 
 ## 当前数据流
@@ -46,7 +46,7 @@
 - `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置、watchlist 配置与持久化；base watchlist 的来源集中在 `WatchlistBaseLoader`，不要把项目内 JSON 读取散落到 View 或其他层。`MenuBarSettingsViewModel` 负责设置弹窗中的草稿、股票代码编辑、base 列表恢复、校验，以及保存/取消动作，避免把设置状态散落在 View 里。
 - ViewModel 负责加载状态、错误降级和 UI 所需状态协调。
 - App 层负责 AppKit 壳层装配，不承接业务逻辑、网络逻辑或行情状态计算。
-- View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；bar 与左键主面板的视觉常量应集中管理并优先共享，滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现。
+- View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；bar 与左键主面板的视觉常量应集中管理并优先共享，设置页中的字段说明、卡片态样式和布局编排也应尽量集中在 View 层，不把展示结构判断下沉到业务层；滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现。
 
 ## 当前已知事实
 - `AppDependencies` 是真实 provider、mock provider 与后续 fallback 切换的自然入口。
