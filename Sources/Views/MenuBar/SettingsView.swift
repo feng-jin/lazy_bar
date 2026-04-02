@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: MenuBarSettingsViewModel
     let onClose: (() -> Void)?
+    @State private var selectedTab: SettingsTab = .watchlist
 
     private enum LayoutMetrics {
         static let watchlistMaxVisibleRows = 7
@@ -16,6 +17,22 @@ struct SettingsView: View {
         static let fieldCardCornerRadius: CGFloat = 12
     }
 
+    private enum SettingsTab: String, CaseIterable, Identifiable {
+        case watchlist
+        case displayFields
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .watchlist:
+                return "监控股票"
+            case .displayFields:
+                return "展示字段"
+            }
+        }
+    }
+
     private struct DisplayFieldOption: Identifiable {
         let id: String
         let title: String
@@ -25,71 +42,41 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        Form {
-            Section("监控股票") {
-                Text("手动维护菜单栏要监控的股票列表。简称用于展示，代码只保留 6 位数字。")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-
-                watchlistComposerCard
-                watchlistListCard
-            }
-
-            Section("展示字段") {
-                Text("控制 bar 和主面板股票列表里要显示的字段组合。")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: 12, alignment: .top),
-                        GridItem(.flexible(), spacing: 12, alignment: .top)
-                    ],
-                    alignment: .leading,
-                    spacing: 12
-                ) {
-                    ForEach(displayFieldOptions) { option in
-                        Toggle(
-                            isOn: binding(
-                                get: option.isOn,
-                                set: option.setIsOn
-                            )
-                        ) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(option.title)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-
-                                Text(option.description)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
-                            .background(cardBackground(for: option.isOn()))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
-                                    .strokeBorder(cardBorderColor(for: option.isOn()), lineWidth: 1)
-                            }
-                            .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius))
-                        }
-                        .toggleStyle(.checkbox)
-                    }
+        VStack(spacing: 0) {
+            Picker("", selection: $selectedTab) {
+                ForEach(SettingsTab.allCases) { tab in
+                    Text(tab.title).tag(tab)
                 }
             }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 16)
 
-            Section {
-                VStack(alignment: .leading, spacing: 6) {
-                    if let validationMessage = viewModel.validationMessage {
-                        Text(validationMessage)
-                            .font(.caption)
-                            .foregroundStyle(.red)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    switch selectedTab {
+                    case .watchlist:
+                        watchlistTabContent
+                    case .displayFields:
+                        displayFieldsTabContent
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
 
-            Section {
+            Divider()
+                .padding(.top, 12)
+
+            VStack(alignment: .leading, spacing: 10) {
+                if let validationMessage = viewModel.validationMessage {
+                    Text(validationMessage)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+
                 HStack {
                     Spacer()
 
@@ -105,12 +92,70 @@ struct SettingsView: View {
                     }
                 }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 20)
         }
-        .formStyle(.grouped)
-        .padding(20)
         .frame(width: 500)
         .onAppear {
             viewModel.beginEditing()
+        }
+    }
+
+    private var watchlistTabContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("手动维护菜单栏要监控的股票列表。简称用于展示，代码只保留 6 位数字。")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+
+            watchlistComposerCard
+            watchlistListCard
+        }
+    }
+
+    private var displayFieldsTabContent: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("控制 bar 和主面板股票列表里要显示的字段组合。")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 12, alignment: .top),
+                    GridItem(.flexible(), spacing: 12, alignment: .top)
+                ],
+                alignment: .leading,
+                spacing: 12
+            ) {
+                ForEach(displayFieldOptions) { option in
+                    Toggle(
+                        isOn: binding(
+                            get: option.isOn,
+                            set: option.setIsOn
+                        )
+                    ) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(option.title)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+
+                            Text(option.description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(cardBackground(for: option.isOn()))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
+                                .strokeBorder(cardBorderColor(for: option.isOn()), lineWidth: 1)
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius))
+                    }
+                    .toggleStyle(.checkbox)
+                }
+            }
         }
     }
 
@@ -205,6 +250,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: watchlistListHeight, alignment: .topLeading)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 18)
             } else {
@@ -328,11 +374,7 @@ struct SettingsView: View {
     }
 
     private var watchlistListHeight: CGFloat {
-        let visibleRowCount = min(
-            viewModel.draftWatchlist.count,
-            LayoutMetrics.watchlistMaxVisibleRows
-        )
-        return CGFloat(visibleRowCount) * LayoutMetrics.watchlistRowHeight + LayoutMetrics.watchlistListVerticalPadding
+        CGFloat(LayoutMetrics.watchlistMaxVisibleRows) * LayoutMetrics.watchlistRowHeight + LayoutMetrics.watchlistListVerticalPadding
     }
 
     private var watchlistSectionBackground: some ShapeStyle {
