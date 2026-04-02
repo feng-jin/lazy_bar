@@ -24,8 +24,8 @@ final class StockDetailViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let quote = try await provider.fetchQuotes().first
-            displayQuote = quote.map(DisplayQuote.init)
+            let quote = try await provider.fetchQuotes(symbols: []).first
+            displayQuote = quote.map { DisplayQuote(quote: $0) }
             hasLoaded = true
         } catch {
             displayQuote = nil

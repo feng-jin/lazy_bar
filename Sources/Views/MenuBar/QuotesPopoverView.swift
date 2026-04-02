@@ -3,6 +3,10 @@ import AppKit
 import SwiftUI
 
 struct QuotesPopoverView: View {
+    private enum LayoutMetrics {
+        static let maxQuotesListHeight: CGFloat = 220
+    }
+
     @ObservedObject var viewModel: MenuBarViewModel
     @ObservedObject var settingsStore: MenuBarSettingsStore
     let onOpenSettings: () -> Void
@@ -35,17 +39,18 @@ struct QuotesPopoverView: View {
                                 }
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 2)
                     }
                     .scrollIndicators(.hidden)
+                    .frame(maxHeight: LayoutMetrics.maxQuotesListHeight)
                 }
             }
             .frame(maxWidth: .infinity)
 
             Divider()
+                .padding(.leading, MenuBarStyle.Metrics.panelDividerLeadingInset)
 
             ActionsSection(onOpenSettings: onOpenSettings, onQuit: onQuit)
-                .padding(.vertical, 4)
         }
         .padding(.vertical, MenuBarStyle.Metrics.panelOuterVerticalPadding)
         .frame(width: layout.itemWidth)
@@ -157,10 +162,10 @@ private struct QuotePopoverRowView: View {
 
             if let symbolText = columns.symbolText {
                 Text(symbolText)
-                    .font(MenuBarStyle.secondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
-                    .foregroundStyle(.secondary)
+                    .font(MenuBarStyle.identitySecondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
+                    .foregroundStyle(MenuBarStyle.identityTextColor)
                     .lineLimit(1)
-                    .truncationMode(.middle)
+                    .fixedSize(horizontal: true, vertical: false)
                     .frame(width: layout.symbolColumnWidth, alignment: .leading)
                     .padding(.leading, layout.columnSpacing)
             }
@@ -169,8 +174,8 @@ private struct QuotePopoverRowView: View {
                 Text(priceText)
                     .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.popoverValueFontSize))
                     .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: layout.priceColumnWidth, alignment: .trailing)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(width: layout.priceColumnWidth, alignment: .trailing)
                     .layoutPriority(1)
                     .padding(.leading, layout.columnSpacing)
             }
@@ -180,7 +185,7 @@ private struct QuotePopoverRowView: View {
                     .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.popoverValueFontSize))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
-                    .frame(maxWidth: layout.changeColumnWidth, alignment: .trailing)
+                    .frame(width: layout.changeColumnWidth, alignment: .trailing)
                     .layoutPriority(2)
                     .padding(.leading, layout.columnSpacing)
             }
@@ -214,8 +219,9 @@ private struct QuotePopoverRowView: View {
     private func nameColumn(columns: DisplayQuote.MenuListColumns) -> some View {
         Text(columns.nameText ?? "")
             .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.popoverPrimaryFontSize))
+            .foregroundStyle(MenuBarStyle.identityTextColor)
             .lineLimit(1)
-            .truncationMode(.tail)
+            .fixedSize(horizontal: true, vertical: false)
             .layoutPriority(3)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -232,7 +238,10 @@ private struct QuotePopoverRowView: View {
 
 #Preview("Loading") {
     QuotesPopoverView(
-        viewModel: MenuBarViewModel(provider: MockQuoteProvider()),
+        viewModel: MenuBarViewModel(
+            provider: MockQuoteProvider(),
+            settingsStore: MenuBarSettingsStore()
+        ),
         settingsStore: MenuBarSettingsStore(),
         onOpenSettings: {},
         onQuit: {}

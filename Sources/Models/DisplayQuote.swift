@@ -113,9 +113,9 @@ struct DisplayQuote: Equatable {
         "\(changeAmountText) (\(changePercentText))"
     }
 
-    init(quote: StockQuote) {
+    init(quote: StockQuote, preferredCompanyName: String? = nil) {
         symbol = quote.symbol
-        companyName = quote.companyName
+        companyName = preferredCompanyName ?? quote.companyName
         priceText = Self.priceFormatter(quote.lastPrice)
         changeAmountText = Self.signedNumberFormatter(quote.changeAmount)
         changePercentText = Self.signedPercentFormatter(quote.changePercent)

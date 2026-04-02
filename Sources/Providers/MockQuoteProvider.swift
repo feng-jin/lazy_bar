@@ -41,6 +41,10 @@ struct MockQuoteProvider: QuoteProviding {
         )
     ]
 
+    private static let seedQuotesBySymbol = Dictionary(
+        uniqueKeysWithValues: seedQuotes.map { ($0.symbol, $0) }
+    )
+
     static var sampleQuotes: [StockQuote] {
         let timestamp = Date()
 
@@ -59,10 +63,12 @@ struct MockQuoteProvider: QuoteProviding {
         }
     }
 
-    func fetchQuotes() async throws -> [StockQuote] {
+    func fetchQuotes(symbols: [String]) async throws -> [StockQuote] {
         let timestamp = Date()
+        let normalizedSymbols = symbols.isEmpty ? Self.seedQuotes.map(\.symbol) : symbols
 
-        return Self.seedQuotes.map { quote in
+        return normalizedSymbols.map { symbol in
+            let quote = Self.seedQuote(for: symbol)
             let swingRatio = Double.random(in: -quote.maxSwingRatio...quote.maxSwingRatio)
             let price = (quote.basePrice * (1 + swingRatio)).roundedToScale(2)
             let changeAmount = (price - quote.previousClose).roundedToScale(2)
@@ -77,6 +83,25 @@ struct MockQuoteProvider: QuoteProviding {
                 updatedAt: timestamp
             )
         }
+    }
+
+    private static func seedQuote(for symbol: String) -> SeedQuote {
+        if let quote = seedQuotesBySymbol[symbol] {
+            return quote
+        }
+
+        let suffix = String(symbol.suffix(2))
+        let priceSeed = Double(Int(symbol.suffix(3)) ?? 100)
+        let previousClose = max(8, (priceSeed / 3.7).roundedToScale(2))
+        let basePrice = (previousClose * (1 + Double(Int(suffix) ?? 0) / 10_000)).roundedToScale(2)
+
+        return SeedQuote(
+            symbol: symbol,
+            companyName: "股票\(symbol)",
+            previousClose: previousClose,
+            basePrice: basePrice,
+            maxSwingRatio: 0.008
+        )
     }
 }
 

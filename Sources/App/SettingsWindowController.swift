@@ -4,28 +4,49 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
+    private enum Metrics {
+        static let contentWidth: CGFloat = 360
+        static let minimumContentHeight: CGFloat = 240
+    }
+
+    private let hostingView: NSHostingView<SettingsView>
+
     init(viewModel: MenuBarSettingsViewModel) {
-        let hostingController = NSHostingController(
+        hostingView = NSHostingView(
             rootView: SettingsView(
                 viewModel: viewModel,
                 onClose: nil
             )
         )
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 360, height: 320),
+            contentRect: NSRect(x: 0, y: 0, width: Metrics.contentWidth, height: 320),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
-        window.contentViewController = hostingController
+
+        let contentView = NSView(
+            frame: NSRect(x: 0, y: 0, width: Metrics.contentWidth, height: 320)
+        )
+        contentView.addSubview(hostingView)
+        NSLayoutConstraint.activate([
+            hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
+
+        window.contentView = contentView
         window.title = "设置"
         window.isReleasedWhenClosed = false
+        window.contentMinSize = NSSize(width: Metrics.contentWidth, height: Metrics.minimumContentHeight)
         window.center()
 
         super.init(window: window)
 
-        hostingController.rootView = SettingsView(
+        hostingView.rootView = SettingsView(
             viewModel: viewModel,
             onClose: { [weak self] in
                 self?.close()
@@ -44,6 +65,10 @@ final class SettingsWindowController: NSWindowController {
         NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
 
         DispatchQueue.main.async {
+            let fittedSize = self.hostingView.fittingSize
+            let contentHeight = max(Metrics.minimumContentHeight, ceil(fittedSize.height))
+            window.setContentSize(NSSize(width: Metrics.contentWidth, height: contentHeight))
+
             if window.isMiniaturized {
                 window.deminiaturize(nil)
             }

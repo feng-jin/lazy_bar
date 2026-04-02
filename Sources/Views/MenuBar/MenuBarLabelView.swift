@@ -22,12 +22,14 @@ enum MenuBarStyle {
         static let panelDividerLeadingInset: CGFloat = 10
     }
 
+    static let identityTextColor = Color.primary
+
     static func primaryTextFont(size: CGFloat) -> Font {
         .system(size: size, weight: .semibold, design: .rounded)
     }
 
-    static func secondaryTextFont(size: CGFloat) -> Font {
-        .system(size: size, weight: .regular, design: .monospaced)
+    static func identitySecondaryTextFont(size: CGFloat) -> Font {
+        .system(size: size, weight: .semibold, design: .rounded)
     }
 
     static func valueTextFont(size: CGFloat) -> Font {
@@ -134,10 +136,10 @@ private struct VerticalTickerView: View {
 
             if let symbolText = columns.symbolText {
                 Text(symbolText)
-                    .font(MenuBarStyle.secondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
-                    .foregroundStyle(.secondary)
+                    .font(MenuBarStyle.identitySecondaryTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
+                    .foregroundStyle(MenuBarStyle.identityTextColor)
                     .lineLimit(1)
-                    .truncationMode(.middle)
+                    .fixedSize(horizontal: true, vertical: false)
                     .frame(width: layout.symbolColumnWidth, alignment: .leading)
                     .padding(.leading, layout.columnSpacing)
             }
@@ -146,8 +148,8 @@ private struct VerticalTickerView: View {
                 Text(priceText)
                     .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
                     .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: layout.priceColumnWidth, alignment: .trailing)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .frame(width: layout.priceColumnWidth, alignment: .trailing)
                     .layoutPriority(1)
                     .padding(.leading, layout.columnSpacing)
             }
@@ -157,7 +159,7 @@ private struct VerticalTickerView: View {
                     .font(MenuBarStyle.valueTextFont(size: MenuBarStyle.Metrics.secondaryFontSize))
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
-                    .frame(maxWidth: layout.changeColumnWidth, alignment: .trailing)
+                    .frame(width: layout.changeColumnWidth, alignment: .trailing)
                     .layoutPriority(2)
                     .padding(.leading, layout.columnSpacing)
             }
@@ -182,8 +184,9 @@ private struct VerticalTickerView: View {
     private func nameColumn(columns: DisplayQuote.MenuBarColumns) -> some View {
         Text(columns.nameText ?? "")
             .font(MenuBarStyle.primaryTextFont(size: MenuBarStyle.Metrics.primaryFontSize))
+            .foregroundStyle(MenuBarStyle.identityTextColor)
             .lineLimit(1)
-            .truncationMode(.tail)
+            .fixedSize(horizontal: true, vertical: false)
             .layoutPriority(3)
             .frame(maxWidth: .infinity, alignment: .leading)
     }

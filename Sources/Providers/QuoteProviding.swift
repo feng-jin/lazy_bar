@@ -2,5 +2,5 @@
 import Foundation
 
 protocol QuoteProviding: Sendable {
-    func fetchQuotes() async throws -> [StockQuote]
+    func fetchQuotes(symbols: [String]) async throws -> [StockQuote]
 }
