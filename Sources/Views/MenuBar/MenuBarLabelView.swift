@@ -53,10 +53,11 @@ struct MenuBarLabelView: View {
 
             if !tickerItems.isEmpty {
                 VerticalTickerView(items: tickerItems, layout: layout)
-            } else if viewModel.isLoading {
-                statusText("加载中...", layout: layout)
             } else {
-                statusText("行情不可用", layout: layout)
+                statusText(
+                    viewModel.statusMessage(settings: settingsStore.settings),
+                    layout: layout
+                )
             }
         }
         .frame(

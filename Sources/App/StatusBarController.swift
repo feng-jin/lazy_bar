@@ -276,8 +276,6 @@ private final class QuotesPanelController: NSWindowController {
             width: width,
             height: maximumContentHeight
         )
-        hostingView.layoutSubtreeIfNeeded()
-
         let fittedHeight = hostingView.fittingSize.height
         let clampedHeight = min(
             maximumContentHeight,

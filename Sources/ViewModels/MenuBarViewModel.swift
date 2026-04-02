@@ -38,6 +38,7 @@ final class MenuBarViewModel: ObservableObject {
         static let horizontalInset = MenuBarStyle.Metrics.statusItemHorizontalInset
         static let contentHorizontalInset: CGFloat = horizontalInset * 2
         static let columnSpacing = MenuBarStyle.Metrics.columnSpacing
+        static let statusFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.primaryFontSize, weight: .medium)
         static let barTitleFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.primaryFontSize, weight: .semibold)
         static let barSecondaryFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .semibold)
         static let barValueFont = NSFont.monospacedDigitSystemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .medium)
@@ -112,6 +113,18 @@ final class MenuBarViewModel: ObservableObject {
             }
     }
 
+    func statusMessage(settings: MenuBarDisplaySettings) -> String {
+        if isLoading {
+            return "加载中..."
+        }
+
+        if settings.watchlist.isEmpty {
+            return "请先添加股票"
+        }
+
+        return "行情不可用"
+    }
+
     func columnLayout(settings: MenuBarDisplaySettings) -> ColumnLayout {
         let nameColumnWidth = displayQuotes
             .map { quote in
@@ -176,6 +189,12 @@ final class MenuBarViewModel: ObservableObject {
 
         if changeColumnWidth > 0 {
             contentWidth += LayoutMetrics.columnSpacing + ceil(changeColumnWidth)
+        }
+
+        if contentWidth == 0 {
+            contentWidth = ceil(
+                Self.textWidth(statusMessage(settings: settings), font: LayoutMetrics.statusFont)
+            )
         }
 
         let itemWidth = contentWidth + LayoutMetrics.contentHorizontalInset

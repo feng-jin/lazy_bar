@@ -24,7 +24,7 @@
   - `StatusBarController`：负责状态栏按钮、左键主面板，以及状态栏标题同步。
   - `SettingsWindowController`：负责设置弹窗的创建、展示和关闭。
 - `Views`
-  - `SettingsView`：设置弹窗中的菜单栏字段配置视图；当前拆成“监控股票”和“展示字段”两个 tab，其中展示字段 tab 用带说明的两列卡片式字段选择区承载字段勾选。
+  - `SettingsView`：设置弹窗中的菜单栏字段配置视图；当前拆成“监控股票”和“展示字段”两个 tab，其中展示字段 tab 用带说明的两列卡片式字段选择区承载字段勾选，“监控股票”tab 则收敛为单段式编辑区；顶部录入行继续使用原生 SwiftUI `TextField`。
   - 其余 `Detail` 与 `Shared` 视图负责具体展示组件。
 
 ## 当前数据流

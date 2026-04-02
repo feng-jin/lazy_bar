@@ -9,10 +9,11 @@ struct SettingsView: View {
 
     private enum LayoutMetrics {
         static let watchlistMaxVisibleRows = 7
-        static let watchlistRowHeight: CGFloat = 52
+        static let watchlistRowHeight: CGFloat = 44
         static let watchlistListVerticalPadding: CGFloat = 12
         static let watchlistSectionCornerRadius: CGFloat = 14
         static let symbolColumnWidth: CGFloat = 108
+        static let composerSymbolWidth: CGFloat = 132
         static let actionColumnWidth: CGFloat = 32
         static let fieldCardCornerRadius: CGFloat = 12
     }
@@ -108,8 +109,7 @@ struct SettingsView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
-            watchlistComposerCard
-            watchlistListCard
+            watchlistEditorCard
         }
     }
 
@@ -159,93 +159,38 @@ struct SettingsView: View {
         }
     }
 
-    private var watchlistComposerCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("新增股票")
-                        .font(.headline)
-                    Text("录入后会加入下方列表，保存后才会真正应用到菜单栏。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer(minLength: 16)
-
-                Button("添加") {
-                    viewModel.addWatchlistEntry()
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!viewModel.canAddWatchlistEntry)
-            }
-
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("股票简称")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    TextField(
-                        "例如：贵州茅台",
-                        text: Binding(
-                            get: { viewModel.watchlistCompanyNameInput },
-                            set: viewModel.updateWatchlistCompanyNameInput
-                        )
-                    )
-                    .textFieldStyle(.roundedBorder)
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("股票代码")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    TextField(
-                        "600519",
-                        text: Binding(
-                            get: { viewModel.watchlistSymbolInput },
-                            set: viewModel.updateWatchlistSymbolInput
-                        )
-                    )
-                    .textFieldStyle(.roundedBorder)
-                    .font(.system(.body, design: .monospaced))
-                    .frame(width: 140)
-                }
-            }
-        }
-        .padding(16)
-        .background(watchlistSectionBackground)
-        .overlay {
-            RoundedRectangle(cornerRadius: LayoutMetrics.watchlistSectionCornerRadius)
-                .strokeBorder(.secondary.opacity(0.12), lineWidth: 1)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.watchlistSectionCornerRadius))
-    }
-
-    private var watchlistListCard: some View {
+    private var watchlistEditorCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Text("已录入股票")
-                    .font(.headline)
-
-                Text("\(viewModel.draftWatchlist.count) 只")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.quaternary, in: Capsule())
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("监控列表")
+                        .font(.headline)
+                    Text("保存后才会真正应用到菜单栏。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 Spacer(minLength: 0)
+
+                Text("\(viewModel.draftWatchlist.count) 只")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 16)
-            .padding(.top, 14)
-            .padding(.bottom, 10)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            watchlistComposerRow
+
+            Divider()
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
 
             if viewModel.draftWatchlist.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("当前还没有股票")
                         .font(.headline)
-                    Text("先在上方填写简称和代码，再点“添加”。保存前你可以继续修改或删除。")
+                    Text("填写简称和代码后点“添加”，保存前你还可以继续修改或删除。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -257,15 +202,19 @@ struct SettingsView: View {
                 watchlistTableHeader
 
                 ScrollView {
-                    LazyVStack(spacing: 10) {
+                    LazyVStack(spacing: 0) {
                         ForEach(viewModel.draftWatchlist) { entry in
                             watchlistRow(for: entry)
+
+                            if entry.id != viewModel.draftWatchlist.last?.id {
+                                Divider()
+                                    .padding(.leading, 16)
+                            }
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 4)
                 }
-                .frame(maxHeight: watchlistListHeight)
+                .frame(height: watchlistListHeight)
             }
         }
         .background(watchlistSectionBackground)
@@ -274,6 +223,50 @@ struct SettingsView: View {
                 .strokeBorder(.secondary.opacity(0.12), lineWidth: 1)
         }
         .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.watchlistSectionCornerRadius))
+    }
+
+    private var watchlistComposerRow: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("股票简称")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                TextField(
+                    "例如：贵州茅台",
+                    text: Binding(
+                        get: { viewModel.watchlistCompanyNameInput },
+                        set: viewModel.updateWatchlistCompanyNameInput
+                    )
+                )
+                .textFieldStyle(.roundedBorder)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("股票代码")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                TextField(
+                    "600519",
+                    text: Binding(
+                        get: { viewModel.watchlistSymbolInput },
+                        set: viewModel.updateWatchlistSymbolInput
+                    )
+                )
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+                .frame(width: LayoutMetrics.composerSymbolWidth)
+            }
+
+            Button("添加") {
+                viewModel.addWatchlistEntry()
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!viewModel.canAddWatchlistEntry)
+            .padding(.top, 22)
+        }
+        .padding(.horizontal, 16)
     }
 
     private var watchlistTableHeader: some View {
@@ -305,20 +298,20 @@ struct SettingsView: View {
             TextField(
                 "股票简称",
                 text: Binding(
-                    get: { currentCompanyName(for: entry.id) },
+                    get: { currentEntry(for: entry.id)?.companyName ?? "" },
                     set: { viewModel.updateWatchlistEntryCompanyName(id: entry.id, input: $0) }
                 )
             )
-            .textFieldStyle(.roundedBorder)
+            .textFieldStyle(.plain)
 
             TextField(
                 "代码",
                 text: Binding(
-                    get: { currentSymbol(for: entry.id) },
+                    get: { currentEntry(for: entry.id)?.symbol ?? "" },
                     set: { viewModel.updateWatchlistEntrySymbol(id: entry.id, input: $0) }
                 )
             )
-            .textFieldStyle(.roundedBorder)
+            .textFieldStyle(.plain)
             .font(.system(.body, design: .monospaced))
             .frame(width: LayoutMetrics.symbolColumnWidth)
 
@@ -338,13 +331,9 @@ struct SettingsView: View {
             }
             .help("删除这只股票")
         }
-        .padding(10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
         .frame(minHeight: LayoutMetrics.watchlistRowHeight)
-        .background(.background.opacity(0.7), in: RoundedRectangle(cornerRadius: 12))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(.secondary.opacity(0.08), lineWidth: 1)
-        }
     }
 
     private func binding(
@@ -357,12 +346,10 @@ struct SettingsView: View {
         )
     }
 
-    private func currentCompanyName(for id: MenuBarSettingsViewModel.EditableWatchlistEntry.ID) -> String {
-        viewModel.draftWatchlist.first(where: { $0.id == id })?.companyName ?? ""
-    }
-
-    private func currentSymbol(for id: MenuBarSettingsViewModel.EditableWatchlistEntry.ID) -> String {
-        viewModel.draftWatchlist.first(where: { $0.id == id })?.symbol ?? ""
+    private func currentEntry(
+        for id: MenuBarSettingsViewModel.EditableWatchlistEntry.ID
+    ) -> MenuBarSettingsViewModel.EditableWatchlistEntry? {
+        viewModel.draftWatchlist.first(where: { $0.id == id })
     }
 
     private func close() {
