@@ -17,6 +17,7 @@ struct MenuBarLabelView: View {
                 )
             }
         }
+        .id(contentIdentity(for: presentation))
         .frame(
             width: presentation.layout.contentWidth,
             height: MenuBarStyle.Metrics.contentHeight,
@@ -33,6 +34,15 @@ struct MenuBarLabelView: View {
                 height: MenuBarStyle.Metrics.contentHeight,
                 alignment: .leading
             )
+    }
+
+    private func contentIdentity(for presentation: MenuBarPresentation) -> String {
+        if presentation.rows.isEmpty {
+            return "status:\(presentation.statusText)"
+        }
+
+        let rowIDs = presentation.rows.map(\.id).joined(separator: ",")
+        return "rows:\(rowIDs)"
     }
 }
 

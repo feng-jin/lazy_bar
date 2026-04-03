@@ -4,6 +4,7 @@ import Foundation
 struct SinaQuoteProvider: QuoteProviding {
     private let session: URLSession
     private let maxRetryCount = 2
+    private let requestTimeoutNanoseconds: UInt64 = 15_000_000_000
 
     init(session: URLSession = .shared) {
         self.session = session
@@ -33,7 +34,7 @@ struct SinaQuoteProvider: QuoteProviding {
 
         while true {
             do {
-                return try await session.data(for: request)
+                return try await timedData(for: request)
             } catch {
                 guard shouldRetry(error: error), attempt < maxRetryCount else {
                     throw error
@@ -43,6 +44,28 @@ struct SinaQuoteProvider: QuoteProviding {
                 let delayNanoseconds = UInt64(attempt) * 500_000_000
                 try await Task.sleep(nanoseconds: delayNanoseconds)
             }
+        }
+    }
+
+    private func timedData(for request: URLRequest) async throws -> (Data, URLResponse) {
+        try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group in
+            group.addTask {
+                try await session.data(for: request)
+            }
+
+            group.addTask {
+                try await Task.sleep(nanoseconds: requestTimeoutNanoseconds)
+                throw URLError(.timedOut)
+            }
+
+            let result = try await group.next()
+            group.cancelAll()
+
+            guard let result else {
+                throw URLError(.unknown)
+            }
+
+            return result
         }
     }
 

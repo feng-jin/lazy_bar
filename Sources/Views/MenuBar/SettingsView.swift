@@ -129,10 +129,7 @@ struct SettingsView: View {
             ) {
                 ForEach(displayFieldOptions) { option in
                     Toggle(
-                        isOn: binding(
-                            get: { viewModel.showsField(option.field) },
-                            set: { viewModel.setField(option.field, isEnabled: $0) }
-                        )
+                        isOn: binding(from: viewModel.binding(for: option.field))
                     ) {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(option.title)
@@ -146,11 +143,11 @@ struct SettingsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
-                        .background(cardBackground(for: viewModel.showsField(option.field)))
+                        .background(cardBackground(for: viewModel.draft.settings.showsField(option.field)))
                         .overlay {
                             RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
                                 .strokeBorder(
-                                    cardBorderColor(for: viewModel.showsField(option.field)),
+                                    cardBorderColor(for: viewModel.draft.settings.showsField(option.field)),
                                     lineWidth: 1
                                 )
                         }
@@ -175,7 +172,7 @@ struct SettingsView: View {
 
                 Spacer(minLength: 0)
 
-                Text("\(viewModel.draftSettings.watchlist.count) 只")
+                Text("\(viewModel.draft.watchlistRows.count) 只")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -189,7 +186,7 @@ struct SettingsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
 
-            if viewModel.draftSettings.watchlist.isEmpty {
+            if viewModel.draft.watchlistRows.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("当前还没有股票")
                         .font(.headline)
@@ -206,10 +203,10 @@ struct SettingsView: View {
 
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(viewModel.draftSettings.watchlist) { entry in
-                            watchlistRow(for: entry)
+                        ForEach(viewModel.draft.watchlistRows) { row in
+                            watchlistRow(for: row)
 
-                            if entry.id != viewModel.draftSettings.watchlist.last?.id {
+                            if row.id != viewModel.draft.watchlistRows.last?.id {
                                 Divider()
                                     .padding(.leading, 16)
                             }
@@ -237,10 +234,7 @@ struct SettingsView: View {
 
                 TextField(
                     "例如：贵州茅台",
-                    text: Binding(
-                        get: { viewModel.watchlistCompanyNameInput },
-                        set: viewModel.updateWatchlistCompanyNameInput
-                    )
+                    text: $viewModel.newEntry.companyName
                 )
                 .textFieldStyle(.roundedBorder)
             }
@@ -252,10 +246,7 @@ struct SettingsView: View {
 
                 TextField(
                     "600519",
-                    text: Binding(
-                        get: { viewModel.watchlistSymbolInput },
-                        set: viewModel.updateWatchlistSymbolInput
-                    )
+                    text: binding(from: viewModel.bindingForNewEntrySymbol())
                 )
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
@@ -263,7 +254,7 @@ struct SettingsView: View {
             }
 
             Button("添加") {
-                viewModel.addWatchlistEntry()
+                viewModel.appendNewEntry()
             }
             .buttonStyle(.borderedProminent)
             .disabled(!viewModel.canAddWatchlistEntry)
@@ -296,13 +287,13 @@ struct SettingsView: View {
         }
     }
 
-    private func watchlistRow(for entry: MenuBarSettingsViewModel.EditableWatchlistEntry) -> some View {
+    private func watchlistRow(for row: MenuBarSettingsViewModel.WatchlistDraftRow) -> some View {
         HStack(spacing: 12) {
             TextField(
                 "股票简称",
                 text: Binding(
-                    get: { currentEntry(for: entry.id)?.companyName ?? "" },
-                    set: { viewModel.updateWatchlistEntryCompanyName(id: entry.id, input: $0) }
+                    get: { currentRow(id: row.id)?.entry.companyName ?? "" },
+                    set: { viewModel.updateWatchlistEntryCompanyName(id: row.id, input: $0) }
                 )
             )
             .textFieldStyle(.plain)
@@ -310,8 +301,8 @@ struct SettingsView: View {
             TextField(
                 "代码",
                 text: Binding(
-                    get: { currentEntry(for: entry.id)?.symbol ?? "" },
-                    set: { viewModel.updateWatchlistEntrySymbol(id: entry.id, input: $0) }
+                    get: { currentRow(id: row.id)?.entry.symbol ?? "" },
+                    set: { viewModel.updateWatchlistEntrySymbol(id: row.id, input: $0) }
                 )
             )
             .textFieldStyle(.plain)
@@ -319,7 +310,7 @@ struct SettingsView: View {
             .frame(width: LayoutMetrics.symbolColumnWidth)
 
             Button {
-                viewModel.removeWatchlistEntry(id: entry.id)
+                viewModel.removeWatchlistEntry(id: row.id)
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: 12, weight: .semibold))
@@ -339,20 +330,17 @@ struct SettingsView: View {
         .frame(minHeight: LayoutMetrics.watchlistRowHeight)
     }
 
-    private func binding(
-        get getter: @escaping () -> Bool,
-        set setter: @escaping (Bool) -> Void
-    ) -> Binding<Bool> {
+    private func binding<Value>(from source: BindingValue<Value>) -> Binding<Value> {
         Binding(
-            get: getter,
-            set: setter
+            get: source.get,
+            set: source.set
         )
     }
 
-    private func currentEntry(
-        for id: MenuBarSettingsViewModel.EditableWatchlistEntry.ID
-    ) -> MenuBarSettingsViewModel.EditableWatchlistEntry? {
-        viewModel.draftSettings.watchlist.first(where: { $0.id == id })
+    private func currentRow(
+        id: MenuBarSettingsViewModel.WatchlistDraftRow.ID
+    ) -> MenuBarSettingsViewModel.WatchlistDraftRow? {
+        viewModel.draft.watchlistRows.first(where: { $0.id == id })
     }
 
     private func close() {

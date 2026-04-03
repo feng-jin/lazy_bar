@@ -4,6 +4,22 @@ import Foundation
 struct WatchlistEntry: Equatable, Codable, Sendable {
     var symbol: String
     var companyName: String
+
+    var sanitized: WatchlistEntry {
+        let normalizedSymbol = Self.normalizedSymbol(from: symbol)
+        let trimmedName = companyName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return WatchlistEntry(
+            symbol: normalizedSymbol,
+            companyName: trimmedName.isEmpty ? normalizedSymbol : trimmedName
+        )
+    }
+
+    static func normalizedSymbol(from input: String) -> String {
+        input
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .filter(\.isNumber)
+    }
 }
 
 struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
@@ -61,5 +77,65 @@ struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
         case .changePercent:
             return showsChangePercent
         }
+    }
+
+    mutating func setField(_ field: Field, isVisible: Bool) {
+        switch field {
+        case .companyName:
+            showsCompanyName = isVisible
+        case .symbol:
+            showsSymbol = isVisible
+        case .price:
+            showsPrice = isVisible
+        case .changePercent:
+            showsChangePercent = isVisible
+        }
+    }
+
+    var hasAtLeastOneVisibleField: Bool {
+        showsSymbol || showsCompanyName || showsPrice || showsChangePercent
+    }
+
+    func containsWatchlistSymbol(_ symbol: String, excludingIndex: Int? = nil) -> Bool {
+        let normalizedSymbol = WatchlistEntry.normalizedSymbol(from: symbol)
+
+        return watchlist.enumerated().contains { index, entry in
+            guard entry.sanitized.symbol == normalizedSymbol else { return false }
+            return index != excludingIndex
+        }
+    }
+
+    func validationMessage() -> String? {
+        guard hasAtLeastOneVisibleField else {
+            return "请至少保留一个展示字段，否则菜单栏和主面板都没有可显示内容。"
+        }
+
+        var seenSymbols = Set<String>()
+
+        for entry in watchlist.map(\.sanitized) {
+            guard !entry.symbol.isEmpty else {
+                return "监控列表里有空代码，请补全为 6 位股票代码。"
+            }
+
+            guard entry.symbol.count == 6 else {
+                return "监控列表里的股票代码必须是 6 位数字。"
+            }
+
+            guard seenSymbols.insert(entry.symbol).inserted else {
+                return "监控列表里存在重复代码，请删除或修改后再保存。"
+            }
+        }
+
+        return nil
+    }
+
+    func sanitized() -> MenuBarDisplaySettings {
+        MenuBarDisplaySettings(
+            watchlist: watchlist.map(\.sanitized),
+            showsSymbol: showsSymbol,
+            showsCompanyName: showsCompanyName,
+            showsPrice: showsPrice,
+            showsChangePercent: showsChangePercent
+        )
     }
 }

@@ -4,34 +4,33 @@ import Foundation
 
 @MainActor
 final class MenuBarSettingsViewModel: ObservableObject {
-    struct EditableWatchlistEntry: Identifiable, Equatable {
-        let id = UUID()
-        var symbol: String
-        var companyName: String
+    struct WatchlistDraftRow: Identifiable, Equatable {
+        let id: UUID
+        var entry: WatchlistEntry
+
+        init(id: UUID = UUID(), entry: WatchlistEntry) {
+            self.id = id
+            self.entry = entry
+        }
     }
 
-    struct DraftSettings: Equatable {
-        var watchlist: [EditableWatchlistEntry]
-        var showsSymbol: Bool
-        var showsCompanyName: Bool
-        var showsPrice: Bool
-        var showsChangePercent: Bool
+    struct DraftState: Equatable {
+        var settings: MenuBarDisplaySettings
+        var watchlistRows: [WatchlistDraftRow]
 
         init(settings: MenuBarDisplaySettings) {
-            watchlist = settings.watchlist.map {
-                EditableWatchlistEntry(symbol: $0.symbol, companyName: $0.companyName)
-            }
-            showsSymbol = settings.showsSymbol
-            showsCompanyName = settings.showsCompanyName
-            showsPrice = settings.showsPrice
-            showsChangePercent = settings.showsChangePercent
+            self.settings = settings
+            self.watchlistRows = settings.watchlist.map { WatchlistDraftRow(entry: $0) }
+        }
+
+        mutating func syncSettingsWatchlist() {
+            settings.watchlist = watchlistRows.map(\.entry)
         }
     }
 
     @Published private(set) var settings: MenuBarDisplaySettings
-    @Published private(set) var draftSettings: DraftSettings
-    @Published var watchlistCompanyNameInput = ""
-    @Published var watchlistSymbolInput = ""
+    @Published var draft: DraftState
+    @Published var newEntry = WatchlistEntry(symbol: "", companyName: "")
 
     private let store: MenuBarSettingsStore
     private var cancellables = Set<AnyCancellable>()
@@ -39,7 +38,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
     init(store: MenuBarSettingsStore) {
         self.store = store
         settings = store.settings
-        draftSettings = DraftSettings(settings: store.settings)
+        draft = DraftState(settings: store.settings)
 
         store.$settings
             .sink { [weak self] settings in
@@ -47,186 +46,116 @@ final class MenuBarSettingsViewModel: ObservableObject {
                 self.settings = settings
 
                 if !self.hasUnsavedChanges {
-                    self.draftSettings = DraftSettings(settings: settings)
-                    self.watchlistCompanyNameInput = ""
-                    self.watchlistSymbolInput = ""
+                    self.resetDraft(from: settings)
                 }
             }
             .store(in: &cancellables)
     }
 
-    func showsField(_ field: MenuBarDisplaySettings.Field) -> Bool {
-        switch field {
-        case .companyName:
-            return draftSettings.showsCompanyName
-        case .symbol:
-            return draftSettings.showsSymbol
-        case .price:
-            return draftSettings.showsPrice
-        case .changePercent:
-            return draftSettings.showsChangePercent
-        }
+    func beginEditing() {
+        guard !hasUnsavedChanges else { return }
+        resetDraft(from: settings)
     }
 
-    func setField(_ field: MenuBarDisplaySettings.Field, isEnabled: Bool) {
-        switch field {
-        case .companyName:
-            draftSettings.showsCompanyName = isEnabled
-        case .symbol:
-            draftSettings.showsSymbol = isEnabled
-        case .price:
-            draftSettings.showsPrice = isEnabled
-        case .changePercent:
-            draftSettings.showsChangePercent = isEnabled
-        }
+    func cancel() {
+        resetDraft(from: settings)
     }
 
-    func updateWatchlistCompanyNameInput(_ input: String) {
-        watchlistCompanyNameInput = input
+    func save() {
+        let sanitizedSettings = currentDraftSettings().sanitized()
+        guard sanitizedSettings.validationMessage() == nil else { return }
+        store.update(sanitizedSettings)
     }
 
-    func updateWatchlistSymbolInput(_ input: String) {
-        watchlistSymbolInput = String(Self.normalizedSymbol(from: input).prefix(6))
-    }
-
-    func addWatchlistEntry() {
-        let symbol = Self.normalizedSymbol(from: watchlistSymbolInput)
-        guard symbol.count == 6 else { return }
-        let companyName = watchlistCompanyNameInput.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !draftSettings.watchlist.contains(where: { $0.symbol == symbol }) else { return }
-        draftSettings.watchlist.append(
-            EditableWatchlistEntry(
-                symbol: symbol,
-                companyName: companyName.isEmpty ? symbol : companyName
-            )
+    func binding(for field: MenuBarDisplaySettings.Field) -> BindingValue<Bool> {
+        BindingValue(
+            get: { [weak self] in
+                self?.draft.settings.showsField(field) ?? false
+            },
+            set: { [weak self] isVisible in
+                self?.draft.settings.setField(field, isVisible: isVisible)
+            }
         )
-        watchlistCompanyNameInput = ""
-        watchlistSymbolInput = ""
     }
 
-    func removeWatchlistEntry(id: EditableWatchlistEntry.ID) {
-        draftSettings.watchlist.removeAll { $0.id == id }
+    func bindingForNewEntrySymbol() -> BindingValue<String> {
+        BindingValue(
+            get: { [weak self] in
+                self?.newEntry.symbol ?? ""
+            },
+            set: { [weak self] input in
+                self?.newEntry.symbol = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
+            }
+        )
     }
 
-    func updateWatchlistEntrySymbol(id: EditableWatchlistEntry.ID, input: String) {
-        guard let index = draftSettings.watchlist.firstIndex(where: { $0.id == id }) else { return }
+    func appendNewEntry() {
+        let candidate = sanitizedNewEntry
+        guard candidate.symbol.count == 6 else { return }
+        guard !currentDraftSettings().containsWatchlistSymbol(candidate.symbol) else { return }
+        draft.watchlistRows.append(WatchlistDraftRow(entry: candidate))
+        draft.syncSettingsWatchlist()
+        newEntry = WatchlistEntry(symbol: "", companyName: "")
+    }
 
-        let normalizedSymbol = String(Self.normalizedSymbol(from: input).prefix(6))
-        draftSettings.watchlist[index].symbol = normalizedSymbol
+    func removeWatchlistEntry(id: WatchlistDraftRow.ID) {
+        draft.watchlistRows.removeAll { $0.id == id }
+        draft.syncSettingsWatchlist()
+    }
 
-        if draftSettings.watchlist[index].companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            draftSettings.watchlist[index].companyName = normalizedSymbol
+    func updateWatchlistEntryCompanyName(id: WatchlistDraftRow.ID, input: String) {
+        guard let index = draft.watchlistRows.firstIndex(where: { $0.id == id }) else { return }
+        draft.watchlistRows[index].entry.companyName = input
+        draft.syncSettingsWatchlist()
+    }
+
+    func updateWatchlistEntrySymbol(id: WatchlistDraftRow.ID, input: String) {
+        guard let index = draft.watchlistRows.firstIndex(where: { $0.id == id }) else { return }
+        let normalizedSymbol = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
+        draft.watchlistRows[index].entry.symbol = normalizedSymbol
+
+        if draft.watchlistRows[index].entry.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            draft.watchlistRows[index].entry.companyName = normalizedSymbol
         }
-    }
 
-    func updateWatchlistEntryCompanyName(id: EditableWatchlistEntry.ID, input: String) {
-        guard let index = draftSettings.watchlist.firstIndex(where: { $0.id == id }) else { return }
-        draftSettings.watchlist[index].companyName = input
+        draft.syncSettingsWatchlist()
     }
 
     var hasUnsavedChanges: Bool {
-        currentDraftSettings() != settings
+        currentDraftSettings().sanitized() != settings
     }
 
     var canSave: Bool {
         validationMessage == nil && hasUnsavedChanges
     }
 
-    func save() {
-        guard let sanitizedSettings = sanitizedDraftSettings() else { return }
-        store.update(sanitizedSettings)
-    }
-
-    func cancel() {
-        draftSettings = DraftSettings(settings: settings)
-        watchlistCompanyNameInput = ""
-        watchlistSymbolInput = ""
-    }
-
-    func beginEditing() {
-        guard !hasUnsavedChanges else { return }
-        draftSettings = DraftSettings(settings: settings)
-        watchlistCompanyNameInput = ""
-        watchlistSymbolInput = ""
-    }
-
     var canAddWatchlistEntry: Bool {
-        let symbol = Self.normalizedSymbol(from: watchlistSymbolInput)
-        guard symbol.count == 6 else { return false }
-        return !draftSettings.watchlist.contains(where: { $0.symbol == symbol })
+        let candidate = sanitizedNewEntry
+        guard candidate.symbol.count == 6 else { return false }
+        return !currentDraftSettings().containsWatchlistSymbol(candidate.symbol)
     }
 
     var validationMessage: String? {
-        guard hasAtLeastOneVisibleField else {
-            return "请至少保留一个展示字段，否则菜单栏和主面板都没有可显示内容。"
-        }
+        currentDraftSettings().validationMessage()
+    }
 
-        let entries = draftSettings.watchlist
-        var seenSymbols = Set<String>()
-
-        for entry in entries {
-            let symbol = Self.normalizedSymbol(from: entry.symbol)
-            guard !symbol.isEmpty else {
-                return "监控列表里有空代码，请补全为 6 位股票代码。"
-            }
-
-            guard symbol.count == 6 else {
-                return "监控列表里的股票代码必须是 6 位数字。"
-            }
-
-            guard seenSymbols.insert(symbol).inserted else {
-                return "监控列表里存在重复代码，请删除或修改后再保存。"
-            }
-        }
-
-        return nil
+    private var sanitizedNewEntry: WatchlistEntry {
+        newEntry.sanitized
     }
 
     private func currentDraftSettings() -> MenuBarDisplaySettings {
-        MenuBarDisplaySettings(
-            watchlist: draftSettings.watchlist.map(Self.watchlistEntry(from:)),
-            showsSymbol: draftSettings.showsSymbol,
-            showsCompanyName: draftSettings.showsCompanyName,
-            showsPrice: draftSettings.showsPrice,
-            showsChangePercent: draftSettings.showsChangePercent
-        )
+        var settings = draft.settings
+        settings.watchlist = draft.watchlistRows.map(\.entry)
+        return settings
     }
 
-    private func sanitizedDraftSettings() -> MenuBarDisplaySettings? {
-        guard validationMessage == nil else { return nil }
-        let watchlist = draftSettings.watchlist.map { entry in
-            let symbol = Self.normalizedSymbol(from: entry.symbol)
-            let companyName = entry.companyName.trimmingCharacters(in: .whitespacesAndNewlines)
-
-            return WatchlistEntry(
-                symbol: symbol,
-                companyName: companyName.isEmpty ? symbol : companyName
-            )
-        }
-        return MenuBarDisplaySettings(
-            watchlist: watchlist,
-            showsSymbol: draftSettings.showsSymbol,
-            showsCompanyName: draftSettings.showsCompanyName,
-            showsPrice: draftSettings.showsPrice,
-            showsChangePercent: draftSettings.showsChangePercent
-        )
+    private func resetDraft(from settings: MenuBarDisplaySettings) {
+        draft = DraftState(settings: settings)
+        newEntry = WatchlistEntry(symbol: "", companyName: "")
     }
+}
 
-    private static func watchlistEntry(from editableEntry: EditableWatchlistEntry) -> WatchlistEntry {
-        WatchlistEntry(symbol: editableEntry.symbol, companyName: editableEntry.companyName)
-    }
-
-    private var hasAtLeastOneVisibleField: Bool {
-        draftSettings.showsSymbol ||
-        draftSettings.showsCompanyName ||
-        draftSettings.showsPrice ||
-        draftSettings.showsChangePercent
-    }
-
-    private static func normalizedSymbol(from input: String) -> String {
-        input
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .filter(\.isNumber)
-    }
+struct BindingValue<Value> {
+    let get: () -> Value
+    let set: (Value) -> Void
 }

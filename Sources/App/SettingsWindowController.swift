@@ -12,12 +12,11 @@ final class SettingsWindowController: NSWindowController {
     private let hostingView: NSHostingView<SettingsView>
 
     init(viewModel: MenuBarSettingsViewModel) {
-        hostingView = NSHostingView(
-            rootView: SettingsView(
-                viewModel: viewModel,
-                onClose: nil
-            )
+        let rootView = SettingsView(
+            viewModel: viewModel,
+            onClose: nil
         )
+        hostingView = NSHostingView(rootView: rootView)
         hostingView.translatesAutoresizingMaskIntoConstraints = false
 
         let window = NSWindow(
@@ -62,7 +61,7 @@ final class SettingsWindowController: NSWindowController {
     func show() {
         guard let window else { return }
 
-        NSRunningApplication.current.activate(options: [.activateIgnoringOtherApps])
+        NSApp.activate()
 
         DispatchQueue.main.async {
             let fittedSize = self.hostingView.fittingSize

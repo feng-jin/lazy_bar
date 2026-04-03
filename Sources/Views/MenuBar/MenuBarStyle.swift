@@ -42,7 +42,7 @@ enum MenuBarStyle {
     }
 
     static func valueTextFont(size: CGFloat) -> Font {
-        .system(size: size, weight: .medium, design: .monospaced)
+        .system(size: size, weight: .medium).monospacedDigit()
     }
 
     static func valueTextNSFont(size: CGFloat) -> NSFont {
