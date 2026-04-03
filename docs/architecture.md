@@ -9,14 +9,14 @@
 - `Models`
   - `StockQuote`：provider 返回的单只原始行情领域模型。
   - `DisplayQuote`：面向 UI 的展示模型，负责把数值和时间格式化成可直接展示的内容，并统一产出菜单栏与主面板共享的列数据。
-  - `MenuBarDisplaySettings`：菜单栏字段配置与 watchlist 条目列表；每个条目包含股票简称和股票代码。
+  - `MenuBarDisplaySettings`：菜单栏字段配置与 watchlist 条目列表；每个条目包含股票简称和股票代码。字段定义、文案和可见性判断也集中在这里，避免设置页勾选项与 bar / 主面板渲染各自维护映射。
 - `Providers`
   - `QuoteProviding`：数据来源边界协议，按当前 watchlist 中的股票代码返回股票列表。
   - `SinaQuoteProvider`：当前 live 环境默认使用的真实行情 provider；通过新浪财经未公开快照接口按股票代码批量拉取 A 股准实时行情。
   - `MockQuoteProvider`：保留用于 Preview、调试或未来兜底的 mock 数据源；每次拉取都会基于基准价生成小幅波动后的最新报价，并按请求的股票代码返回对应 mock 股票。
 - `ViewModels`
   - `MenuBarViewModel`：负责菜单栏 ticker 数据源、下拉股票列表状态，以及定时刷新调度；通过独立的 `QuoteRefreshScheduler` 计算 A 股交易时段下的刷新节奏；不再直接承担字体测量或列宽计算。
-  - `MenuBarSettingsViewModel`：负责设置弹窗单一草稿模型、股票代码录入、watchlist 编辑校验，以及保存/取消动作。
+- `MenuBarSettingsViewModel`：负责设置弹窗单一草稿模型、股票代码录入、watchlist 编辑校验、展示字段至少保留一项的约束，以及保存/取消动作。
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
   - `MenuBarSettingsStore`：持久化菜单栏展示设置，供菜单栏和设置页共享；首次启动时使用空 watchlist，后续完全依赖用户手动维护并持久化本地结果。
@@ -35,7 +35,7 @@
 3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. `MenuBarViewModel` 首次加载时读取已保存的 watchlist 条目，并调用 `QuoteProviding.fetchQuotes(symbols:)` 获取 `[StockQuote]`，随后按 A 股交易时段动态选择刷新间隔重复拉取：交易时段每 3 秒一次，非交易时段最长每 10 分钟一次；若下一次 10 分钟轮询会跨过 09:30 或 13:00 这类交易恢复边界，则会提前在边界时刻唤醒并切回高频刷新。
-6. `MenuBarSettingsViewModel` 读取 `MenuBarSettingsStore`；首次启动时 watchlist 为空，设置页支持在草稿态里新增、删除、直接编辑代码和简称；保存前会统一做代码长度、重复值和空值校验。
+6. `MenuBarSettingsViewModel` 读取 `MenuBarSettingsStore`；首次启动时 watchlist 为空，设置页支持在草稿态里新增、删除、直接编辑代码和简称；保存前会统一做代码长度、重复值、空值以及“至少保留一个展示字段”的校验。
 8. `MenuBarViewModel` 将 `[StockQuote]` 转成 `[DisplayQuote]`，并显式维护 `loading / emptyWatchlist / failed / loaded` 这类主面板与 bar 共用的界面状态；展示层再通过 `MenuBarPresentation` 按当前菜单栏展示设置统一生成共享 rows 与动态列宽。列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；身份列到股价列之间的基准前导间距也由共享布局统一控制，避免价格位数变化时行内视觉间距波动过大；当 watchlist 在加载中发生变更时，ViewModel 会取消旧一轮加载并只接受最新一轮请求结果，避免已删除或过期的股票重新写回 UI；定时刷新时直接替换最新展示数据，并在刷新失败时尽量保留上一份成功快照。
 9. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据共享 presentation 中的 layout 同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用共享列行组件对齐渲染股票简称、股价与涨跌幅；左键点击后展示的主面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，上半部分继续复用相同的分栏展示数据、动态列宽与共享样式 token，下半部分只承载设置入口、退出和后续少量操作。
 10. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口。

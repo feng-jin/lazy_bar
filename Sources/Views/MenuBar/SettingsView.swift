@@ -35,11 +35,11 @@ struct SettingsView: View {
     }
 
     private struct DisplayFieldOption: Identifiable {
-        let id: String
-        let title: String
-        let description: String
-        let isOn: () -> Bool
-        let setIsOn: (Bool) -> Void
+        let field: MenuBarDisplaySettings.Field
+
+        var id: String { field.id }
+        var title: String { field.title }
+        var description: String { field.description }
     }
 
     var body: some View {
@@ -130,8 +130,8 @@ struct SettingsView: View {
                 ForEach(displayFieldOptions) { option in
                     Toggle(
                         isOn: binding(
-                            get: option.isOn,
-                            set: option.setIsOn
+                            get: { viewModel.showsField(option.field) },
+                            set: { viewModel.setField(option.field, isEnabled: $0) }
                         )
                     ) {
                         VStack(alignment: .leading, spacing: 6) {
@@ -146,10 +146,13 @@ struct SettingsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(12)
-                        .background(cardBackground(for: option.isOn()))
+                        .background(cardBackground(for: viewModel.showsField(option.field)))
                         .overlay {
                             RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
-                                .strokeBorder(cardBorderColor(for: option.isOn()), lineWidth: 1)
+                                .strokeBorder(
+                                    cardBorderColor(for: viewModel.showsField(option.field)),
+                                    lineWidth: 1
+                                )
                         }
                         .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius))
                     }
@@ -369,36 +372,7 @@ struct SettingsView: View {
     }
 
     private var displayFieldOptions: [DisplayFieldOption] {
-        [
-            DisplayFieldOption(
-                id: "companyName",
-                title: "股票简称",
-                description: "优先显示你自定义维护的股票名称，适合快速扫一眼识别标的。",
-                isOn: { viewModel.draftSettings.showsCompanyName },
-                setIsOn: viewModel.setShowsCompanyName
-            ),
-            DisplayFieldOption(
-                id: "symbol",
-                title: "股票代码",
-                description: "展示 6 位代码，适合区分同名或相近简称的股票。",
-                isOn: { viewModel.draftSettings.showsSymbol },
-                setIsOn: viewModel.setShowsSymbol
-            ),
-            DisplayFieldOption(
-                id: "price",
-                title: "当前股价",
-                description: "显示最新价格，是菜单栏和主面板里的核心数值字段。",
-                isOn: { viewModel.draftSettings.showsPrice },
-                setIsOn: viewModel.setShowsPrice
-            ),
-            DisplayFieldOption(
-                id: "changePercent",
-                title: "涨跌幅",
-                description: "显示相对昨收的百分比变化，便于快速判断强弱。",
-                isOn: { viewModel.draftSettings.showsChangePercent },
-                setIsOn: viewModel.setShowsChangePercent
-            )
-        ]
+        MenuBarDisplaySettings.Field.allCases.map { DisplayFieldOption(field: $0) }
     }
 
     private func cardBackground(for isSelected: Bool) -> some ShapeStyle {

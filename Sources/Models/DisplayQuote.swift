@@ -17,17 +17,11 @@ struct DisplayQuote: Equatable {
     let updatedAtText: String
 
     func columns(settings: MenuBarDisplaySettings) -> QuoteColumns {
-        let showsAnyField =
-            settings.showsCompanyName ||
-            settings.showsSymbol ||
-            settings.showsPrice ||
-            settings.showsChangePercent
-
         return QuoteColumns(
-            nameText: showsAnyField ? (settings.showsCompanyName ? companyName : nil) : companyName,
-            symbolText: settings.showsSymbol ? symbol : nil,
-            priceText: settings.showsPrice ? priceText : nil,
-            changeText: settings.showsChangePercent ? changePercentText : nil
+            nameText: settings.showsField(.companyName) ? companyName : nil,
+            symbolText: settings.showsField(.symbol) ? symbol : nil,
+            priceText: settings.showsField(.price) ? priceText : nil,
+            changeText: settings.showsField(.changePercent) ? changePercentText : nil
         )
     }
 

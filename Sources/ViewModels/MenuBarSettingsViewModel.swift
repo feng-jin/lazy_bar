@@ -55,20 +55,30 @@ final class MenuBarSettingsViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    func setShowsSymbol(_ isEnabled: Bool) {
-        draftSettings.showsSymbol = isEnabled
+    func showsField(_ field: MenuBarDisplaySettings.Field) -> Bool {
+        switch field {
+        case .companyName:
+            return draftSettings.showsCompanyName
+        case .symbol:
+            return draftSettings.showsSymbol
+        case .price:
+            return draftSettings.showsPrice
+        case .changePercent:
+            return draftSettings.showsChangePercent
+        }
     }
 
-    func setShowsCompanyName(_ isEnabled: Bool) {
-        draftSettings.showsCompanyName = isEnabled
-    }
-
-    func setShowsPrice(_ isEnabled: Bool) {
-        draftSettings.showsPrice = isEnabled
-    }
-
-    func setShowsChangePercent(_ isEnabled: Bool) {
-        draftSettings.showsChangePercent = isEnabled
+    func setField(_ field: MenuBarDisplaySettings.Field, isEnabled: Bool) {
+        switch field {
+        case .companyName:
+            draftSettings.showsCompanyName = isEnabled
+        case .symbol:
+            draftSettings.showsSymbol = isEnabled
+        case .price:
+            draftSettings.showsPrice = isEnabled
+        case .changePercent:
+            draftSettings.showsChangePercent = isEnabled
+        }
     }
 
     func updateWatchlistCompanyNameInput(_ input: String) {
@@ -148,6 +158,10 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     var validationMessage: String? {
+        guard hasAtLeastOneVisibleField else {
+            return "请至少保留一个展示字段，否则菜单栏和主面板都没有可显示内容。"
+        }
+
         let entries = draftSettings.watchlist
         var seenSymbols = Set<String>()
 
@@ -201,6 +215,13 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     private static func watchlistEntry(from editableEntry: EditableWatchlistEntry) -> WatchlistEntry {
         WatchlistEntry(symbol: editableEntry.symbol, companyName: editableEntry.companyName)
+    }
+
+    private var hasAtLeastOneVisibleField: Bool {
+        draftSettings.showsSymbol ||
+        draftSettings.showsCompanyName ||
+        draftSettings.showsPrice ||
+        draftSettings.showsChangePercent
     }
 
     private static func normalizedSymbol(from input: String) -> String {
