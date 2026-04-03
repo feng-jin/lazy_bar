@@ -13,11 +13,9 @@ struct QuotesPopoverView: View {
     let onQuit: () -> Void
 
     var body: some View {
-        let settings = settingsStore.settings
-        let displayQuotes = viewModel.displayQuotes
-        let layout = QuoteColumnLayoutCalculator.layout(
-            displayQuotes: displayQuotes,
-            settings: settings,
+        let presentation = MenuBarPresentation(
+            displayQuotes: viewModel.displayQuotes,
+            settings: settingsStore.settings,
             statusText: viewModel.statusText
         )
 
@@ -27,14 +25,13 @@ struct QuotesPopoverView: View {
                 case .loaded:
                     ScrollView {
                         LazyVStack(spacing: 0) {
-                            ForEach(Array(displayQuotes.enumerated()), id: \.element.symbol) { index, quote in
+                            ForEach(Array(presentation.rows.enumerated()), id: \.element.id) { index, row in
                                 QuotePopoverRowView(
-                                    quote: quote,
-                                    settings: settings,
-                                    layout: layout
+                                    row: row,
+                                    layout: presentation.layout
                                 )
 
-                                if index < displayQuotes.count - 1 {
+                                if index < presentation.rows.count - 1 {
                                     Divider()
                                         .padding(.leading, MenuBarStyle.Metrics.panelDividerLeadingInset)
                                 }
@@ -56,7 +53,7 @@ struct QuotesPopoverView: View {
             ActionsSection(onOpenSettings: onOpenSettings, onQuit: onQuit)
         }
         .padding(.vertical, MenuBarStyle.Metrics.panelOuterVerticalPadding)
-        .frame(width: layout.itemWidth)
+        .frame(width: presentation.layout.itemWidth)
         .background(.thickMaterial)
         .clipShape(RoundedRectangle(cornerRadius: MenuBarStyle.Metrics.panelCornerRadius, style: .continuous))
         .overlay {
@@ -151,14 +148,13 @@ private struct ActionRowView: View {
 }
 
 private struct QuotePopoverRowView: View {
-    let quote: DisplayQuote
-    let settings: MenuBarDisplaySettings
+    let row: MenuBarPresentation.Row
     let layout: QuoteColumnLayout
     @State private var isHovering = false
 
     var body: some View {
         QuoteColumnsRowView(
-            columns: quote.columns(settings: settings),
+            columns: row.columns,
             layout: layout,
             typography: .popover
         )

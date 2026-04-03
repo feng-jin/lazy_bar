@@ -23,11 +23,11 @@ final class StatusBarController: NSObject {
         self.menuBarViewModel = menuBarViewModel
         self.settingsStore = settingsStore
         self.openSettingsWindowHandler = openSettingsWindow
-        let initialWidth = QuoteColumnLayoutCalculator.layout(
+        let initialWidth = MenuBarPresentation(
             displayQuotes: menuBarViewModel.displayQuotes,
             settings: settingsStore.settings,
             statusText: menuBarViewModel.statusText
-        ).itemWidth
+        ).layout.itemWidth
         statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
         super.init()
 
@@ -84,7 +84,7 @@ final class StatusBarController: NSObject {
     }
 
     private func updateStatusItemWidth() {
-        statusItem.length = currentLayout().itemWidth
+        statusItem.length = currentPresentation().layout.itemWidth
     }
 
     @objc
@@ -101,7 +101,7 @@ final class StatusBarController: NSObject {
         }
 
         let panelController = QuotesPanelController(
-            contentWidth: currentLayout().itemWidth,
+            contentWidth: currentPresentation().layout.itemWidth,
             maximumContentHeight: 360,
             rootView: AnyView(
                 QuotesPopoverView(
@@ -127,8 +127,8 @@ final class StatusBarController: NSObject {
         removeClickMonitors()
     }
 
-    private func currentLayout() -> QuoteColumnLayout {
-        QuoteColumnLayoutCalculator.layout(
+    private func currentPresentation() -> MenuBarPresentation {
+        MenuBarPresentation(
             displayQuotes: menuBarViewModel.displayQuotes,
             settings: settingsStore.settings,
             statusText: menuBarViewModel.statusText

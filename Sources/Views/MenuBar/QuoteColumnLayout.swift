@@ -48,12 +48,9 @@ struct QuoteColumnLayoutCalculator {
     }
 
     static func layout(
-        displayQuotes: [DisplayQuote],
-        settings: MenuBarDisplaySettings,
+        columns: [DisplayQuote.QuoteColumns],
         statusText: String
     ) -> QuoteColumnLayout {
-        let columns = displayQuotes.map { $0.columns(settings: settings) }
-
         let nameColumnWidth = columns
             .map {
                 max(
@@ -63,44 +60,38 @@ struct QuoteColumnLayoutCalculator {
             }
             .max() ?? 0
 
-        let symbolColumnWidth = settings.showsSymbol
-            ? max(
-                columns
-                    .compactMap(\.symbolText)
-                    .map { textWidth($0, font: Metrics.barSecondaryFont) }
-                    .max() ?? 0,
-                columns
-                    .compactMap(\.symbolText)
-                    .map { textWidth($0, font: Metrics.listSecondaryFont) }
-                    .max() ?? 0
-            )
-            : 0
+        let symbolColumnWidth = max(
+            columns
+                .compactMap(\.symbolText)
+                .map { textWidth($0, font: Metrics.barSecondaryFont) }
+                .max() ?? 0,
+            columns
+                .compactMap(\.symbolText)
+                .map { textWidth($0, font: Metrics.listSecondaryFont) }
+                .max() ?? 0
+        )
 
-        let priceColumnWidth = settings.showsPrice
-            ? max(
-                columns
-                    .compactMap(\.priceText)
-                    .map { textWidth($0, font: Metrics.barValueFont) }
-                    .max() ?? 0,
-                columns
-                    .compactMap(\.priceText)
-                    .map { textWidth($0, font: Metrics.listValueFont) }
-                    .max() ?? 0
-            )
-            : 0
+        let priceColumnWidth = max(
+            columns
+                .compactMap(\.priceText)
+                .map { textWidth($0, font: Metrics.barValueFont) }
+                .max() ?? 0,
+            columns
+                .compactMap(\.priceText)
+                .map { textWidth($0, font: Metrics.listValueFont) }
+                .max() ?? 0
+        )
 
-        let changeColumnWidth = settings.showsChangePercent
-            ? max(
-                columns
-                    .compactMap(\.changeText)
-                    .map { textWidth($0, font: Metrics.barValueFont) }
-                    .max() ?? 0,
-                columns
-                    .compactMap(\.changeText)
-                    .map { textWidth($0, font: Metrics.listValueFont) }
-                    .max() ?? 0
-            )
-            : 0
+        let changeColumnWidth = max(
+            columns
+                .compactMap(\.changeText)
+                .map { textWidth($0, font: Metrics.barValueFont) }
+                .max() ?? 0,
+            columns
+                .compactMap(\.changeText)
+                .map { textWidth($0, font: Metrics.listValueFont) }
+                .max() ?? 0
+        )
 
         var contentWidth = ceil(nameColumnWidth)
 

@@ -1,74 +1,29 @@
 /// 菜单栏上的紧凑 ticker 标签，在固定宽度内上下循环播放股票摘要。
 import SwiftUI
 
-enum MenuBarStyle {
-    enum Metrics {
-        static let statusItemHorizontalInset: CGFloat = 10
-        static let columnSpacing: CGFloat = 4
-        static let contentHeight: CGFloat = 16
-        static let primaryFontSize: CGFloat = 12
-        static let secondaryFontSize: CGFloat = 12
-        static let popoverPrimaryFontSize: CGFloat = 12
-        static let popoverValueFontSize: CGFloat = 12
-        static let verticalTextOffset: CGFloat = 1
-        static let verticalHoldDuration: TimeInterval = 1.6
-        static let verticalTransitionDuration: TimeInterval = 0.6
-        static let panelOuterVerticalPadding: CGFloat = 4
-        static let panelRowHorizontalPadding: CGFloat = 10
-        static let panelRowVerticalPadding: CGFloat = 7
-        static let panelCornerRadius: CGFloat = 14
-        static let panelRowCornerRadius: CGFloat = 8
-        static let panelBorderOpacity: CGFloat = 0.45
-        static let panelDividerLeadingInset: CGFloat = 10
-    }
-
-    static let identityTextColor = Color.primary
-
-    static func primaryTextFont(size: CGFloat) -> Font {
-        .system(size: size, weight: .semibold, design: .rounded)
-    }
-
-    static func identitySecondaryTextFont(size: CGFloat) -> Font {
-        .system(size: size, weight: .semibold, design: .rounded)
-    }
-
-    static func valueTextFont(size: CGFloat) -> Font {
-        .system(size: size, weight: .medium, design: .monospaced)
-    }
-
-    static func statusTextFont(size: CGFloat) -> Font {
-        .system(size: size, weight: .medium, design: .rounded)
-    }
-}
-
 struct MenuBarLabelView: View {
     @ObservedObject var viewModel: MenuBarViewModel
     @ObservedObject var settingsStore: MenuBarSettingsStore
 
     var body: some View {
-        let settings = settingsStore.settings
-        let layout = QuoteColumnLayoutCalculator.layout(
+        let presentation = MenuBarPresentation(
             displayQuotes: viewModel.displayQuotes,
-            settings: settings,
+            settings: settingsStore.settings,
             statusText: viewModel.statusText
         )
 
         Group {
-            let tickerItems = viewModel.displayQuotes.map {
-                VerticalTickerView.TickerItem(id: $0.symbol, columns: $0.columns(settings: settings))
-            }
-
-            if !tickerItems.isEmpty {
-                VerticalTickerView(items: tickerItems, layout: layout)
+            if !presentation.rows.isEmpty {
+                VerticalTickerView(items: presentation.rows, layout: presentation.layout)
             } else {
                 statusText(
-                    viewModel.statusText,
-                    layout: layout
+                    presentation.statusText,
+                    layout: presentation.layout
                 )
             }
         }
         .frame(
-            width: layout.contentWidth,
+            width: presentation.layout.contentWidth,
             height: MenuBarStyle.Metrics.contentHeight,
             alignment: .leading
         )
@@ -87,12 +42,7 @@ struct MenuBarLabelView: View {
 }
 
 private struct VerticalTickerView: View {
-    struct TickerItem: Equatable, Identifiable {
-        let id: String
-        let columns: DisplayQuote.QuoteColumns
-    }
-
-    let items: [TickerItem]
+    let items: [MenuBarPresentation.Row]
     let layout: QuoteColumnLayout
 
     @State private var currentIndex = 0
@@ -151,12 +101,12 @@ private struct VerticalTickerView: View {
         return min(max(currentIndex, 0), items.count - 1)
     }
 
-    private var nextItem: TickerItem? {
+    private var nextItem: MenuBarPresentation.Row? {
         guard items.count > 1 else { return currentItem }
         return items[nextIndex]
     }
 
-    private var currentItem: TickerItem? {
+    private var currentItem: MenuBarPresentation.Row? {
         guard !items.isEmpty else { return nil }
         return items[safeCurrentIndex]
     }
