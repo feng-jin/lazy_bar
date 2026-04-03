@@ -7,12 +7,12 @@ struct QuotesPopoverView: View {
         static let maxQuotesListHeight: CGFloat = 220
     }
 
-    @ObservedObject var presentationStore: MenuBarPresentationStore
+    @ObservedObject var viewModel: MenuBarViewModel
     let onOpenSettings: () -> Void
     let onQuit: () -> Void
 
     var body: some View {
-        let presentation = presentationStore.presentation
+        let presentation = viewModel.presentation
 
         VStack(spacing: 0) {
             Group {
@@ -172,10 +172,7 @@ private struct QuotePopoverRowView: View {
 
 #Preview("Quotes") {
     QuotesPopoverView(
-        presentationStore: MenuBarPresentationStore(
-            viewModel: PreviewMocks.menuBarViewModel,
-            settingsStore: MenuBarSettingsStore()
-        ),
+        viewModel: PreviewMocks.menuBarViewModel,
         onOpenSettings: {},
         onQuit: {}
     )
@@ -184,11 +181,8 @@ private struct QuotePopoverRowView: View {
 #Preview("Loading") {
     let settingsStore = MenuBarSettingsStore()
     QuotesPopoverView(
-        presentationStore: MenuBarPresentationStore(
-            viewModel: MenuBarViewModel(
-                provider: MockQuoteProvider(),
-                settingsStore: settingsStore
-            ),
+        viewModel: MenuBarViewModel(
+            provider: MockQuoteProvider(),
             settingsStore: settingsStore
         ),
         onOpenSettings: {},

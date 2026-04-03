@@ -2,11 +2,9 @@
 import SwiftUI
 
 struct MenuBarLabelView: View {
-    @ObservedObject var presentationStore: MenuBarPresentationStore
+    let presentation: MenuBarPresentation
 
     var body: some View {
-        let presentation = presentationStore.presentation
-
         Group {
             if !presentation.rows.isEmpty {
                 VerticalTickerView(items: presentation.rows, layout: presentation.layout)
@@ -38,11 +36,21 @@ struct MenuBarLabelView: View {
 
     private func contentIdentity(for presentation: MenuBarPresentation) -> String {
         if presentation.rows.isEmpty {
-            return "status:\(presentation.statusText)"
+            return "status:\(presentation.statusText):\(presentation.layout.itemWidth)"
         }
 
-        let rowIDs = presentation.rows.map(\.id).joined(separator: ",")
-        return "rows:\(rowIDs)"
+        let rowsSignature = presentation.rows
+            .map { row in
+                [
+                    row.id,
+                    row.columns.nameText ?? "",
+                    row.columns.symbolText ?? "",
+                    row.columns.priceText ?? "",
+                    row.columns.changeText ?? ""
+                ].joined(separator: "|")
+            }
+            .joined(separator: ",")
+        return "rows:\(rowsSignature):\(presentation.layout.itemWidth)"
     }
 }
 
@@ -188,10 +196,7 @@ private struct VerticalTickerView: View {
 
 #Preview {
     MenuBarLabelView(
-        presentationStore: MenuBarPresentationStore(
-            viewModel: PreviewMocks.menuBarViewModel,
-            settingsStore: MenuBarSettingsStore()
-        )
+        presentation: PreviewMocks.menuBarViewModel.presentation
     )
     .padding()
 }

@@ -3,7 +3,7 @@ import Foundation
 struct QuoteRefreshScheduler {
     private enum Policy {
         static let activeMarketIntervalNanoseconds: UInt64 = 3_000_000_000
-        static let inactiveMarketIntervalNanoseconds: UInt64 = 600_000_000_000
+        static let inactiveMarketIntervalNanoseconds: UInt64 = 10_000_000_000
         static let tradingDays: Set<Int> = [2, 3, 4, 5, 6]
         static let morningSessionStartHour = 9
         static let morningSessionStartMinute = 30

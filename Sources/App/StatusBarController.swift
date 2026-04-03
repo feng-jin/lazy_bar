@@ -6,7 +6,6 @@ import SwiftUI
 @MainActor
 final class StatusBarController: NSObject {
     private let menuBarViewModel: MenuBarViewModel
-    private let presentationStore: MenuBarPresentationStore
     private let openSettingsWindowHandler: () -> Void
     private let statusItem: NSStatusItem
     private var hostedLabelView: MouseTransparentHostingView<MenuBarLabelView>?
@@ -17,16 +16,11 @@ final class StatusBarController: NSObject {
 
     init(
         menuBarViewModel: MenuBarViewModel,
-        settingsStore: MenuBarSettingsStore,
         openSettingsWindow: @escaping () -> Void
     ) {
         self.menuBarViewModel = menuBarViewModel
-        self.presentationStore = MenuBarPresentationStore(
-            viewModel: menuBarViewModel,
-            settingsStore: settingsStore
-        )
         self.openSettingsWindowHandler = openSettingsWindow
-        let initialWidth = presentationStore.presentation.layout.itemWidth
+        let initialWidth = menuBarViewModel.presentation.layout.itemWidth
         statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
         super.init()
 
@@ -44,7 +38,7 @@ final class StatusBarController: NSObject {
 
         let labelView = MouseTransparentHostingView(
             rootView: MenuBarLabelView(
-                presentationStore: presentationStore
+                presentation: menuBarViewModel.presentation
             )
         )
         labelView.translatesAutoresizingMaskIntoConstraints = false
@@ -68,7 +62,7 @@ final class StatusBarController: NSObject {
     }
 
     private func observeWidthChanges() {
-        presentationStore.$presentation
+        menuBarViewModel.$presentation
             .sink { [weak self] _ in
                 self?.refreshStatusItemPresentation()
             }
@@ -76,16 +70,27 @@ final class StatusBarController: NSObject {
     }
 
     private func refreshStatusItemPresentation() {
-        let presentation = presentationStore.presentation
+        let presentation = menuBarViewModel.presentation
         statusItem.length = presentation.layout.itemWidth
 
-        hostedLabelView?.rootView = MenuBarLabelView(
-            presentationStore: presentationStore
-        )
-
         guard let button = statusItem.button else { return }
+        hostedLabelView?.rootView = MenuBarLabelView(
+            presentation: presentation
+        )
+        hostedLabelView?.setFrameSize(
+            NSSize(
+                width: presentation.layout.contentWidth,
+                height: MenuBarStyle.Metrics.contentHeight
+            )
+        )
+        hostedLabelView?.needsLayout = true
+        hostedLabelView?.layoutSubtreeIfNeeded()
+        hostedLabelView?.needsDisplay = true
+        hostedLabelView?.displayIfNeeded()
         button.needsLayout = true
         button.layoutSubtreeIfNeeded()
+        button.needsDisplay = true
+        button.displayIfNeeded()
     }
 
     @objc
@@ -102,11 +107,11 @@ final class StatusBarController: NSObject {
         }
 
         let panelController = QuotesPanelController(
-            contentWidth: presentationStore.presentation.layout.itemWidth,
+            contentWidth: menuBarViewModel.presentation.layout.itemWidth,
             maximumContentHeight: 360,
             rootView: AnyView(
                 QuotesPopoverView(
-                    presentationStore: presentationStore,
+                    viewModel: menuBarViewModel,
                     onOpenSettings: { [weak self] in
                         self?.openSettings()
                     },

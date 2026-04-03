@@ -27,7 +27,6 @@ struct LazyBarApp: App {
         settingsWindowController = SettingsWindowController(viewModel: menuBarSettingsViewModel)
         statusBarController = StatusBarController(
             menuBarViewModel: menuBarViewModel,
-            settingsStore: dependencies.menuBarSettingsStore,
             openSettingsWindow: { [settingsWindowController] in
                 settingsWindowController.show()
             }

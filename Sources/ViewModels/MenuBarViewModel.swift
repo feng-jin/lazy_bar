@@ -17,11 +17,13 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     @Published private(set) var viewState: ViewState
+    @Published private(set) var presentation: MenuBarPresentation
 
     private let provider: any QuoteProviding
     private let settingsStore: MenuBarSettingsStore
     private let refreshScheduler: QuoteRefreshScheduler
     private var hasLoaded = false
+    private var quoteSnapshotsBySymbol: [String: StockQuote] = [:]
     private var activeFetchTask: Task<[StockQuote], Error>?
     private var refreshTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
@@ -31,18 +33,38 @@ final class MenuBarViewModel: ObservableObject {
         settingsStore: MenuBarSettingsStore,
         refreshScheduler: QuoteRefreshScheduler = QuoteRefreshScheduler()
     ) {
+        let initialViewState: ViewState = settingsStore.settings.watchlist.isEmpty ? .emptyWatchlist : .loading
+
         self.provider = provider
         self.settingsStore = settingsStore
         self.refreshScheduler = refreshScheduler
-        viewState = settingsStore.settings.watchlist.isEmpty ? .emptyWatchlist : .loading
+        viewState = initialViewState
+        presentation = MenuBarPresentation(
+            viewState: initialViewState,
+            settings: settingsStore.settings
+        )
+
+        $viewState
+            .combineLatest(settingsStore.$settings)
+            .map(MenuBarPresentation.init(viewState:settings:))
+            .assign(to: &$presentation)
 
         settingsStore.$settings
-            .map(\.watchlist)
+            .map { settings in
+                settings.watchlist.map(\.symbol)
+            }
             .removeDuplicates()
             .dropFirst()
             .sink { [weak self] _ in
                 guard let self else { return }
-                Task { await self.handleWatchlistChange() }
+                Task { await self.handleSymbolListChange() }
+            }
+            .store(in: &cancellables)
+
+        settingsStore.$settings
+            .dropFirst()
+            .sink { [weak self] _ in
+                self?.reapplyCurrentSnapshotsIfPossible()
             }
             .store(in: &cancellables)
     }
@@ -98,13 +120,14 @@ final class MenuBarViewModel: ObservableObject {
         refreshTask = nil
     }
 
-    private func handleWatchlistChange() async {
+    private func handleSymbolListChange() async {
         guard !currentSymbols.isEmpty else {
             cancelActiveFetch()
             applyEmptyWatchlistState()
             return
         }
 
+        pruneSnapshots(excluding: Set(currentSymbols))
         await performLoad()
     }
 
@@ -118,12 +141,8 @@ final class MenuBarViewModel: ObservableObject {
         let quotes = await fetchQuotes(symbols: symbols, failureBehavior: .keepLastSuccessfulSnapshot)
         guard let quotes else { return }
 
-        let displayQuotes = displayQuotes(from: quotes)
-        if !displayQuotes.isEmpty {
-            viewState = .loaded(displayQuotes)
-        } else if currentDisplayQuotes.isEmpty {
-            viewState = .failed
-        }
+        replaceSnapshots(with: quotes, for: symbols)
+        reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: currentDisplayQuotes.isEmpty)
     }
 
     private func displayQuotes(from quotes: [StockQuote]) -> [DisplayQuote] {
@@ -131,7 +150,10 @@ final class MenuBarViewModel: ObservableObject {
             uniqueKeysWithValues: settingsStore.settings.watchlist.map { ($0.symbol, $0.companyName) }
         )
 
-        return quotes.map { quote in
+        let quotesBySymbol = Dictionary(uniqueKeysWithValues: quotes.map { ($0.symbol, $0) })
+
+        return settingsStore.settings.watchlist.compactMap { entry in
+            guard let quote = quotesBySymbol[entry.symbol] else { return nil }
             let displayName = watchlistNamesBySymbol[quote.symbol] ?? quote.companyName
             return DisplayQuote(quote: quote, preferredCompanyName: displayName)
         }
@@ -183,15 +205,41 @@ final class MenuBarViewModel: ObservableObject {
     private func applyEmptyWatchlistState() {
         stopRefresh()
         hasLoaded = true
+        quoteSnapshotsBySymbol = [:]
         viewState = .emptyWatchlist
     }
 
     private func applyLoadedQuotes(_ quotes: [StockQuote]?) {
         guard let quotes else { return }
 
-        let displayQuotes = displayQuotes(from: quotes)
-        viewState = displayQuotes.isEmpty ? .failed : .loaded(displayQuotes)
+        replaceSnapshots(with: quotes, for: currentSymbols)
+        reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: true)
         startRefreshIfNeeded()
         hasLoaded = true
+    }
+
+    private func reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: Bool = false) {
+        let quotes = currentSymbols.compactMap { quoteSnapshotsBySymbol[$0] }
+        let displayQuotes = displayQuotes(from: quotes)
+
+        if !displayQuotes.isEmpty {
+            viewState = .loaded(displayQuotes)
+        } else if fallbackToFailureWhenEmpty {
+            viewState = .failed
+        }
+    }
+
+    private func replaceSnapshots(with quotes: [StockQuote], for symbols: [String]) {
+        for symbol in symbols {
+            quoteSnapshotsBySymbol.removeValue(forKey: symbol)
+        }
+
+        for quote in quotes {
+            quoteSnapshotsBySymbol[quote.symbol] = quote
+        }
+    }
+
+    private func pruneSnapshots(excluding retainedSymbols: Set<String>) {
+        quoteSnapshotsBySymbol = quoteSnapshotsBySymbol.filter { retainedSymbols.contains($0.key) }
     }
 }
