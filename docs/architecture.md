@@ -26,7 +26,7 @@
   - `SettingsView`：设置弹窗中的菜单栏字段配置视图；当前拆成“监控股票”和“展示字段”两个 tab，其中展示字段 tab 用带说明的两列卡片式字段选择区承载字段勾选，“监控股票”tab 则收敛为单段式编辑区；顶部录入行继续使用原生 SwiftUI `TextField`。
   - `MenuBarStyle`：菜单栏与左键主面板共享的字体、间距、圆角等样式 token。
   - `MenuBarPresentation`：基于 `DisplayQuote` 和当前展示设置统一产出菜单栏 ticker 与左键股票列表共享的 rows 和 layout。
-  - `QuoteColumnLayoutCalculator` / `QuoteColumnsRowView`：菜单栏与左键主面板共享的展示层基础设施，统一负责列宽测量、列布局与行渲染。
+  - `QuoteColumnLayoutCalculator` / `QuoteColumnsRowView`：菜单栏与左键主面板共享的展示层基础设施，统一负责列宽测量、列布局与行渲染；其中身份列到股价列的前导间距也在这里集中定义。
   - 其余 `Shared` 视图负责通用展示组件。
 
 ## 当前数据流
@@ -36,7 +36,7 @@
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. `MenuBarViewModel` 首次加载时读取已保存的 watchlist 条目，并调用 `QuoteProviding.fetchQuotes(symbols:)` 获取 `[StockQuote]`，随后按 A 股交易时段动态选择刷新间隔重复拉取：交易时段每 3 秒一次，非交易时段最长每 10 分钟一次；若下一次 10 分钟轮询会跨过 09:30 或 13:00 这类交易恢复边界，则会提前在边界时刻唤醒并切回高频刷新。
 6. `MenuBarSettingsViewModel` 读取 `MenuBarSettingsStore`；首次启动时 watchlist 为空，设置页支持在草稿态里新增、删除、直接编辑代码和简称；保存前会统一做代码长度、重复值和空值校验。
-8. `MenuBarViewModel` 将 `[StockQuote]` 转成 `[DisplayQuote]`，并显式维护 `loading / emptyWatchlist / failed / loaded` 这类主面板与 bar 共用的界面状态；展示层再通过 `MenuBarPresentation` 按当前菜单栏展示设置统一生成共享 rows 与动态列宽。列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；当 watchlist 在加载中发生变更时，ViewModel 会取消旧一轮加载并只接受最新一轮请求结果，避免已删除或过期的股票重新写回 UI；定时刷新时直接替换最新展示数据，并在刷新失败时尽量保留上一份成功快照。
+8. `MenuBarViewModel` 将 `[StockQuote]` 转成 `[DisplayQuote]`，并显式维护 `loading / emptyWatchlist / failed / loaded` 这类主面板与 bar 共用的界面状态；展示层再通过 `MenuBarPresentation` 按当前菜单栏展示设置统一生成共享 rows 与动态列宽。列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；身份列到股价列之间的基准前导间距也由共享布局统一控制，避免价格位数变化时行内视觉间距波动过大；当 watchlist 在加载中发生变更时，ViewModel 会取消旧一轮加载并只接受最新一轮请求结果，避免已删除或过期的股票重新写回 UI；定时刷新时直接替换最新展示数据，并在刷新失败时尽量保留上一份成功快照。
 9. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据共享 presentation 中的 layout 同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用共享列行组件对齐渲染股票简称、股价与涨跌幅；左键点击后展示的主面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，上半部分继续复用相同的分栏展示数据、动态列宽与共享样式 token，下半部分只承载设置入口、退出和后续少量操作。
 10. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口。
 

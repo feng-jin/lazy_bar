@@ -8,6 +8,7 @@ struct QuoteColumnLayout: Equatable {
     let priceColumnWidth: CGFloat
     let changeColumnWidth: CGFloat
     let columnSpacing: CGFloat
+    let valueColumnLeadingSpacing: CGFloat
 
     var symbolWidthWithSpacing: CGFloat {
         guard symbolColumnWidth > 0 else { return 0 }
@@ -16,7 +17,7 @@ struct QuoteColumnLayout: Equatable {
 
     var priceWidthWithSpacing: CGFloat {
         guard priceColumnWidth > 0 else { return 0 }
-        return columnSpacing + priceColumnWidth
+        return valueColumnLeadingSpacing + priceColumnWidth
     }
 
     var changeWidthWithSpacing: CGFloat {
@@ -38,13 +39,14 @@ struct QuoteColumnLayoutCalculator {
         static let horizontalInset = MenuBarStyle.Metrics.statusItemHorizontalInset
         static let contentHorizontalInset: CGFloat = horizontalInset * 2
         static let columnSpacing = MenuBarStyle.Metrics.columnSpacing
-        static let statusFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.primaryFontSize, weight: .medium)
-        static let barTitleFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.primaryFontSize, weight: .semibold)
-        static let barSecondaryFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .semibold)
-        static let barValueFont = NSFont.monospacedDigitSystemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .medium)
-        static let listPrimaryFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.popoverPrimaryFontSize, weight: .semibold)
-        static let listSecondaryFont = NSFont.systemFont(ofSize: MenuBarStyle.Metrics.secondaryFontSize, weight: .semibold)
-        static let listValueFont = NSFont.monospacedDigitSystemFont(ofSize: MenuBarStyle.Metrics.popoverValueFontSize, weight: .medium)
+        static let valueColumnLeadingSpacing = MenuBarStyle.Metrics.valueColumnLeadingSpacing
+        static let statusFont = MenuBarStyle.statusTextNSFont(size: MenuBarStyle.Metrics.primaryFontSize)
+        static let barTitleFont = MenuBarStyle.primaryTextNSFont(size: MenuBarStyle.Metrics.primaryFontSize)
+        static let barSecondaryFont = MenuBarStyle.identitySecondaryTextNSFont(size: MenuBarStyle.Metrics.secondaryFontSize)
+        static let barValueFont = MenuBarStyle.valueTextNSFont(size: MenuBarStyle.Metrics.secondaryFontSize)
+        static let listPrimaryFont = MenuBarStyle.primaryTextNSFont(size: MenuBarStyle.Metrics.popoverPrimaryFontSize)
+        static let listSecondaryFont = MenuBarStyle.identitySecondaryTextNSFont(size: MenuBarStyle.Metrics.secondaryFontSize)
+        static let listValueFont = MenuBarStyle.valueTextNSFont(size: MenuBarStyle.Metrics.popoverValueFontSize)
     }
 
     static func layout(
@@ -100,7 +102,7 @@ struct QuoteColumnLayoutCalculator {
         }
 
         if priceColumnWidth > 0 {
-            contentWidth += Metrics.columnSpacing + ceil(priceColumnWidth)
+            contentWidth += Metrics.valueColumnLeadingSpacing + ceil(priceColumnWidth)
         }
 
         if changeColumnWidth > 0 {
@@ -119,7 +121,8 @@ struct QuoteColumnLayoutCalculator {
             symbolColumnWidth: ceil(symbolColumnWidth),
             priceColumnWidth: ceil(priceColumnWidth),
             changeColumnWidth: ceil(changeColumnWidth),
-            columnSpacing: Metrics.columnSpacing
+            columnSpacing: Metrics.columnSpacing,
+            valueColumnLeadingSpacing: Metrics.valueColumnLeadingSpacing
         )
     }
 

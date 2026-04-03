@@ -42,7 +42,7 @@ struct QuoteColumnsRowView: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .layoutPriority(3)
-                .frame(width: layout.nameColumnWidth, alignment: .leading)
+                .frame(width: layout.nameColumnWidth, alignment: .trailing)
 
             if let symbolText = columns.symbolText {
                 Text(symbolText)
@@ -50,7 +50,7 @@ struct QuoteColumnsRowView: View {
                     .foregroundStyle(MenuBarStyle.identityTextColor)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
-                    .frame(width: layout.symbolColumnWidth, alignment: .leading)
+                    .frame(width: layout.symbolColumnWidth, alignment: .trailing)
                     .padding(.leading, layout.columnSpacing)
             }
 
@@ -61,7 +61,7 @@ struct QuoteColumnsRowView: View {
                     .fixedSize(horizontal: true, vertical: false)
                     .frame(width: layout.priceColumnWidth, alignment: .trailing)
                     .layoutPriority(1)
-                    .padding(.leading, layout.columnSpacing)
+                    .padding(.leading, layout.valueColumnLeadingSpacing)
             }
 
             if let changeText = columns.changeText {
@@ -77,7 +77,7 @@ struct QuoteColumnsRowView: View {
         .frame(
             width: layout.contentWidth,
             height: height,
-            alignment: .leading
+            alignment: .trailing
         )
         .offset(y: verticalOffset)
     }
