@@ -15,7 +15,7 @@
   - `SinaQuoteProvider`：当前 live 环境默认使用的真实行情 provider；通过新浪财经未公开快照接口按股票代码批量拉取 A 股准实时行情。
   - `MockQuoteProvider`：保留用于 Preview、调试或未来兜底的 mock 数据源；每次拉取都会基于基准价生成小幅波动后的最新报价，并按请求的股票代码返回对应 mock 股票。
 - `ViewModels`
-  - `MenuBarViewModel`：负责菜单栏 ticker 数据源、下拉股票列表状态，以及定时刷新调度；不再直接承担字体测量或列宽计算。
+  - `MenuBarViewModel`：负责菜单栏 ticker 数据源、下拉股票列表状态，以及定时刷新调度；通过独立的 `QuoteRefreshScheduler` 计算 A 股交易时段下的刷新节奏；不再直接承担字体测量或列宽计算。
   - `MenuBarSettingsViewModel`：负责设置弹窗单一草稿模型、股票代码录入、watchlist 编辑校验，以及保存/取消动作。
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
@@ -32,9 +32,9 @@
 2. `AppDependencies` 组装 `SinaQuoteProvider` 与 `MenuBarSettingsStore`，并注入对应 ViewModel。
 3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
-5. `MenuBarViewModel` 首次加载时读取已保存的 watchlist 条目，并调用 `QuoteProviding.fetchQuotes(symbols:)` 获取 `[StockQuote]`，随后按固定间隔重复拉取。
+5. `MenuBarViewModel` 首次加载时读取已保存的 watchlist 条目，并调用 `QuoteProviding.fetchQuotes(symbols:)` 获取 `[StockQuote]`，随后按 A 股交易时段动态选择刷新间隔重复拉取：交易时段每 3 秒一次，非交易时段最长每 10 分钟一次；若下一次 10 分钟轮询会跨过 09:30 或 13:00 这类交易恢复边界，则会提前在边界时刻唤醒并切回高频刷新。
 6. `MenuBarSettingsViewModel` 读取 `MenuBarSettingsStore`；首次启动时 watchlist 为空，设置页支持在草稿态里新增、删除、直接编辑代码和简称；保存前会统一做代码长度、重复值和空值校验。
-8. `MenuBarViewModel` 将 `[StockQuote]` 转成 `[DisplayQuote]`，并显式维护 `loading / emptyWatchlist / failed / loaded` 这类主面板与 bar 共用的界面状态；展示层再按当前菜单栏展示设置生成共享列数据与动态列宽。列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；定时刷新时直接替换最新展示数据，并在刷新失败时尽量保留上一份成功快照。
+8. `MenuBarViewModel` 将 `[StockQuote]` 转成 `[DisplayQuote]`，并显式维护 `loading / emptyWatchlist / failed / loaded` 这类主面板与 bar 共用的界面状态；展示层再按当前菜单栏展示设置生成共享列数据与动态列宽。列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；当 watchlist 在加载中发生变更时，ViewModel 会取消旧一轮加载并只接受最新一轮请求结果，避免已删除或过期的股票重新写回 UI；定时刷新时直接替换最新展示数据，并在刷新失败时尽量保留上一份成功快照。
 9. `StatusBarController` 将 `MenuBarLabelView` 托管到 `NSStatusBarButton` 内部，并根据共享列布局同步调整状态栏按钮宽度；`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并使用共享列行组件对齐渲染股票简称、股价与涨跌幅；左键点击后展示的主面板直接观察与 bar 相同的 `MenuBarViewModel` 和 `MenuBarSettingsStore`，上半部分继续复用相同的分栏展示数据、动态列宽与共享样式 token，下半部分只承载设置入口、退出和后续少量操作。
 10. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口。
 
@@ -44,7 +44,7 @@
 - `DisplayQuote` 是展示格式化边界。菜单栏 ticker 与左键列表所需的名称、价格、涨跌幅、更新时间以及共享列数据应尽量集中在这里或 ViewModel；当 watchlist 中配置了自定义股票简称时，由 ViewModel 在这里统一覆盖展示名称。
 - 共享列布局计算与共享行渲染属于展示层基础设施，应放在 View/展示辅助层，而不是回流到业务 ViewModel 中。
 - `MenuBarDisplaySettings` 和 `MenuBarSettingsStore` 负责展示配置、watchlist 配置与持久化；watchlist 不再依赖 bundle 内置 JSON，首次启动为空列表，后续由用户手动维护。`MenuBarSettingsViewModel` 负责设置弹窗中的单一草稿模型、股票代码编辑、校验，以及保存/取消动作，避免把设置状态散落在 View 里。
-- ViewModel 负责加载状态、错误降级和 UI 所需状态协调；不要让 View 通过空数组、布尔值等零散信号自行猜测“空 watchlist / 加载中 / 拉取失败”。
+- ViewModel 负责加载状态、错误降级和 UI 所需状态协调；交易时段轮询节奏由独立调度器计算；不要让 View 通过空数组、布尔值等零散信号自行猜测“空 watchlist / 加载中 / 拉取失败”。
 - App 层负责 AppKit 壳层装配，不承接业务逻辑、网络逻辑或行情状态计算。
 - View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；bar 与左键主面板的视觉常量应集中管理并优先共享，设置页中的 tab 切换、字段说明、卡片态样式和布局编排也应尽量集中在 View 层，不把展示结构判断下沉到业务层；滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现。
 
@@ -57,5 +57,5 @@
 
 ## 后续优先扩展点
 - 真实行情接入：从 `Providers` 和 `AppDependencies` 开始扩展。
-- 刷新调度：当前由 `MenuBarViewModel` 负责 mock 定时拉取；后续接真实行情时，可继续保留在 ViewModel 或抽到独立协调层，但不要直接写进 View。
+- 刷新调度：当前由 `MenuBarViewModel` 负责按 A 股交易时段在 3 秒和 10 分钟两档之间切换轮询；后续若要接入更细粒度的交易所日历、午休/节假日规则或推送式链路，可继续保留在 ViewModel 或抽到独立协调层，但不要直接写进 View。
 - watchlist 与设置配置：当前统一通过设置弹窗和 `MenuBarSettingsStore` 维护；后续继续扩展时仍要保持状态与数据边界不下沉到 View。

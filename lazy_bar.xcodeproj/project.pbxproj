@@ -14,6 +14,7 @@
 		A00000000000000000000007 /* MockQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000031 /* MockQuoteProvider.swift */; };
 		A00000000000000000000008 /* QuoteProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000032 /* QuoteProviding.swift */; };
 		A00000000000000000000009 /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000041 /* MenuBarViewModel.swift */; };
+		A0000000000000000000000A /* QuoteRefreshScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000042 /* QuoteRefreshScheduler.swift */; };
 		A0000000000000000000000C /* MenuBarLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000052 /* MenuBarLabelView.swift */; };
 		A00000000000000000000014 /* SectionCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000072 /* SectionCardView.swift */; };
 		A00000000000000000000015 /* PreviewMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000081 /* PreviewMocks.swift */; };
@@ -46,6 +47,7 @@
 		A00000000000000000000032 /* QuoteProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteProviding.swift; sourceTree = "<group>"; };
 		A00000000000000000000038 /* SinaQuoteProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinaQuoteProvider.swift; sourceTree = "<group>"; };
 		A00000000000000000000041 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
+		A00000000000000000000042 /* QuoteRefreshScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteRefreshScheduler.swift; sourceTree = "<group>"; };
 		A00000000000000000000043 /* MenuBarSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsViewModel.swift; sourceTree = "<group>"; };
 		A00000000000000000000052 /* MenuBarLabelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarLabelView.swift; sourceTree = "<group>"; };
 		A00000000000000000000053 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 			children = (
 				A00000000000000000000043 /* MenuBarSettingsViewModel.swift */,
 				A00000000000000000000041 /* MenuBarViewModel.swift */,
+				A00000000000000000000042 /* QuoteRefreshScheduler.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -263,6 +266,7 @@
 				A00000000000000000000008 /* QuoteProviding.swift in Sources */,
 				A00000000000000000000037 /* SinaQuoteProvider.swift in Sources */,
 				A00000000000000000000009 /* MenuBarViewModel.swift in Sources */,
+				A0000000000000000000000A /* QuoteRefreshScheduler.swift in Sources */,
 				A0000000000000000000000C /* MenuBarLabelView.swift in Sources */,
 				A00000000000000000000057 /* QuoteColumnLayout.swift in Sources */,
 				A00000000000000000000059 /* QuoteColumnsRowView.swift in Sources */,
