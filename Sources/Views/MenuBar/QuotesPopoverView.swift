@@ -7,22 +7,16 @@ struct QuotesPopoverView: View {
         static let maxQuotesListHeight: CGFloat = 220
     }
 
-    @ObservedObject var viewModel: MenuBarViewModel
-    @ObservedObject var settingsStore: MenuBarSettingsStore
+    @ObservedObject var presentationStore: MenuBarPresentationStore
     let onOpenSettings: () -> Void
     let onQuit: () -> Void
 
     var body: some View {
-        let presentation = MenuBarPresentation(
-            displayQuotes: viewModel.displayQuotes,
-            settings: settingsStore.settings,
-            statusText: viewModel.statusText
-        )
+        let presentation = presentationStore.presentation
 
         VStack(spacing: 0) {
             Group {
-                switch viewModel.viewState {
-                case .loaded:
+                if !presentation.rows.isEmpty {
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(Array(presentation.rows.enumerated()), id: \.element.id) { index, row in
@@ -41,8 +35,8 @@ struct QuotesPopoverView: View {
                     }
                     .scrollIndicators(.hidden)
                     .frame(maxHeight: LayoutMetrics.maxQuotesListHeight)
-                case .loading, .emptyWatchlist, .failed:
-                    stateView(text: viewModel.statusText)
+                } else {
+                    stateView(text: presentation.statusText)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -178,20 +172,25 @@ private struct QuotePopoverRowView: View {
 
 #Preview("Quotes") {
     QuotesPopoverView(
-        viewModel: PreviewMocks.menuBarViewModel,
-        settingsStore: MenuBarSettingsStore(),
+        presentationStore: MenuBarPresentationStore(
+            viewModel: PreviewMocks.menuBarViewModel,
+            settingsStore: MenuBarSettingsStore()
+        ),
         onOpenSettings: {},
         onQuit: {}
     )
 }
 
 #Preview("Loading") {
+    let settingsStore = MenuBarSettingsStore()
     QuotesPopoverView(
-        viewModel: MenuBarViewModel(
-            provider: MockQuoteProvider(),
-            settingsStore: MenuBarSettingsStore()
+        presentationStore: MenuBarPresentationStore(
+            viewModel: MenuBarViewModel(
+                provider: MockQuoteProvider(),
+                settingsStore: settingsStore
+            ),
+            settingsStore: settingsStore
         ),
-        settingsStore: MenuBarSettingsStore(),
         onOpenSettings: {},
         onQuit: {}
     )

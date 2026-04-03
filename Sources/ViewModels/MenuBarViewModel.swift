@@ -79,24 +79,6 @@ final class MenuBarViewModel: ObservableObject {
         hasLoaded = true
     }
 
-    var displayQuotes: [DisplayQuote] {
-        guard case let .loaded(quotes) = viewState else { return [] }
-        return quotes
-    }
-
-    var statusText: String {
-        switch viewState {
-        case .loading:
-            return "加载中..."
-        case .emptyWatchlist:
-            return "请先添加股票"
-        case .failed:
-            return "行情不可用"
-        case .loaded:
-            return ""
-        }
-    }
-
     private func startRefreshIfNeeded() {
         guard refreshTask == nil else { return }
 
@@ -139,7 +121,7 @@ final class MenuBarViewModel: ObservableObject {
         let displayQuotes = displayQuotes(from: quotes)
         if !displayQuotes.isEmpty {
             viewState = .loaded(displayQuotes)
-        } else if self.displayQuotes.isEmpty {
+        } else if currentDisplayQuotes.isEmpty {
             viewState = .failed
         }
     }
@@ -180,7 +162,7 @@ final class MenuBarViewModel: ObservableObject {
         } catch {
             guard activeFetchTask == task else { return nil }
 
-            if failureBehavior == .showFailure || displayQuotes.isEmpty {
+            if failureBehavior == .showFailure || currentDisplayQuotes.isEmpty {
                 viewState = .failed
             }
             activeFetchTask = nil
@@ -191,6 +173,11 @@ final class MenuBarViewModel: ObservableObject {
     private func cancelActiveFetch() {
         activeFetchTask?.cancel()
         activeFetchTask = nil
+    }
+
+    private var currentDisplayQuotes: [DisplayQuote] {
+        guard case let .loaded(quotes) = viewState else { return [] }
+        return quotes
     }
 
     private func applyEmptyWatchlistState() {

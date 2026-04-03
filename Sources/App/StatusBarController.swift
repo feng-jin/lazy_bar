@@ -6,7 +6,7 @@ import SwiftUI
 @MainActor
 final class StatusBarController: NSObject {
     private let menuBarViewModel: MenuBarViewModel
-    private let settingsStore: MenuBarSettingsStore
+    private let presentationStore: MenuBarPresentationStore
     private let openSettingsWindowHandler: () -> Void
     private let statusItem: NSStatusItem
     private var hostedLabelView: MouseTransparentHostingView<MenuBarLabelView>?
@@ -21,13 +21,12 @@ final class StatusBarController: NSObject {
         openSettingsWindow: @escaping () -> Void
     ) {
         self.menuBarViewModel = menuBarViewModel
-        self.settingsStore = settingsStore
+        self.presentationStore = MenuBarPresentationStore(
+            viewModel: menuBarViewModel,
+            settingsStore: settingsStore
+        )
         self.openSettingsWindowHandler = openSettingsWindow
-        let initialWidth = MenuBarPresentation(
-            displayQuotes: menuBarViewModel.displayQuotes,
-            settings: settingsStore.settings,
-            statusText: menuBarViewModel.statusText
-        ).layout.itemWidth
+        let initialWidth = presentationStore.presentation.layout.itemWidth
         statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
         super.init()
 
@@ -45,8 +44,7 @@ final class StatusBarController: NSObject {
 
         let labelView = MouseTransparentHostingView(
             rootView: MenuBarLabelView(
-                viewModel: menuBarViewModel,
-                settingsStore: settingsStore
+                presentationStore: presentationStore
             )
         )
         labelView.translatesAutoresizingMaskIntoConstraints = false
@@ -66,25 +64,28 @@ final class StatusBarController: NSObject {
         ])
 
         hostedLabelView = labelView
-        updateStatusItemWidth()
+        refreshStatusItemPresentation()
     }
 
     private func observeWidthChanges() {
-        menuBarViewModel.$viewState
+        presentationStore.$presentation
             .sink { [weak self] _ in
-                self?.updateStatusItemWidth()
-            }
-            .store(in: &cancellables)
-
-        settingsStore.$settings
-            .sink { [weak self] _ in
-                self?.updateStatusItemWidth()
+                self?.refreshStatusItemPresentation()
             }
             .store(in: &cancellables)
     }
 
-    private func updateStatusItemWidth() {
-        statusItem.length = currentPresentation().layout.itemWidth
+    private func refreshStatusItemPresentation() {
+        let presentation = presentationStore.presentation
+        statusItem.length = presentation.layout.itemWidth
+
+        hostedLabelView?.rootView = MenuBarLabelView(
+            presentationStore: presentationStore
+        )
+
+        guard let button = statusItem.button else { return }
+        button.needsLayout = true
+        button.layoutSubtreeIfNeeded()
     }
 
     @objc
@@ -101,12 +102,11 @@ final class StatusBarController: NSObject {
         }
 
         let panelController = QuotesPanelController(
-            contentWidth: currentPresentation().layout.itemWidth,
+            contentWidth: presentationStore.presentation.layout.itemWidth,
             maximumContentHeight: 360,
             rootView: AnyView(
                 QuotesPopoverView(
-                    viewModel: menuBarViewModel,
-                    settingsStore: settingsStore,
+                    presentationStore: presentationStore,
                     onOpenSettings: { [weak self] in
                         self?.openSettings()
                     },
@@ -125,14 +125,6 @@ final class StatusBarController: NSObject {
         quotesPanelController?.close()
         quotesPanelController = nil
         removeClickMonitors()
-    }
-
-    private func currentPresentation() -> MenuBarPresentation {
-        MenuBarPresentation(
-            displayQuotes: menuBarViewModel.displayQuotes,
-            settings: settingsStore.settings,
-            statusText: menuBarViewModel.statusText
-        )
     }
 
     private func installClickMonitors() {

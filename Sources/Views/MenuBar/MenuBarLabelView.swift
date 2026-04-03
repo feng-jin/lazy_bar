@@ -2,15 +2,10 @@
 import SwiftUI
 
 struct MenuBarLabelView: View {
-    @ObservedObject var viewModel: MenuBarViewModel
-    @ObservedObject var settingsStore: MenuBarSettingsStore
+    @ObservedObject var presentationStore: MenuBarPresentationStore
 
     var body: some View {
-        let presentation = MenuBarPresentation(
-            displayQuotes: viewModel.displayQuotes,
-            settings: settingsStore.settings,
-            statusText: viewModel.statusText
-        )
+        let presentation = presentationStore.presentation
 
         Group {
             if !presentation.rows.isEmpty {
@@ -183,8 +178,10 @@ private struct VerticalTickerView: View {
 
 #Preview {
     MenuBarLabelView(
-        viewModel: PreviewMocks.menuBarViewModel,
-        settingsStore: MenuBarSettingsStore()
+        presentationStore: MenuBarPresentationStore(
+            viewModel: PreviewMocks.menuBarViewModel,
+            settingsStore: MenuBarSettingsStore()
+        )
     )
     .padding()
 }
