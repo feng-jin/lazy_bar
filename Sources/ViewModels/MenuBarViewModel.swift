@@ -1,9 +1,15 @@
 /// 管理菜单栏标签所需的紧凑行情状态。
 import Combine
 import Foundation
+import os
 
 @MainActor
 final class MenuBarViewModel: ObservableObject {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
+        category: "MenuBarViewModel"
+    )
+
     private enum FailureBehavior {
         case showFailure
         case keepLastSuccessfulSnapshot
@@ -22,6 +28,7 @@ final class MenuBarViewModel: ObservableObject {
     private let provider: any QuoteProviding
     private let settingsStore: MenuBarSettingsStore
     private let refreshScheduler: QuoteRefreshScheduler
+    private var lastObservedSymbols: [String]
     private var hasLoaded = false
     private var quoteSnapshotsBySymbol: [String: StockQuote] = [:]
     private var activeFetchTask: Task<[StockQuote], Error>?
@@ -38,6 +45,7 @@ final class MenuBarViewModel: ObservableObject {
         self.provider = provider
         self.settingsStore = settingsStore
         self.refreshScheduler = refreshScheduler
+        lastObservedSymbols = settingsStore.settings.watchlist.map(\.symbol)
         viewState = initialViewState
         presentation = MenuBarPresentation(
             viewState: initialViewState,
@@ -48,6 +56,25 @@ final class MenuBarViewModel: ObservableObject {
             .combineLatest(settingsStore.$settings)
             .map(MenuBarPresentation.init(viewState:settings:))
             .assign(to: &$presentation)
+
+        $viewState
+            .sink { viewState in
+                Self.logger.debug("viewState -> \(Self.debugDescription(for: viewState), privacy: .public)")
+            }
+            .store(in: &cancellables)
+
+        $presentation
+            .sink { presentation in
+                Self.logger.debug(
+                    """
+                    presentation -> rows=\(presentation.rows.count, privacy: .public) \
+                    status=\(presentation.statusText, privacy: .public) \
+                    width=\(presentation.layout.itemWidth, privacy: .public) \
+                    signature=\(Self.presentationSignature(for: presentation), privacy: .public)
+                    """
+                )
+            }
+            .store(in: &cancellables)
 
         settingsStore.$settings
             .map { settings in
@@ -63,8 +90,13 @@ final class MenuBarViewModel: ObservableObject {
 
         settingsStore.$settings
             .dropFirst()
-            .sink { [weak self] _ in
-                self?.reapplyCurrentSnapshotsIfPossible()
+            .sink { [weak self] settings in
+                guard let self else { return }
+                let symbols = settings.watchlist.map(\.symbol)
+                defer { lastObservedSymbols = symbols }
+
+                guard symbols == lastObservedSymbols else { return }
+                reapplyCurrentSnapshotsIfPossible()
             }
             .store(in: &cancellables)
     }
@@ -75,14 +107,14 @@ final class MenuBarViewModel: ObservableObject {
 
     func loadIfNeeded() async {
         guard !hasLoaded else { return }
-        await performLoad()
+        await performLoad(showLoadingState: true)
     }
 
     func load() async {
-        await performLoad()
+        await performLoad(showLoadingState: true)
     }
 
-    private func performLoad() async {
+    private func performLoad(showLoadingState: Bool) async {
         let symbols = currentSymbols
 
         guard !symbols.isEmpty else {
@@ -91,7 +123,9 @@ final class MenuBarViewModel: ObservableObject {
             return
         }
 
-        viewState = .loading
+        if showLoadingState {
+            viewState = .loading
+        }
         let quotes = await fetchQuotes(symbols: symbols, failureBehavior: .showFailure)
         applyLoadedQuotes(quotes)
     }
@@ -128,7 +162,8 @@ final class MenuBarViewModel: ObservableObject {
         }
 
         pruneSnapshots(excluding: Set(currentSymbols))
-        await performLoad()
+        reapplyCurrentSnapshotsIfPossible()
+        await performLoad(showLoadingState: currentDisplayQuotes.isEmpty)
     }
 
     private func refreshQuotes() async {
@@ -241,5 +276,37 @@ final class MenuBarViewModel: ObservableObject {
 
     private func pruneSnapshots(excluding retainedSymbols: Set<String>) {
         quoteSnapshotsBySymbol = quoteSnapshotsBySymbol.filter { retainedSymbols.contains($0.key) }
+    }
+
+    private static func debugDescription(for viewState: ViewState) -> String {
+        switch viewState {
+        case .loading:
+            return "loading"
+        case .emptyWatchlist:
+            return "emptyWatchlist"
+        case .failed:
+            return "failed"
+        case let .loaded(quotes):
+            let symbols = quotes.map(\.symbol).joined(separator: ",")
+            return "loaded(count: \(quotes.count), symbols: [\(symbols)])"
+        }
+    }
+
+    private static func presentationSignature(for presentation: MenuBarPresentation) -> String {
+        if presentation.rows.isEmpty {
+            return "status:\(presentation.statusText)"
+        }
+
+        return presentation.rows
+            .map { row in
+                [
+                    row.id,
+                    row.columns.nameText ?? "",
+                    row.columns.symbolText ?? "",
+                    row.columns.priceText ?? "",
+                    row.columns.changeText ?? ""
+                ].joined(separator: "|")
+            }
+            .joined(separator: ",")
     }
 }

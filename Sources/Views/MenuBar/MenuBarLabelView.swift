@@ -1,10 +1,26 @@
 /// 菜单栏上的紧凑 ticker 标签，在固定宽度内上下循环播放股票摘要。
+import os
 import SwiftUI
 
 struct MenuBarLabelView: View {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
+        category: "MenuBarLabelView"
+    )
+
     let presentation: MenuBarPresentation
 
     var body: some View {
+        let identity = contentIdentity(for: presentation)
+        let _ = Self.logger.debug(
+            """
+            body rows=\(presentation.rows.count, privacy: .public) \
+            status=\(presentation.statusText, privacy: .public) \
+            width=\(presentation.layout.itemWidth, privacy: .public) \
+            identity=\(identity, privacy: .public)
+            """
+        )
+
         Group {
             if !presentation.rows.isEmpty {
                 VerticalTickerView(items: presentation.rows, layout: presentation.layout)
@@ -15,7 +31,7 @@ struct MenuBarLabelView: View {
                 )
             }
         }
-        .id(contentIdentity(for: presentation))
+        .id(identity)
         .frame(
             width: presentation.layout.contentWidth,
             height: MenuBarStyle.Metrics.contentHeight,
@@ -172,25 +188,16 @@ private struct VerticalTickerView: View {
             return
         }
 
-        if let currentItemID,
-           let matchedIndex = items.firstIndex(where: { $0.id == currentItemID }) {
-            currentIndex = matchedIndex
-        } else if currentIndex >= items.count {
-            currentIndex = 0
-        }
-        currentItemID = currentItem?.id
-
         if items.count == 1 {
             animationTask?.cancel()
             animationTask = nil
+            currentIndex = 0
+            currentItemID = items.first?.id
             offsetY = 0
             return
         }
 
-        guard animationTask != nil else {
-            restartAnimation()
-            return
-        }
+        restartAnimation()
     }
 }
 

@@ -1,10 +1,16 @@
 /// 管理状态栏按钮与左键主面板。
 import AppKit
 import Combine
+import os
 import SwiftUI
 
 @MainActor
 final class StatusBarController: NSObject {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
+        category: "StatusBarController"
+    )
+
     private let menuBarViewModel: MenuBarViewModel
     private let openSettingsWindowHandler: () -> Void
     private let statusItem: NSStatusItem
@@ -58,19 +64,27 @@ final class StatusBarController: NSObject {
         ])
 
         hostedLabelView = labelView
-        refreshStatusItemPresentation()
+        refreshStatusItemPresentation(using: menuBarViewModel.presentation)
     }
 
     private func observeWidthChanges() {
         menuBarViewModel.$presentation
-            .sink { [weak self] _ in
-                self?.refreshStatusItemPresentation()
+            .sink { [weak self] presentation in
+                self?.refreshStatusItemPresentation(using: presentation)
             }
             .store(in: &cancellables)
     }
 
-    private func refreshStatusItemPresentation() {
-        let presentation = menuBarViewModel.presentation
+    private func refreshStatusItemPresentation(using presentation: MenuBarPresentation) {
+        Self.logger.debug(
+            """
+            refreshStatusItemPresentation rows=\(presentation.rows.count, privacy: .public) \
+            status=\(presentation.statusText, privacy: .public) \
+            itemWidth=\(presentation.layout.itemWidth, privacy: .public) \
+            contentWidth=\(presentation.layout.contentWidth, privacy: .public) \
+            signature=\(Self.presentationSignature(for: presentation), privacy: .public)
+            """
+        )
         statusItem.length = presentation.layout.itemWidth
 
         guard let button = statusItem.button else { return }
@@ -91,6 +105,24 @@ final class StatusBarController: NSObject {
         button.layoutSubtreeIfNeeded()
         button.needsDisplay = true
         button.displayIfNeeded()
+    }
+
+    private static func presentationSignature(for presentation: MenuBarPresentation) -> String {
+        if presentation.rows.isEmpty {
+            return "status:\(presentation.statusText)"
+        }
+
+        return presentation.rows
+            .map { row in
+                [
+                    row.id,
+                    row.columns.nameText ?? "",
+                    row.columns.symbolText ?? "",
+                    row.columns.priceText ?? "",
+                    row.columns.changeText ?? ""
+                ].joined(separator: "|")
+            }
+            .joined(separator: ",")
     }
 
     @objc
