@@ -185,7 +185,7 @@ private struct VerticalTickerView: View {
 
 #Preview {
     MenuBarLabelView(
-        presentation: PreviewMocks.menuBarViewModel.presentation
+        presentation: MenuBarPresentation(renderState: PreviewMocks.menuBarViewModel.renderState)
     )
     .padding()
 }

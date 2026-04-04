@@ -12,7 +12,7 @@ struct QuotesPopoverView: View {
     let onQuit: () -> Void
 
     var body: some View {
-        let presentation = viewModel.presentation
+        let presentation = MenuBarPresentation(renderState: viewModel.renderState)
 
         VStack(spacing: 0) {
             Group {

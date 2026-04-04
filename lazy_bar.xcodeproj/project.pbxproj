@@ -30,9 +30,9 @@
 		A0000000000000000000001F /* QuotesPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000054 /* QuotesPopoverView.swift */; };
 		A00000000000000000000057 /* QuoteColumnLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000058 /* QuoteColumnLayout.swift */; };
 		A00000000000000000000059 /* QuoteColumnsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000005A /* QuoteColumnsRowView.swift */; };
+		A00000000000000000000102 /* MenuBarRenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000103 /* MenuBarRenderState.swift */; };
 		A00000000000000000000037 /* SinaQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000038 /* SinaQuoteProvider.swift */; };
 		A00000000000000000000092 /* MenuBarSettingsStoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000093 /* MenuBarSettingsStoring.swift */; };
-		A00000000000000000000094 /* MenuBarPresentationBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000095 /* MenuBarPresentationBuilder.swift */; };
 		A00000000000000000000096 /* MenuBarContentState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000097 /* MenuBarContentState.swift */; };
 		A00000000000000000000098 /* QuoteSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000099 /* QuoteSession.swift */; };
 /* End PBXBuildFile section */
@@ -62,11 +62,11 @@
 		A00000000000000000000056 /* MenuBarPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPresentation.swift; sourceTree = "<group>"; };
 		A00000000000000000000058 /* QuoteColumnLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteColumnLayout.swift; sourceTree = "<group>"; };
 		A0000000000000000000005A /* QuoteColumnsRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteColumnsRowView.swift; sourceTree = "<group>"; };
+		A00000000000000000000103 /* MenuBarRenderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarRenderState.swift; sourceTree = "<group>"; };
 		A00000000000000000000072 /* SectionCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCardView.swift; sourceTree = "<group>"; };
 		A00000000000000000000081 /* PreviewMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewMocks.swift; sourceTree = "<group>"; };
 		A00000000000000000000091 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
 		A00000000000000000000093 /* MenuBarSettingsStoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsStoring.swift; sourceTree = "<group>"; };
-		A00000000000000000000095 /* MenuBarPresentationBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPresentationBuilder.swift; sourceTree = "<group>"; };
 		A00000000000000000000097 /* MenuBarContentState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentState.swift; sourceTree = "<group>"; };
 		A00000000000000000000099 /* QuoteSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteSession.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -159,7 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000097 /* MenuBarContentState.swift */,
-				A00000000000000000000095 /* MenuBarPresentationBuilder.swift */,
+				A00000000000000000000103 /* MenuBarRenderState.swift */,
 				A00000000000000000000043 /* MenuBarSettingsViewModel.swift */,
 				A00000000000000000000041 /* MenuBarViewModel.swift */,
 				A00000000000000000000099 /* QuoteSession.swift */,
@@ -288,8 +288,8 @@
 				A0000000000000000000000C /* MenuBarLabelView.swift in Sources */,
 				A0000000000000000000000D /* MenuBarStyle.swift in Sources */,
 				A0000000000000000000000E /* MenuBarPresentation.swift in Sources */,
-				A00000000000000000000094 /* MenuBarPresentationBuilder.swift in Sources */,
 				A00000000000000000000096 /* MenuBarContentState.swift in Sources */,
+				A00000000000000000000102 /* MenuBarRenderState.swift in Sources */,
 				A00000000000000000000098 /* QuoteSession.swift in Sources */,
 				A00000000000000000000057 /* QuoteColumnLayout.swift in Sources */,
 				A00000000000000000000059 /* QuoteColumnsRowView.swift in Sources */,

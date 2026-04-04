@@ -16,16 +16,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     struct DraftState: Equatable {
         var settings: MenuBarDisplaySettings
-        var watchlistRows: [WatchlistDraftRow]
-
-        init(settings: MenuBarDisplaySettings) {
-            self.settings = settings
-            self.watchlistRows = settings.watchlist.map { WatchlistDraftRow(entry: $0) }
-        }
-
-        mutating func syncSettingsWatchlist() {
-            settings.watchlist = watchlistRows.map(\.entry)
-        }
+        var watchlistRowIDs: [WatchlistDraftRow.ID]
     }
 
     @Published private(set) var settings: MenuBarDisplaySettings
@@ -38,7 +29,10 @@ final class MenuBarSettingsViewModel: ObservableObject {
     init(store: any MenuBarSettingsStoring) {
         self.store = store
         settings = store.settings
-        draft = DraftState(settings: store.settings)
+        draft = DraftState(
+            settings: store.settings,
+            watchlistRowIDs: store.settings.watchlist.map { _ in UUID() }
+        )
 
         store.settingsPublisher
             .sink { [weak self] settings in
@@ -62,89 +56,65 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     func save() {
-        let sanitizedSettings = currentDraftSettings().sanitized()
+        let sanitizedSettings = draft.settings.sanitized()
         guard sanitizedSettings.validationMessage() == nil else { return }
         store.update(sanitizedSettings)
     }
 
-    func binding(for field: MenuBarDisplaySettings.Field) -> BindingValue<Bool> {
-        BindingValue(
-            get: { [weak self] in
-                self?.draft.settings.showsField(field) ?? false
-            },
-            set: { [weak self] isVisible in
-                self?.draft.settings.setField(field, isVisible: isVisible)
-            }
-        )
+    func showsField(_ field: MenuBarDisplaySettings.Field) -> Bool {
+        draft.settings.showsField(field)
     }
 
-    func bindingForNewEntrySymbol() -> BindingValue<String> {
-        BindingValue(
-            get: { [weak self] in
-                self?.newEntry.symbol ?? ""
-            },
-            set: { [weak self] input in
-                self?.newEntry.symbol = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
-            }
-        )
+    func setField(_ field: MenuBarDisplaySettings.Field, isVisible: Bool) {
+        draft.settings.setField(field, isVisible: isVisible)
     }
 
-    func bindingForWatchlistEntryCompanyName(id: WatchlistDraftRow.ID) -> BindingValue<String> {
-        BindingValue(
-            get: { [weak self] in
-                self?.draft.watchlistRows.first(where: { $0.id == id })?.entry.companyName ?? ""
-            },
-            set: { [weak self] input in
-                self?.updateWatchlistEntryCompanyName(id: id, input: input)
-            }
-        )
+    func newEntrySymbol() -> String {
+        newEntry.symbol
     }
 
-    func bindingForWatchlistEntrySymbol(id: WatchlistDraftRow.ID) -> BindingValue<String> {
-        BindingValue(
-            get: { [weak self] in
-                self?.draft.watchlistRows.first(where: { $0.id == id })?.entry.symbol ?? ""
-            },
-            set: { [weak self] input in
-                self?.updateWatchlistEntrySymbol(id: id, input: input)
-            }
-        )
+    func setNewEntrySymbol(_ input: String) {
+        newEntry.symbol = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
+    }
+
+    var watchlistRows: [WatchlistDraftRow] {
+        zip(draft.watchlistRowIDs, draft.settings.watchlist).map { id, entry in
+            WatchlistDraftRow(id: id, entry: entry)
+        }
     }
 
     func appendNewEntry() {
         let candidate = sanitizedNewEntry
         guard candidate.symbol.count == 6 else { return }
-        guard !currentDraftSettings().containsWatchlistSymbol(candidate.symbol) else { return }
-        draft.watchlistRows.append(WatchlistDraftRow(entry: candidate))
-        draft.syncSettingsWatchlist()
+        guard !draft.settings.containsWatchlistSymbol(candidate.symbol) else { return }
+        draft.settings.watchlist.append(candidate)
+        draft.watchlistRowIDs.append(UUID())
         newEntry = WatchlistEntry(symbol: "", companyName: "")
     }
 
     func removeWatchlistEntry(id: WatchlistDraftRow.ID) {
-        draft.watchlistRows.removeAll { $0.id == id }
-        draft.syncSettingsWatchlist()
+        guard let index = draft.watchlistRowIDs.firstIndex(of: id) else { return }
+        draft.watchlistRowIDs.remove(at: index)
+        draft.settings.watchlist.remove(at: index)
     }
 
     func updateWatchlistEntryCompanyName(id: WatchlistDraftRow.ID, input: String) {
-        guard let index = draft.watchlistRows.firstIndex(where: { $0.id == id }) else { return }
-        draft.watchlistRows[index].entry.companyName = input
-        draft.syncSettingsWatchlist()
+        guard let index = watchlistIndex(for: id) else { return }
+        draft.settings.watchlist[index].companyName = input
     }
 
     func updateWatchlistEntrySymbol(id: WatchlistDraftRow.ID, input: String) {
-        guard let index = draft.watchlistRows.firstIndex(where: { $0.id == id }) else { return }
+        guard let index = watchlistIndex(for: id) else { return }
         let normalizedSymbol = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
-        draft.watchlistRows[index].entry.symbol = normalizedSymbol
+        draft.settings.watchlist[index].symbol = normalizedSymbol
 
-        if draft.watchlistRows[index].entry.companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            draft.watchlistRows[index].entry.companyName = normalizedSymbol
+        if draft.settings.watchlist[index].companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            draft.settings.watchlist[index].companyName = normalizedSymbol
         }
-
-        draft.syncSettingsWatchlist()
     }
 
     var hasUnsavedChanges: Bool {
-        currentDraftSettings().sanitized() != settings
+        draft.settings.sanitized() != settings
     }
 
     var canSave: Bool {
@@ -154,30 +124,39 @@ final class MenuBarSettingsViewModel: ObservableObject {
     var canAddWatchlistEntry: Bool {
         let candidate = sanitizedNewEntry
         guard candidate.symbol.count == 6 else { return false }
-        return !currentDraftSettings().containsWatchlistSymbol(candidate.symbol)
+        return !draft.settings.containsWatchlistSymbol(candidate.symbol)
     }
 
     var validationMessage: String? {
-        currentDraftSettings().validationMessage()
+        draft.settings.validationMessage()
     }
 
     private var sanitizedNewEntry: WatchlistEntry {
         newEntry.sanitized
     }
 
-    private func currentDraftSettings() -> MenuBarDisplaySettings {
-        var settings = draft.settings
-        settings.watchlist = draft.watchlistRows.map(\.entry)
-        return settings
-    }
-
     private func resetDraft(from settings: MenuBarDisplaySettings) {
-        draft = DraftState(settings: settings)
+        draft = DraftState(
+            settings: settings,
+            watchlistRowIDs: settings.watchlist.map { _ in UUID() }
+        )
         newEntry = WatchlistEntry(symbol: "", companyName: "")
     }
-}
 
-struct BindingValue<Value> {
-    let get: () -> Value
-    let set: (Value) -> Void
+    private func watchlistIndex(for id: WatchlistDraftRow.ID) -> Int? {
+        draft.watchlistRowIDs.firstIndex(of: id)
+    }
+
+    private func watchlistEntry(id: WatchlistDraftRow.ID) -> WatchlistEntry? {
+        guard let index = watchlistIndex(for: id) else { return nil }
+        return draft.settings.watchlist[index]
+    }
+
+    func watchlistEntryCompanyName(id: WatchlistDraftRow.ID) -> String {
+        watchlistEntry(id: id)?.companyName ?? ""
+    }
+
+    func watchlistEntrySymbol(id: WatchlistDraftRow.ID) -> String {
+        watchlistEntry(id: id)?.symbol ?? ""
+    }
 }

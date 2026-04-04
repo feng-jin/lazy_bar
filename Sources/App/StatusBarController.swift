@@ -17,11 +17,8 @@ final class StatusBarController: NSObject {
 
     private let menuBarViewModel: MenuBarViewModel
     private let openSettingsWindowHandler: () -> Void
-    private let statusItem: NSStatusItem
-    private var hostedLabelView: MouseTransparentHostingView<MenuBarLabelView>?
-    private var quotesPanelController: QuotesPanelController?
-    private var localClickMonitor: Any?
-    private var globalClickMonitor: Any?
+    private let statusItemHost: StatusItemHost
+    private let panelCoordinator = QuotesPanelCoordinator()
     private var cancellables: Set<AnyCancellable> = []
 
     init(
@@ -30,51 +27,19 @@ final class StatusBarController: NSObject {
     ) {
         self.menuBarViewModel = menuBarViewModel
         self.openSettingsWindowHandler = openSettingsWindow
-        let initialWidth = menuBarViewModel.presentation.layout.itemWidth
-        statusItem = NSStatusBar.system.statusItem(withLength: initialWidth)
+        statusItemHost = StatusItemHost(
+            initialPresentation: MenuBarPresentation(renderState: menuBarViewModel.renderState)
+        )
         super.init()
 
-        configureStatusItem()
+        statusItemHost.configure(target: self, action: #selector(handleStatusItemClick(_:)))
         observePresentationChanges()
     }
 
-    private func configureStatusItem() {
-        guard let button = statusItem.button else { return }
-        button.target = self
-        button.action = #selector(handleStatusItemClick(_:))
-        button.sendAction(on: [.leftMouseUp])
-        button.title = ""
-        button.image = nil
-
-        let labelView = MouseTransparentHostingView(
-            rootView: MenuBarLabelView(
-                presentation: menuBarViewModel.presentation
-            )
-        )
-        labelView.translatesAutoresizingMaskIntoConstraints = false
-
-        button.addSubview(labelView)
-        NSLayoutConstraint.activate([
-            labelView.leadingAnchor.constraint(
-                equalTo: button.leadingAnchor,
-                constant: MenuBarStyle.Metrics.statusItemHorizontalInset
-            ),
-            labelView.trailingAnchor.constraint(
-                equalTo: button.trailingAnchor,
-                constant: -MenuBarStyle.Metrics.statusItemHorizontalInset
-            ),
-            labelView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-            labelView.heightAnchor.constraint(equalToConstant: MenuBarStyle.Metrics.contentHeight)
-        ])
-
-        hostedLabelView = labelView
-        syncPresentation(menuBarViewModel.presentation)
-    }
-
     private func observePresentationChanges() {
-        menuBarViewModel.$presentation
-            .sink { [weak self] presentation in
-                self?.syncPresentation(presentation)
+        menuBarViewModel.$renderState
+            .sink { [weak self] renderState in
+                self?.syncPresentation(MenuBarPresentation(renderState: renderState))
             }
             .store(in: &cancellables)
     }
@@ -89,12 +54,91 @@ final class StatusBarController: NSObject {
             signature=\(presentation.debugSignature, privacy: .public)
             """
         )
+        guard let button = statusItemHost.button else { return }
+        statusItemHost.sync(presentation: presentation)
+        panelCoordinator.updateLayout(
+            contentWidth: presentation.layout.itemWidth,
+            maximumContentHeight: Metrics.maximumPanelContentHeight,
+            relativeTo: button
+        )
+    }
+
+    @objc
+    private func handleStatusItemClick(_ sender: AnyObject?) {
+        toggleQuotesPanel()
+    }
+
+    private func toggleQuotesPanel() {
+        guard let button = statusItemHost.button else { return }
+
+        panelCoordinator.toggle(
+            contentWidth: MenuBarPresentation(renderState: menuBarViewModel.renderState).layout.itemWidth,
+            maximumContentHeight: Metrics.maximumPanelContentHeight,
+            relativeTo: button,
+            statusItemFrameProvider: { [weak self] in
+                self?.statusItemHost.buttonFrameOnScreen() ?? .zero
+            },
+            rootView: AnyView(
+                QuotesPopoverView(
+                    viewModel: menuBarViewModel,
+                    onOpenSettings: { [weak self] in
+                        self?.openSettings()
+                    },
+                    onQuit: { [weak self] in
+                        self?.quitApp()
+                    }
+                )
+            )
+        )
+    }
+
+    @objc
+    private func openSettings() {
+        panelCoordinator.close()
+        openSettingsWindowHandler()
+    }
+
+    @objc
+    private func quitApp() {
+        NSApp.terminate(nil)
+    }
+}
+
+private final class MouseTransparentHostingView<Content: View>: NSHostingView<Content> {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
+}
+
+@MainActor
+private final class StatusItemHost {
+    let statusItem: NSStatusItem
+    private var hostedLabelView: MouseTransparentHostingView<MenuBarLabelView>?
+
+    init(initialPresentation: MenuBarPresentation) {
+        statusItem = NSStatusBar.system.statusItem(withLength: initialPresentation.layout.itemWidth)
+        installLabelView(initialPresentation: initialPresentation)
+        sync(presentation: initialPresentation)
+    }
+
+    var button: NSStatusBarButton? {
+        statusItem.button
+    }
+
+    func configure(target: AnyObject, action: Selector) {
+        guard let button = statusItem.button else { return }
+        button.target = target
+        button.action = action
+        button.sendAction(on: [.leftMouseUp])
+        button.title = ""
+        button.image = nil
+    }
+
+    func sync(presentation: MenuBarPresentation) {
         statusItem.length = presentation.layout.itemWidth
 
         guard let button = statusItem.button else { return }
-        hostedLabelView?.rootView = MenuBarLabelView(
-            presentation: presentation
-        )
+        hostedLabelView?.rootView = MenuBarLabelView(presentation: presentation)
         hostedLabelView?.setFrameSize(
             NSSize(
                 width: presentation.layout.contentWidth,
@@ -109,133 +153,149 @@ final class StatusBarController: NSObject {
         button.layoutSubtreeIfNeeded()
         button.needsDisplay = true
         button.displayIfNeeded()
-
-        quotesPanelController?.updateLayout(
-            contentWidth: presentation.layout.itemWidth,
-            maximumContentHeight: Metrics.maximumPanelContentHeight,
-            relativeTo: button
-        )
     }
 
-    @objc
-    private func handleStatusItemClick(_ sender: AnyObject?) {
-        toggleQuotesPanel()
+    func buttonFrameOnScreen() -> NSRect {
+        guard let button, let window = button.window else { return .zero }
+        let rectInWindow = button.convert(button.bounds, to: nil)
+        return window.convertToScreen(rectInWindow)
     }
 
-    private func toggleQuotesPanel() {
+    private func installLabelView(initialPresentation: MenuBarPresentation) {
         guard let button = statusItem.button else { return }
 
-        if quotesPanelController?.isVisible == true {
-            closeQuotesPanel()
+        let labelView = MouseTransparentHostingView(
+            rootView: MenuBarLabelView(presentation: initialPresentation)
+        )
+        labelView.translatesAutoresizingMaskIntoConstraints = false
+        button.addSubview(labelView)
+
+        NSLayoutConstraint.activate([
+            labelView.leadingAnchor.constraint(
+                equalTo: button.leadingAnchor,
+                constant: MenuBarStyle.Metrics.statusItemHorizontalInset
+            ),
+            labelView.trailingAnchor.constraint(
+                equalTo: button.trailingAnchor,
+                constant: -MenuBarStyle.Metrics.statusItemHorizontalInset
+            ),
+            labelView.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+            labelView.heightAnchor.constraint(equalToConstant: MenuBarStyle.Metrics.contentHeight)
+        ])
+
+        hostedLabelView = labelView
+    }
+}
+
+@MainActor
+private final class QuotesPanelCoordinator {
+    private var panelController: QuotesPanelController?
+    private var outsideClickMonitor: OutsideClickMonitor?
+
+    func toggle(
+        contentWidth: CGFloat,
+        maximumContentHeight: CGFloat,
+        relativeTo button: NSStatusBarButton,
+        statusItemFrameProvider: @escaping () -> NSRect,
+        rootView: AnyView
+    ) {
+        if panelController?.isVisible == true {
+            close()
             return
         }
 
         let panelController = QuotesPanelController(
-            contentWidth: menuBarViewModel.presentation.layout.itemWidth,
-            maximumContentHeight: Metrics.maximumPanelContentHeight,
-            rootView: AnyView(
-                QuotesPopoverView(
-                    viewModel: menuBarViewModel,
-                    onOpenSettings: { [weak self] in
-                        self?.openSettings()
-                    },
-                    onQuit: { [weak self] in
-                        self?.quitApp()
-                    }
-                )
-            )
+            contentWidth: contentWidth,
+            maximumContentHeight: maximumContentHeight,
+            rootView: rootView
         )
         panelController.show(relativeTo: button)
-        quotesPanelController = panelController
-        installClickMonitors()
+        self.panelController = panelController
+        outsideClickMonitor = OutsideClickMonitor(
+            panelFrameProvider: { [weak panelController] in
+                panelController?.frame ?? .zero
+            },
+            statusItemFrameProvider: statusItemFrameProvider,
+            onOutsideClick: { [weak self] in
+                self?.close()
+            }
+        )
     }
 
-    private func closeQuotesPanel() {
-        quotesPanelController?.close()
-        quotesPanelController = nil
-        removeClickMonitors()
+    func updateLayout(
+        contentWidth: CGFloat,
+        maximumContentHeight: CGFloat,
+        relativeTo button: NSStatusBarButton
+    ) {
+        panelController?.updateLayout(
+            contentWidth: contentWidth,
+            maximumContentHeight: maximumContentHeight,
+            relativeTo: button
+        )
     }
 
-    private func installClickMonitors() {
-        removeClickMonitors()
+    func close() {
+        panelController?.close()
+        panelController = nil
+        outsideClickMonitor = nil
+    }
+}
 
+@MainActor
+private final class OutsideClickMonitor {
+    private var localClickMonitor: Any?
+    private var globalClickMonitor: Any?
+
+    init(
+        panelFrameProvider: @escaping () -> NSRect,
+        statusItemFrameProvider: @escaping () -> NSRect,
+        onOutsideClick: @escaping () -> Void
+    ) {
         localClickMonitor = NSEvent.addLocalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
-        ) { [weak self] event in
-            guard let self else { return event }
-            guard self.quotesPanelController?.isVisible == true else { return event }
-            guard !self.isEventInsideQuotesPanelOrStatusItem(event) else { return event }
-            self.closeQuotesPanel()
+        ) { event in
+            let point = Self.pointOnScreen(for: event)
+            let isInsidePanel = panelFrameProvider().contains(point)
+            let isInsideStatusItem = statusItemFrameProvider().contains(point)
+
+            if !isInsidePanel && !isInsideStatusItem {
+                onOutsideClick()
+            }
+
             return event
         }
 
         globalClickMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
-        ) { [weak self] _ in
-            guard let self else { return }
-            guard self.quotesPanelController?.isVisible == true else { return }
-            let mouseLocation = NSEvent.mouseLocation
-            guard !self.isPointInsideQuotesPanelOrStatusItem(mouseLocation) else { return }
-            self.closeQuotesPanel()
+        ) { _ in
+            let point = NSEvent.mouseLocation
+            let isInsidePanel = panelFrameProvider().contains(point)
+            let isInsideStatusItem = statusItemFrameProvider().contains(point)
+
+            if !isInsidePanel && !isInsideStatusItem {
+                onOutsideClick()
+            }
         }
     }
 
-    private func removeClickMonitors() {
+    deinit {
         if let localClickMonitor {
             NSEvent.removeMonitor(localClickMonitor)
-            self.localClickMonitor = nil
         }
 
         if let globalClickMonitor {
             NSEvent.removeMonitor(globalClickMonitor)
-            self.globalClickMonitor = nil
         }
     }
 
-    private func isEventInsideQuotesPanelOrStatusItem(_ event: NSEvent) -> Bool {
-        let pointOnScreen: NSPoint
-
+    private static func pointOnScreen(for event: NSEvent) -> NSPoint {
         if let window = event.window {
-            pointOnScreen = window.convertToScreen(
+            return window.convertToScreen(
                 NSRect(origin: event.locationInWindow, size: .zero)
             ).origin
-        } else {
-            pointOnScreen = NSEvent.mouseLocation
         }
 
-        return isPointInsideQuotesPanelOrStatusItem(pointOnScreen)
-    }
-
-    private func isPointInsideQuotesPanelOrStatusItem(_ point: NSPoint) -> Bool {
-        if let panelFrame = quotesPanelController?.frame, panelFrame.contains(point) {
-            return true
-        }
-
-        guard let button = statusItem.button else { return false }
-        return statusItemButtonFrame(for: button).contains(point)
-    }
-
-    private func statusItemButtonFrame(for button: NSStatusBarButton) -> NSRect {
-        guard let window = button.window else { return .zero }
-        let rectInWindow = button.convert(button.bounds, to: nil)
-        return window.convertToScreen(rectInWindow)
-    }
-
-    @objc
-    private func openSettings() {
-        closeQuotesPanel()
-        openSettingsWindowHandler()
-    }
-
-    @objc
-    private func quitApp() {
-        NSApp.terminate(nil)
-    }
-}
-
-private final class MouseTransparentHostingView<Content: View>: NSHostingView<Content> {
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        nil
+        return NSEvent.mouseLocation
     }
 }
 

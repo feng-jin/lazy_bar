@@ -8,6 +8,14 @@ struct MenuBarPresentation: Equatable {
     let layout: QuoteColumnLayout
     let statusText: String
 
+    init(renderState: MenuBarRenderState) {
+        self.init(
+            displayQuotes: renderState.displayQuotes,
+            settings: renderState.settings,
+            statusText: renderState.statusText
+        )
+    }
+
     init(
         displayQuotes: [DisplayQuote],
         settings: MenuBarDisplaySettings,

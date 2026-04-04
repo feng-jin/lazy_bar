@@ -11,7 +11,7 @@ final class MenuBarViewModel: ObservableObject {
     )
 
     @Published private(set) var viewState: MenuBarContentState
-    @Published private(set) var presentation: MenuBarPresentation
+    @Published private(set) var renderState: MenuBarRenderState
 
     private let settingsStore: any MenuBarSettingsStoring
     private let quoteSession: QuoteSession
@@ -21,8 +21,7 @@ final class MenuBarViewModel: ObservableObject {
 
     init(
         settingsStore: any MenuBarSettingsStoring,
-        quoteSession: QuoteSession,
-        presentationBuilder: MenuBarPresentationBuilder = MenuBarPresentationBuilder()
+        quoteSession: QuoteSession
     ) {
         let initialViewState: MenuBarContentState = settingsStore.settings.watchlist.isEmpty ? .emptyWatchlist : .loading
 
@@ -30,20 +29,20 @@ final class MenuBarViewModel: ObservableObject {
         self.quoteSession = quoteSession
         lastObservedSymbols = settingsStore.settings.watchlist.map(\.symbol)
         viewState = initialViewState
-        presentation = presentationBuilder.build(
+        renderState = Self.makeRenderState(
             contentState: initialViewState,
             settings: settingsStore.settings
         )
 
         $viewState
             .combineLatest(settingsStore.settingsPublisher)
-            .map { [presentationBuilder] viewState, settings in
-                presentationBuilder.build(
+            .map { viewState, settings in
+                Self.makeRenderState(
                     contentState: viewState,
                     settings: settings
                 )
             }
-            .assign(to: &$presentation)
+            .assign(to: &$renderState)
 
         $viewState
             .sink { viewState in
@@ -51,14 +50,13 @@ final class MenuBarViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        $presentation
-            .sink { presentation in
+        $renderState
+            .sink { renderState in
                 Self.logger.debug(
                     """
-                    presentation -> rows=\(presentation.rows.count, privacy: .public) \
-                    status=\(presentation.statusText, privacy: .public) \
-                    width=\(presentation.layout.itemWidth, privacy: .public) \
-                    signature=\(Self.presentationSignature(for: presentation), privacy: .public)
+                    renderState -> quotes=\(renderState.displayQuotes.count, privacy: .public) \
+                    status=\(renderState.statusText, privacy: .public) \
+                    signature=\(Self.renderStateSignature(for: renderState), privacy: .public)
                     """
                 )
             }
@@ -231,7 +229,32 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
-    private static func presentationSignature(for presentation: MenuBarPresentation) -> String {
-        presentation.debugSignature
+    private static func makeRenderState(
+        contentState: MenuBarContentState,
+        settings: MenuBarDisplaySettings
+    ) -> MenuBarRenderState {
+        MenuBarRenderState(
+            contentState: contentState,
+            settings: settings
+        )
+    }
+
+    private static func renderStateSignature(for renderState: MenuBarRenderState) -> String {
+        if renderState.displayQuotes.isEmpty {
+            return "status:\(renderState.statusText)"
+        }
+
+        return renderState.displayQuotes
+            .map { quote in
+                let columns = quote.columns(settings: renderState.settings)
+                return [
+                    quote.symbol,
+                    columns.nameText ?? "",
+                    columns.symbolText ?? "",
+                    columns.priceText ?? "",
+                    columns.changeText ?? ""
+                ].joined(separator: "|")
+            }
+            .joined(separator: ",")
     }
 }
