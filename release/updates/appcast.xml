@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Lazy Bar</title>
+        <item>
+            <title>0.1.0</title>
+            <pubDate>Sat, 04 Apr 2026 18:48:07 +0800</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://feng-jin.github.io/lazy_bar_update/Lazy%20Bar-0.1.0-test.zip" length="1953780" type="application/octet-stream" sparkle:edSignature="SUov1RACkKsaeDc4vON0hDXIYBuWyFEfpxgjsKXH1EsZpjHjP5qNLez983GeZVya02CzmYJGmGe5zSzspYhtBg=="/>
+        </item>
+    </channel>
+</rss>
