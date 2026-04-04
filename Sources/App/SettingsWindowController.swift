@@ -15,12 +15,17 @@ final class SettingsWindowController: NSWindowController {
         category: "SettingsWindowController"
     )
 
-    private let hostingView: NSHostingView<SettingsView>
+    private let hostingView: NSHostingView<AnyView>
     private let viewModel: MenuBarSettingsViewModel
+    private var rootViewIdentity = UUID()
 
     init(viewModel: MenuBarSettingsViewModel) {
         self.viewModel = viewModel
-        let rootView = Self.makeRootView(viewModel: viewModel, onClose: nil)
+        let rootView = Self.makeRootView(
+            viewModel: viewModel,
+            rootViewIdentity: rootViewIdentity,
+            onClose: nil
+        )
         hostingView = NSHostingView(rootView: rootView)
         hostingView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -52,6 +57,7 @@ final class SettingsWindowController: NSWindowController {
 
         hostingView.rootView = Self.makeRootView(
             viewModel: viewModel,
+            rootViewIdentity: rootViewIdentity,
             onClose: { [weak self] in
                 self?.close()
             }
@@ -73,8 +79,10 @@ final class SettingsWindowController: NSWindowController {
 
         NSApp.activate()
         viewModel.beginEditing()
+        rootViewIdentity = UUID()
         hostingView.rootView = Self.makeRootView(
             viewModel: viewModel,
+            rootViewIdentity: rootViewIdentity,
             onClose: { [weak self] in
                 self?.close()
             }
@@ -112,11 +120,15 @@ final class SettingsWindowController: NSWindowController {
 
     private static func makeRootView(
         viewModel: MenuBarSettingsViewModel,
+        rootViewIdentity: UUID,
         onClose: (() -> Void)?
-    ) -> SettingsView {
-        SettingsView(
-            viewModel: viewModel,
-            onClose: onClose
+    ) -> AnyView {
+        AnyView(
+            SettingsView(
+                viewModel: viewModel,
+                onClose: onClose
+            )
+            .id(rootViewIdentity)
         )
     }
 }
