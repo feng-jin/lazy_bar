@@ -25,4 +25,34 @@ struct MenuBarPresentation: Equatable {
         )
         self.statusText = statusText
     }
+
+    var debugSignature: String {
+        if rows.isEmpty {
+            return "status:\(statusText)"
+        }
+
+        return rowsSignature
+    }
+
+    var contentIdentity: String {
+        if rows.isEmpty {
+            return "status:\(statusText):\(layout.itemWidth)"
+        }
+
+        return "rows:\(rowsSignature):\(layout.itemWidth)"
+    }
+
+    private var rowsSignature: String {
+        rows
+            .map { row in
+                [
+                    row.id,
+                    row.columns.nameText ?? "",
+                    row.columns.symbolText ?? "",
+                    row.columns.priceText ?? "",
+                    row.columns.changeText ?? ""
+                ].joined(separator: "|")
+            }
+            .joined(separator: ",")
+    }
 }

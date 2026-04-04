@@ -83,26 +83,10 @@ final class MenuBarViewModel: ObservableObject {
             .store(in: &cancellables)
 
         settingsStore.settingsPublisher
-            .map { settings in
-                settings.watchlist.map(\.symbol)
-            }
-            .removeDuplicates()
-            .dropFirst()
-            .sink { [weak self] _ in
-                guard let self else { return }
-                Task { await self.handleSymbolListChange() }
-            }
-            .store(in: &cancellables)
-
-        settingsStore.settingsPublisher
             .dropFirst()
             .sink { [weak self] settings in
                 guard let self else { return }
-                let symbols = settings.watchlist.map(\.symbol)
-                defer { lastObservedSymbols = symbols }
-
-                guard symbols == lastObservedSymbols else { return }
-                reapplyCurrentSnapshotsIfPossible()
+                Task { await self.handleSettingsChange(settings) }
             }
             .store(in: &cancellables)
     }
@@ -160,14 +144,27 @@ final class MenuBarViewModel: ObservableObject {
         refreshTask = nil
     }
 
-    private func handleSymbolListChange() async {
-        guard !currentSymbols.isEmpty else {
+    private func handleSettingsChange(_ settings: MenuBarDisplaySettings) async {
+        let symbols = settings.watchlist.map(\.symbol)
+        let previousSymbols = lastObservedSymbols
+        lastObservedSymbols = symbols
+
+        guard symbols != previousSymbols else {
+            reapplyCurrentSnapshotsIfPossible()
+            return
+        }
+
+        await handleSymbolListChange(symbols: symbols)
+    }
+
+    private func handleSymbolListChange(symbols: [String]) async {
+        guard !symbols.isEmpty else {
             cancelActiveFetch()
             applyEmptyWatchlistState()
             return
         }
 
-        pruneSnapshots(excluding: Set(currentSymbols))
+        pruneSnapshots(excluding: Set(symbols))
         reapplyCurrentSnapshotsIfPossible()
         await performLoad(showLoadingState: currentDisplayQuotes.isEmpty)
     }
@@ -314,20 +311,6 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     private static func presentationSignature(for presentation: MenuBarPresentation) -> String {
-        if presentation.rows.isEmpty {
-            return "status:\(presentation.statusText)"
-        }
-
-        return presentation.rows
-            .map { row in
-                [
-                    row.id,
-                    row.columns.nameText ?? "",
-                    row.columns.symbolText ?? "",
-                    row.columns.priceText ?? "",
-                    row.columns.changeText ?? ""
-                ].joined(separator: "|")
-            }
-            .joined(separator: ",")
+        presentation.debugSignature
     }
 }

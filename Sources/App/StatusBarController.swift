@@ -6,6 +6,10 @@ import SwiftUI
 
 @MainActor
 final class StatusBarController: NSObject {
+    private enum Metrics {
+        static let maximumPanelContentHeight: CGFloat = 360
+    }
+
     private static let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
         category: "StatusBarController"
@@ -31,7 +35,7 @@ final class StatusBarController: NSObject {
         super.init()
 
         configureStatusItem()
-        observeWidthChanges()
+        observePresentationChanges()
     }
 
     private func configureStatusItem() {
@@ -64,25 +68,25 @@ final class StatusBarController: NSObject {
         ])
 
         hostedLabelView = labelView
-        refreshStatusItemPresentation(using: menuBarViewModel.presentation)
+        syncPresentation(menuBarViewModel.presentation)
     }
 
-    private func observeWidthChanges() {
+    private func observePresentationChanges() {
         menuBarViewModel.$presentation
             .sink { [weak self] presentation in
-                self?.refreshStatusItemPresentation(using: presentation)
+                self?.syncPresentation(presentation)
             }
             .store(in: &cancellables)
     }
 
-    private func refreshStatusItemPresentation(using presentation: MenuBarPresentation) {
+    private func syncPresentation(_ presentation: MenuBarPresentation) {
         Self.logger.debug(
             """
-            refreshStatusItemPresentation rows=\(presentation.rows.count, privacy: .public) \
+            syncPresentation rows=\(presentation.rows.count, privacy: .public) \
             status=\(presentation.statusText, privacy: .public) \
             itemWidth=\(presentation.layout.itemWidth, privacy: .public) \
             contentWidth=\(presentation.layout.contentWidth, privacy: .public) \
-            signature=\(Self.presentationSignature(for: presentation), privacy: .public)
+            signature=\(presentation.debugSignature, privacy: .public)
             """
         )
         statusItem.length = presentation.layout.itemWidth
@@ -105,24 +109,12 @@ final class StatusBarController: NSObject {
         button.layoutSubtreeIfNeeded()
         button.needsDisplay = true
         button.displayIfNeeded()
-    }
 
-    private static func presentationSignature(for presentation: MenuBarPresentation) -> String {
-        if presentation.rows.isEmpty {
-            return "status:\(presentation.statusText)"
-        }
-
-        return presentation.rows
-            .map { row in
-                [
-                    row.id,
-                    row.columns.nameText ?? "",
-                    row.columns.symbolText ?? "",
-                    row.columns.priceText ?? "",
-                    row.columns.changeText ?? ""
-                ].joined(separator: "|")
-            }
-            .joined(separator: ",")
+        quotesPanelController?.updateLayout(
+            contentWidth: presentation.layout.itemWidth,
+            maximumContentHeight: Metrics.maximumPanelContentHeight,
+            relativeTo: button
+        )
     }
 
     @objc
@@ -140,7 +132,7 @@ final class StatusBarController: NSObject {
 
         let panelController = QuotesPanelController(
             contentWidth: menuBarViewModel.presentation.layout.itemWidth,
-            maximumContentHeight: 360,
+            maximumContentHeight: Metrics.maximumPanelContentHeight,
             rootView: AnyView(
                 QuotesPopoverView(
                     viewModel: menuBarViewModel,
@@ -322,6 +314,24 @@ private final class QuotesPanelController: NSWindowController {
             max(Metrics.minimumContentHeight, ceil(fittedHeight))
         )
         return clampedHeight
+    }
+
+    func updateLayout(
+        contentWidth: CGFloat,
+        maximumContentHeight: CGFloat,
+        relativeTo button: NSStatusBarButton
+    ) {
+        let measuredHeight = Self.measuredContentHeight(
+            for: hostingView,
+            width: contentWidth,
+            maximumContentHeight: maximumContentHeight
+        )
+        let contentSize = NSSize(width: contentWidth, height: measuredHeight)
+        hostingView.frame = NSRect(origin: .zero, size: contentSize)
+        panel.setContentSize(contentSize)
+
+        guard isVisible else { return }
+        show(relativeTo: button)
     }
 
     func show(relativeTo button: NSStatusBarButton) {

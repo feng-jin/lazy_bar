@@ -89,6 +89,28 @@ final class MenuBarSettingsViewModel: ObservableObject {
         )
     }
 
+    func bindingForWatchlistEntryCompanyName(id: WatchlistDraftRow.ID) -> BindingValue<String> {
+        BindingValue(
+            get: { [weak self] in
+                self?.draft.watchlistRows.first(where: { $0.id == id })?.entry.companyName ?? ""
+            },
+            set: { [weak self] input in
+                self?.updateWatchlistEntryCompanyName(id: id, input: input)
+            }
+        )
+    }
+
+    func bindingForWatchlistEntrySymbol(id: WatchlistDraftRow.ID) -> BindingValue<String> {
+        BindingValue(
+            get: { [weak self] in
+                self?.draft.watchlistRows.first(where: { $0.id == id })?.entry.symbol ?? ""
+            },
+            set: { [weak self] input in
+                self?.updateWatchlistEntrySymbol(id: id, input: input)
+            }
+        )
+    }
+
     func appendNewEntry() {
         let candidate = sanitizedNewEntry
         guard candidate.symbol.count == 6 else { return }

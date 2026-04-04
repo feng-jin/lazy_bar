@@ -291,19 +291,13 @@ struct SettingsView: View {
         HStack(spacing: 12) {
             TextField(
                 "股票简称",
-                text: Binding(
-                    get: { currentRow(id: row.id)?.entry.companyName ?? "" },
-                    set: { viewModel.updateWatchlistEntryCompanyName(id: row.id, input: $0) }
-                )
+                text: binding(from: viewModel.bindingForWatchlistEntryCompanyName(id: row.id))
             )
             .textFieldStyle(.plain)
 
             TextField(
                 "代码",
-                text: Binding(
-                    get: { currentRow(id: row.id)?.entry.symbol ?? "" },
-                    set: { viewModel.updateWatchlistEntrySymbol(id: row.id, input: $0) }
-                )
+                text: binding(from: viewModel.bindingForWatchlistEntrySymbol(id: row.id))
             )
             .textFieldStyle(.plain)
             .font(.system(.body, design: .monospaced))
@@ -335,12 +329,6 @@ struct SettingsView: View {
             get: source.get,
             set: source.set
         )
-    }
-
-    private func currentRow(
-        id: MenuBarSettingsViewModel.WatchlistDraftRow.ID
-    ) -> MenuBarSettingsViewModel.WatchlistDraftRow? {
-        viewModel.draft.watchlistRows.first(where: { $0.id == id })
     }
 
     private func close() {

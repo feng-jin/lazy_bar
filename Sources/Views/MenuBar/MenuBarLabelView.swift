@@ -11,7 +11,7 @@ struct MenuBarLabelView: View {
     let presentation: MenuBarPresentation
 
     var body: some View {
-        let identity = contentIdentity(for: presentation)
+        let identity = presentation.contentIdentity
         let _ = Self.logger.debug(
             """
             body rows=\(presentation.rows.count, privacy: .public) \
@@ -50,24 +50,6 @@ struct MenuBarLabelView: View {
             )
     }
 
-    private func contentIdentity(for presentation: MenuBarPresentation) -> String {
-        if presentation.rows.isEmpty {
-            return "status:\(presentation.statusText):\(presentation.layout.itemWidth)"
-        }
-
-        let rowsSignature = presentation.rows
-            .map { row in
-                [
-                    row.id,
-                    row.columns.nameText ?? "",
-                    row.columns.symbolText ?? "",
-                    row.columns.priceText ?? "",
-                    row.columns.changeText ?? ""
-                ].joined(separator: "|")
-            }
-            .joined(separator: ",")
-        return "rows:\(rowsSignature):\(presentation.layout.itemWidth)"
-    }
 }
 
 private struct VerticalTickerView: View {
