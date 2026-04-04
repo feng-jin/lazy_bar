@@ -26,7 +26,7 @@ Examples:
 Environment overrides:
   SPARKLE_CHECKOUT_PATH      Sparkle checkout path. If omitted, the script will try to find one in DerivedData.
   SPARKLE_DERIVED_DATA_PATH  DerivedData path used when building Sparkle CLI tools.
-  APP_DERIVED_DATA_PATH      DerivedData path used when building lazy_bar.
+  APP_DERIVED_DATA_PATH      DerivedData path used when building the app.
 EOF
 }
 
@@ -59,11 +59,41 @@ fi
 
 SPARKLE_PROJECT_PATH="$SPARKLE_CHECKOUT_PATH/Sparkle.xcodeproj"
 GENERATE_APPCAST_BIN="$SPARKLE_DERIVED_DATA_PATH/Build/Products/Release/generate_appcast"
-APP_BUILD_PATH="$APP_DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/lazy_bar.app"
-ARCHIVE_NAME="lazy_bar-$VERSION.zip"
+
+resolve_product_name() {
+    xcodebuild \
+        -project "$PROJECT_PATH" \
+        -scheme "$SCHEME" \
+        -configuration "$CONFIGURATION" \
+        -showBuildSettings 2>/dev/null \
+        | awk -F' = ' '/^[[:space:]]*PRODUCT_NAME = / { print $2; exit }'
+}
+
+PRODUCT_NAME=$(resolve_product_name)
+
+if [[ -z "$PRODUCT_NAME" ]]; then
+    echo "Could not resolve PRODUCT_NAME from Xcode build settings." >&2
+    exit 1
+fi
+
+APP_BUILD_PATH="$APP_DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/$PRODUCT_NAME.app"
+ARCHIVE_NAME="$PRODUCT_NAME-$VERSION.zip"
 ARCHIVE_PATH="$UPDATE_DIR/$ARCHIVE_NAME"
 
+remove_conflicting_archives() {
+    local archive
+
+    setopt local_options null_glob
+    for archive in "$UPDATE_DIR"/*-"$VERSION".zip; do
+        if [[ "$archive" != "$ARCHIVE_PATH" ]]; then
+            echo "==> Removing conflicting archive for version $VERSION: $(basename "$archive")"
+            rm -f "$archive"
+        fi
+    done
+}
+
 echo "==> Sparkle checkout: $SPARKLE_CHECKOUT_PATH"
+echo "==> Product name: $PRODUCT_NAME"
 echo "==> Update directory: $UPDATE_DIR"
 echo "==> Building generate_appcast"
 xcodebuild \
@@ -98,6 +128,8 @@ rm -f "$ARCHIVE_PATH"
 ditto -c -k --sequesterRsrc --keepParent \
     "$APP_BUILD_PATH" \
     "$ARCHIVE_PATH"
+
+remove_conflicting_archives
 
 echo "==> Generating appcast.xml"
 "$GENERATE_APPCAST_BIN" "$UPDATE_DIR"

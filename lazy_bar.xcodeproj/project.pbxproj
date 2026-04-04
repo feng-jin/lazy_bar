@@ -43,7 +43,7 @@
 		655EF4A22F78C00800474F97 /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AGENTS.md; sourceTree = "<group>"; };
 		A00000000000000000000012 /* AppDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencies.swift; sourceTree = "<group>"; };
 		A00000000000000000000013 /* LazyBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyBarApp.swift; sourceTree = "<group>"; };
-		A00000000000000000000017 /* lazy_bar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = lazy_bar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000017 /* Lazy Bar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Lazy Bar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A00000000000000000000018 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = Resources/Info.plist; sourceTree = SOURCE_ROOT; };
 		A00000000000000000000021 /* DisplayQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayQuote.swift; sourceTree = "<group>"; };
 		A00000000000000000000023 /* StockQuote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockQuote.swift; sourceTree = "<group>"; };
@@ -121,7 +121,7 @@
 		A00000000000000000000114 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000017 /* lazy_bar.app */,
+				A00000000000000000000017 /* Lazy Bar.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -232,7 +232,7 @@
 				A00000000000000000000107 /* Sparkle */,
 			);
 			productName = lazy_bar;
-			productReference = A00000000000000000000017 /* lazy_bar.app */;
+			productReference = A00000000000000000000017 /* Lazy Bar.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -441,7 +441,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Lazy Bar";
 				SDKROOT = macosx;
 				SPARKLE_FEED_URL = "https://feng-jin.github.io/lazy_bar_update/appcast.xml";
 				SPARKLE_PUBLIC_ED_KEY = "2TJPgA/YTXFgu+x/fnCm9oksRtRJcfe5aFUH3JjOahM=";
@@ -471,7 +471,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = "Lazy Bar";
 				SDKROOT = macosx;
 				SPARKLE_FEED_URL = "https://feng-jin.github.io/lazy_bar_update/appcast.xml";
 				SPARKLE_PUBLIC_ED_KEY = "2TJPgA/YTXFgu+x/fnCm9oksRtRJcfe5aFUH3JjOahM=";
