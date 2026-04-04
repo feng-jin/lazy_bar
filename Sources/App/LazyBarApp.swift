@@ -11,8 +11,8 @@ struct LazyBarApp: App {
     init() {
         let dependencies = AppDependencies.live
         let menuBarViewModel = MenuBarViewModel(
-            provider: dependencies.quoteProvider,
-            settingsStore: dependencies.menuBarSettingsStore
+            settingsStore: dependencies.menuBarSettingsStore,
+            quoteSession: dependencies.quoteSession
         )
         let menuBarSettingsViewModel = MenuBarSettingsViewModel(
             store: dependencies.menuBarSettingsStore

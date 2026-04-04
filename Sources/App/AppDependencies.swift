@@ -2,16 +2,17 @@
 import Foundation
 
 struct AppDependencies {
-    let quoteProvider: any QuoteProviding
     let menuBarSettingsStore: MenuBarSettingsStore
+    let quoteSession: QuoteSession
 
     @MainActor
     static var live: AppDependencies {
         let menuBarSettingsStore = MenuBarSettingsStore()
+        let quoteProvider = SinaQuoteProvider()
 
         return AppDependencies(
-            quoteProvider: SinaQuoteProvider(),
-            menuBarSettingsStore: menuBarSettingsStore
+            menuBarSettingsStore: menuBarSettingsStore,
+            quoteSession: QuoteSession(provider: quoteProvider)
         )
     }
 }

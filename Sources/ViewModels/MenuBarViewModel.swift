@@ -10,46 +10,28 @@ final class MenuBarViewModel: ObservableObject {
         category: "MenuBarViewModel"
     )
 
-    private enum FailureBehavior {
-        case showFailure
-        case keepLastSuccessfulSnapshot
-    }
-
-    enum ViewState: Equatable {
-        case loading
-        case emptyWatchlist
-        case failed
-        case loaded([DisplayQuote])
-    }
-
-    @Published private(set) var viewState: ViewState
+    @Published private(set) var viewState: MenuBarContentState
     @Published private(set) var presentation: MenuBarPresentation
 
-    private let provider: any QuoteProviding
     private let settingsStore: any MenuBarSettingsStoring
-    private let refreshScheduler: QuoteRefreshScheduler
+    private let quoteSession: QuoteSession
     private var lastObservedSymbols: [String]
     private var hasLoaded = false
-    private var quoteSnapshotsBySymbol: [String: StockQuote] = [:]
-    private var activeFetchTask: Task<[StockQuote], Error>?
-    private var refreshTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
 
     init(
-        provider: any QuoteProviding,
         settingsStore: any MenuBarSettingsStoring,
-        presentationBuilder: MenuBarPresentationBuilder = MenuBarPresentationBuilder(),
-        refreshScheduler: QuoteRefreshScheduler = QuoteRefreshScheduler()
+        quoteSession: QuoteSession,
+        presentationBuilder: MenuBarPresentationBuilder = MenuBarPresentationBuilder()
     ) {
-        let initialViewState: ViewState = settingsStore.settings.watchlist.isEmpty ? .emptyWatchlist : .loading
+        let initialViewState: MenuBarContentState = settingsStore.settings.watchlist.isEmpty ? .emptyWatchlist : .loading
 
-        self.provider = provider
         self.settingsStore = settingsStore
-        self.refreshScheduler = refreshScheduler
+        self.quoteSession = quoteSession
         lastObservedSymbols = settingsStore.settings.watchlist.map(\.symbol)
         viewState = initialViewState
         presentation = presentationBuilder.build(
-            contentState: Self.presentationState(from: initialViewState),
+            contentState: initialViewState,
             settings: settingsStore.settings
         )
 
@@ -57,7 +39,7 @@ final class MenuBarViewModel: ObservableObject {
             .combineLatest(settingsStore.settingsPublisher)
             .map { [presentationBuilder] viewState, settings in
                 presentationBuilder.build(
-                    contentState: Self.presentationState(from: viewState),
+                    contentState: viewState,
                     settings: settings
                 )
             }
@@ -91,10 +73,6 @@ final class MenuBarViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    deinit {
-        refreshTask?.cancel()
-    }
-
     func loadIfNeeded() async {
         guard !hasLoaded else { return }
         await performLoad(showLoadingState: true)
@@ -104,11 +82,15 @@ final class MenuBarViewModel: ObservableObject {
         await performLoad(showLoadingState: true)
     }
 
+    func displayQuotesForPreview(_ quotes: [DisplayQuote]) {
+        viewState = .loaded(quotes)
+        hasLoaded = true
+    }
+
     private func performLoad(showLoadingState: Bool) async {
         let symbols = currentSymbols
 
         guard !symbols.isEmpty else {
-            cancelActiveFetch()
             applyEmptyWatchlistState()
             return
         }
@@ -116,32 +98,31 @@ final class MenuBarViewModel: ObservableObject {
         if showLoadingState {
             viewState = .loading
         }
-        let quotes = await fetchQuotes(symbols: symbols, failureBehavior: .showFailure)
-        applyLoadedQuotes(quotes)
-    }
 
-    func displayQuotesForPreview(_ quotes: [DisplayQuote]) {
-        viewState = .loaded(quotes)
-        hasLoaded = true
-    }
+        let outcome = await quoteSession.fetchLatest(symbols: symbols)
+        handleFetchOutcome(
+            outcome,
+            fallbackToFailureWhenEmpty: true
+        )
 
-    private func startRefreshIfNeeded() {
-        guard refreshTask == nil else { return }
-
-        refreshTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard let self else { return }
-                let intervalNanoseconds = self.refreshScheduler.delayNanoseconds()
-                try? await Task.sleep(nanoseconds: intervalNanoseconds)
-                guard !Task.isCancelled else { return }
-                await self.refreshQuotes()
-            }
+        if case .success = outcome {
+            hasLoaded = true
         }
     }
 
-    private func stopRefresh() {
-        refreshTask?.cancel()
-        refreshTask = nil
+    private func startRefreshIfNeeded() {
+        quoteSession.startRefreshingIfNeeded(
+            currentSymbols: { [weak self] in
+                self?.currentSymbols ?? []
+            },
+            handleResult: { [weak self] outcome in
+                guard let self else { return }
+                self.handleFetchOutcome(
+                    outcome,
+                    fallbackToFailureWhenEmpty: self.currentDisplayQuotes.isEmpty
+                )
+            }
+        )
     }
 
     private func handleSettingsChange(_ settings: MenuBarDisplaySettings) async {
@@ -159,35 +140,24 @@ final class MenuBarViewModel: ObservableObject {
 
     private func handleSymbolListChange(symbols: [String]) async {
         guard !symbols.isEmpty else {
-            cancelActiveFetch()
             applyEmptyWatchlistState()
             return
         }
 
-        pruneSnapshots(excluding: Set(symbols))
-        reapplyCurrentSnapshotsIfPossible()
-        await performLoad(showLoadingState: currentDisplayQuotes.isEmpty)
-    }
+        let retainedQuotes = quoteSession.updateTrackedSymbols(symbols)
+        let retainedDisplayQuotes = displayQuotes(from: retainedQuotes)
 
-    private func refreshQuotes() async {
-        let symbols = currentSymbols
-        guard !symbols.isEmpty else {
-            applyEmptyWatchlistState()
-            return
+        if !retainedDisplayQuotes.isEmpty {
+            viewState = .loaded(retainedDisplayQuotes)
         }
 
-        let quotes = await fetchQuotes(symbols: symbols, failureBehavior: .keepLastSuccessfulSnapshot)
-        guard let quotes else { return }
-
-        replaceSnapshots(with: quotes, for: symbols)
-        reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: currentDisplayQuotes.isEmpty)
+        await performLoad(showLoadingState: retainedDisplayQuotes.isEmpty)
     }
 
     private func displayQuotes(from quotes: [StockQuote]) -> [DisplayQuote] {
         let watchlistNamesBySymbol = Dictionary(
             uniqueKeysWithValues: settingsStore.settings.watchlist.map { ($0.symbol, $0.companyName) }
         )
-
         let quotesBySymbol = Dictionary(uniqueKeysWithValues: quotes.map { ($0.symbol, $0) })
 
         return settingsStore.settings.watchlist.compactMap { entry in
@@ -201,63 +171,28 @@ final class MenuBarViewModel: ObservableObject {
         settingsStore.settings.watchlist.map(\.symbol)
     }
 
-    private func fetchQuotes(
-        symbols: [String],
-        failureBehavior: FailureBehavior
-    ) async -> [StockQuote]? {
-        activeFetchTask?.cancel()
-        let task = Task { try await provider.fetchQuotes(symbols: symbols) }
-        activeFetchTask = task
-
-        do {
-            let quotes = try await task.value
-            guard activeFetchTask == task else { return nil }
-            activeFetchTask = nil
-            return quotes
-        } catch is CancellationError {
-            if activeFetchTask == task {
-                activeFetchTask = nil
-            }
-            return nil
-        } catch {
-            guard activeFetchTask == task else { return nil }
-
-            if failureBehavior == .showFailure || currentDisplayQuotes.isEmpty {
-                viewState = .failed
-            }
-            activeFetchTask = nil
-            return nil
-        }
-    }
-
-    private func cancelActiveFetch() {
-        activeFetchTask?.cancel()
-        activeFetchTask = nil
-    }
-
     private var currentDisplayQuotes: [DisplayQuote] {
         guard case let .loaded(quotes) = viewState else { return [] }
         return quotes
     }
 
     private func applyEmptyWatchlistState() {
-        stopRefresh()
         hasLoaded = true
-        quoteSnapshotsBySymbol = [:]
+        quoteSession.reset()
         viewState = .emptyWatchlist
     }
 
-    private func applyLoadedQuotes(_ quotes: [StockQuote]?) {
-        guard let quotes else { return }
-
-        replaceSnapshots(with: quotes, for: currentSymbols)
-        reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: true)
-        startRefreshIfNeeded()
-        hasLoaded = true
+    private func reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: Bool = false) {
+        applyCachedQuotes(
+            quoteSession.cachedQuotes(for: currentSymbols),
+            fallbackToFailureWhenEmpty: fallbackToFailureWhenEmpty
+        )
     }
 
-    private func reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: Bool = false) {
-        let quotes = currentSymbols.compactMap { quoteSnapshotsBySymbol[$0] }
+    private func applyCachedQuotes(
+        _ quotes: [StockQuote],
+        fallbackToFailureWhenEmpty: Bool = false
+    ) {
         let displayQuotes = displayQuotes(from: quotes)
 
         if !displayQuotes.isEmpty {
@@ -267,21 +202,22 @@ final class MenuBarViewModel: ObservableObject {
         }
     }
 
-    private func replaceSnapshots(with quotes: [StockQuote], for symbols: [String]) {
-        for symbol in symbols {
-            quoteSnapshotsBySymbol.removeValue(forKey: symbol)
-        }
-
-        for quote in quotes {
-            quoteSnapshotsBySymbol[quote.symbol] = quote
+    private func handleFetchOutcome(
+        _ outcome: QuoteSession.FetchOutcome,
+        fallbackToFailureWhenEmpty: Bool
+    ) {
+        switch outcome {
+        case let .success(quotes):
+            applyCachedQuotes(quotes, fallbackToFailureWhenEmpty: fallbackToFailureWhenEmpty)
+            startRefreshIfNeeded()
+        case let .failure(cachedQuotes):
+            applyCachedQuotes(cachedQuotes, fallbackToFailureWhenEmpty: fallbackToFailureWhenEmpty)
+        case .cancelled:
+            return
         }
     }
 
-    private func pruneSnapshots(excluding retainedSymbols: Set<String>) {
-        quoteSnapshotsBySymbol = quoteSnapshotsBySymbol.filter { retainedSymbols.contains($0.key) }
-    }
-
-    private static func debugDescription(for viewState: ViewState) -> String {
+    private static func debugDescription(for viewState: MenuBarContentState) -> String {
         switch viewState {
         case .loading:
             return "loading"
@@ -292,21 +228,6 @@ final class MenuBarViewModel: ObservableObject {
         case let .loaded(quotes):
             let symbols = quotes.map(\.symbol).joined(separator: ",")
             return "loaded(count: \(quotes.count), symbols: [\(symbols)])"
-        }
-    }
-
-    private static func presentationState(
-        from viewState: ViewState
-    ) -> MenuBarPresentationBuilder.ContentState {
-        switch viewState {
-        case .loading:
-            return .loading
-        case .emptyWatchlist:
-            return .emptyWatchlist
-        case .failed:
-            return .failed
-        case let .loaded(quotes):
-            return .loaded(quotes)
         }
     }
 

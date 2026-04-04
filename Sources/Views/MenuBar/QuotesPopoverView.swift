@@ -182,8 +182,8 @@ private struct QuotePopoverRowView: View {
     let settingsStore = MenuBarSettingsStore()
     QuotesPopoverView(
         viewModel: MenuBarViewModel(
-            provider: MockQuoteProvider(),
-            settingsStore: settingsStore
+            settingsStore: settingsStore,
+            quoteSession: QuoteSession(provider: MockQuoteProvider())
         ),
         onOpenSettings: {},
         onQuit: {}

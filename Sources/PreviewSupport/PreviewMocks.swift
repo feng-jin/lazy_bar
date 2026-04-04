@@ -10,9 +10,10 @@ enum PreviewMocks {
 
     @MainActor
     static var menuBarViewModel: MenuBarViewModel {
+        let settingsStore = MenuBarSettingsStore()
         let viewModel = MenuBarViewModel(
-            provider: MockQuoteProvider(),
-            settingsStore: MenuBarSettingsStore()
+            settingsStore: settingsStore,
+            quoteSession: QuoteSession(provider: MockQuoteProvider())
         )
         viewModel.displayQuotesForPreview(displayQuotes)
         return viewModel
