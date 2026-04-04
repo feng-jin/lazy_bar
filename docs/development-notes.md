@@ -20,7 +20,7 @@
 - 当前左键主面板底部新增了“检查更新”入口，动作由 `StatusBarController` 转发给 `AppUpdater`；`AppUpdater` 再用 Sparkle 的 `SPUStandardUpdaterController` 承担自动更新调度与手动检查。如果当前构建还没配置 `SUFeedURL` 或 `SUPublicEDKey`，应用会保留入口但点击后弹出配置提示，避免 Sparkle 在启动阶段因为缺少 feed 而直接进入错误态。
 - 当前通过 Swift Package 引入 Sparkle 2 作为唯一第三方依赖；target build settings 中新增了 `SPARKLE_FEED_URL` 与 `SPARKLE_PUBLIC_ED_KEY` 两个占位项，并由 `Resources/Info.plist` 映射到 `SUFeedURL`、`SUPublicEDKey`。要让更新真正可用，发布链路还需要补齐 appcast 托管、EdDSA 密钥、签名后的归档产物，以及面向分发包的 Developer ID 签名/公证流程。
 - 仓库当前提供了 `scripts/build_sparkle_release.sh`，会自动定位本机 DerivedData 中的 Sparkle checkout，构建 `generate_appcast` 工具，再基于当前 target 的 `PRODUCT_NAME` 构建 Release 包，打出 `<PRODUCT_NAME>-<version>.zip` 并生成更新目录中的 `appcast.xml`。因此像当前对外显示名 `Lazy Bar` 这类产品名变更，不需要再手动同步脚本里的 `.app` 产物路径；若更新目录里残留同版本但旧命名的 zip，脚本也会在生成 appcast 前自动清理，避免 Sparkle 因重复版本报错。默认产物路径适合本地验证，正式分发前仍建议改为 Developer ID 签名并公证后的构建链路。
-- 当前本地实际使用的发布入口是仓库根目录的 `release.sh`，命令示例为 `bash release.sh 0.1.0`；该入口会转调 `scripts/build_sparkle_release.sh $1 ../lazy_bar_update`，把 zip 与 `appcast.xml` 输出到仓库相邻的 `../lazy_bar_update` 目录。
+- 当前本地实际使用的发布入口是 `scripts/release.sh`，命令示例为 `bash scripts/release.sh 0.1.0`；该入口会转调 `scripts/build_sparkle_release.sh $1 ../lazy_bar_update`，把 zip 与 `appcast.xml` 输出到仓库相邻的 `../lazy_bar_update` 目录。
 
 ## 常见修改入口
 - 要替换数据源：优先查看 `Sources/Providers`、`Sources/ViewModels/QuoteSession.swift` 与 `Sources/App/AppDependencies.swift`。
@@ -31,7 +31,7 @@
 - 要调整展示格式化：优先查看 `Sources/Models/DisplayQuote.swift`。
 - 要确认应用启动、状态栏装配与设置弹窗：优先查看 `Sources/App/LazyBarApp.swift`、`Sources/App/StatusBarController.swift`、`Sources/App/SettingsWindowController.swift`、`Sources/Views/MenuBar/QuotesPopoverView.swift` 和 `Sources/Views/MenuBar/SettingsView.swift`。
 - 要调整应用更新能力：优先查看 `Sources/App/AppUpdater.swift`、`Sources/App/LazyBarApp.swift`、`Sources/App/StatusBarController.swift`、`Sources/Views/MenuBar/QuotesPopoverView.swift`、`Resources/Info.plist` 和 `lazy_bar.xcodeproj/project.pbxproj`。
-- 要调整本地发布与 appcast 生成流程：优先查看 `scripts/build_sparkle_release.sh`。
+- 要调整本地发布与 appcast 生成流程：优先查看 `scripts/release.sh` 和 `scripts/build_sparkle_release.sh`。
 
 ## 已知限制
 - 当前真实行情依赖新浪未公开快照接口，接口格式、可用性和限流策略都可能随时变化。
