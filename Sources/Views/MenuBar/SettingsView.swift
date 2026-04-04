@@ -98,9 +98,6 @@ struct SettingsView: View {
             .padding(.bottom, 20)
         }
         .frame(width: 500)
-        .onAppear {
-            viewModel.beginEditing()
-        }
     }
 
     private var watchlistTabContent: some View {

@@ -41,6 +41,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
         )
 
         store.settingsPublisher
+            .dropFirst()
             .sink { [weak self] settings in
                 guard let self else { return }
                 self.settings = settings

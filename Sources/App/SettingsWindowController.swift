@@ -72,6 +72,7 @@ final class SettingsWindowController: NSWindowController {
         Self.logger.debug("show settings window")
 
         NSApp.activate()
+        viewModel.beginEditing()
         hostingView.rootView = Self.makeRootView(
             viewModel: viewModel,
             onClose: { [weak self] in

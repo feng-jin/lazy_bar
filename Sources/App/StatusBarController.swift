@@ -132,6 +132,7 @@ private final class MouseTransparentHostingView<Content: View>: NSHostingView<Co
 private final class StatusItemHost {
     let statusItem: NSStatusItem
     private var hostedLabelView: MouseTransparentHostingView<MenuBarLabelView>?
+    private var refreshGeneration: UInt = 0
 
     init(initialPresentation: MenuBarPresentation) {
         statusItem = NSStatusBar.system.statusItem(withLength: initialPresentation.layout.itemWidth)
@@ -163,14 +164,7 @@ private final class StatusItemHost {
                 height: MenuBarStyle.Metrics.contentHeight
             )
         )
-        hostedLabelView?.needsLayout = true
-        hostedLabelView?.layoutSubtreeIfNeeded()
-        hostedLabelView?.needsDisplay = true
-        hostedLabelView?.displayIfNeeded()
-        button.needsLayout = true
-        button.layoutSubtreeIfNeeded()
-        button.needsDisplay = true
-        button.displayIfNeeded()
+        refreshViewHierarchy(hostedView: hostedLabelView, button: button)
     }
 
     func buttonFrameOnScreen() -> NSRect {
@@ -202,6 +196,32 @@ private final class StatusItemHost {
         ])
 
         hostedLabelView = labelView
+    }
+
+    private func refreshViewHierarchy(
+        hostedView: NSView?,
+        button: NSStatusBarButton
+    ) {
+        refreshGeneration &+= 1
+        let generation = refreshGeneration
+
+        hostedView?.needsLayout = true
+        hostedView?.needsDisplay = true
+        button.needsLayout = true
+        button.needsDisplay = true
+
+        DispatchQueue.main.async { [weak self, weak hostedView, weak button] in
+            guard
+                let self,
+                self.refreshGeneration == generation,
+                let button
+            else { return }
+
+            hostedView?.layoutSubtreeIfNeeded()
+            hostedView?.displayIfNeeded()
+            button.layoutSubtreeIfNeeded()
+            button.displayIfNeeded()
+        }
     }
 }
 
