@@ -28,13 +28,15 @@
 		A0000000000000000000001D /* StatusBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* StatusBarController.swift */; };
 		A0000000000000000000001E /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000027 /* SettingsWindowController.swift */; };
 		A0000000000000000000001F /* QuotesPopoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000054 /* QuotesPopoverView.swift */; };
+		A00000000000000000000037 /* SinaQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000038 /* SinaQuoteProvider.swift */; };
 		A00000000000000000000057 /* QuoteColumnLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000058 /* QuoteColumnLayout.swift */; };
 		A00000000000000000000059 /* QuoteColumnsRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000005A /* QuoteColumnsRowView.swift */; };
-		A00000000000000000000102 /* MenuBarRenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000103 /* MenuBarRenderState.swift */; };
-		A00000000000000000000037 /* SinaQuoteProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000038 /* SinaQuoteProvider.swift */; };
 		A00000000000000000000092 /* MenuBarSettingsStoring.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000093 /* MenuBarSettingsStoring.swift */; };
 		A00000000000000000000096 /* MenuBarContentState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000097 /* MenuBarContentState.swift */; };
 		A00000000000000000000098 /* QuoteSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000099 /* QuoteSession.swift */; };
+		A00000000000000000000102 /* MenuBarRenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000103 /* MenuBarRenderState.swift */; };
+		A00000000000000000000104 /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000105 /* AppUpdater.swift */; };
+		A00000000000000000000106 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000107 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -62,13 +64,14 @@
 		A00000000000000000000056 /* MenuBarPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarPresentation.swift; sourceTree = "<group>"; };
 		A00000000000000000000058 /* QuoteColumnLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteColumnLayout.swift; sourceTree = "<group>"; };
 		A0000000000000000000005A /* QuoteColumnsRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteColumnsRowView.swift; sourceTree = "<group>"; };
-		A00000000000000000000103 /* MenuBarRenderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarRenderState.swift; sourceTree = "<group>"; };
 		A00000000000000000000072 /* SectionCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionCardView.swift; sourceTree = "<group>"; };
 		A00000000000000000000081 /* PreviewMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewMocks.swift; sourceTree = "<group>"; };
 		A00000000000000000000091 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
 		A00000000000000000000093 /* MenuBarSettingsStoring.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarSettingsStoring.swift; sourceTree = "<group>"; };
 		A00000000000000000000097 /* MenuBarContentState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentState.swift; sourceTree = "<group>"; };
 		A00000000000000000000099 /* QuoteSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteSession.swift; sourceTree = "<group>"; };
+		A00000000000000000000103 /* MenuBarRenderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarRenderState.swift; sourceTree = "<group>"; };
+		A00000000000000000000105 /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +79,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00000000000000000000106 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				A00000000000000000000012 /* AppDependencies.swift */,
+				A00000000000000000000105 /* AppUpdater.swift */,
 				A00000000000000000000013 /* LazyBarApp.swift */,
 				A00000000000000000000093 /* MenuBarSettingsStoring.swift */,
 				A00000000000000000000024 /* MenuBarSettingsStore.swift */,
@@ -223,6 +228,9 @@
 			dependencies = (
 			);
 			name = lazy_bar;
+			packageProductDependencies = (
+				A00000000000000000000107 /* Sparkle */,
+			);
 			productName = lazy_bar;
 			productReference = A00000000000000000000017 /* lazy_bar.app */;
 			productType = "com.apple.product-type.application";
@@ -251,6 +259,9 @@
 				Base,
 			);
 			mainGroup = A00000000000000000000111;
+			packageReferences = (
+				A00000000000000000000108 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = A00000000000000000000114 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -277,6 +288,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A00000000000000000000002 /* AppDependencies.swift in Sources */,
+				A00000000000000000000104 /* AppUpdater.swift in Sources */,
 				A00000000000000000000003 /* LazyBarApp.swift in Sources */,
 				A00000000000000000000004 /* DisplayQuote.swift in Sources */,
 				A00000000000000000000006 /* StockQuote.swift in Sources */,
@@ -411,7 +423,9 @@
 		A00000000000000000000183 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -425,10 +439,12 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SPARKLE_FEED_URL = "https://feng-jin.github.io/lazy_bar_update/appcast.xml";
+				SPARKLE_PUBLIC_ED_KEY = "2TJPgA/YTXFgu+x/fnCm9oksRtRJcfe5aFUH3JjOahM=";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -437,7 +453,9 @@
 		A00000000000000000000184 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -451,10 +469,12 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.jinfeng.lazy-bar";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SPARKLE_FEED_URL = "https://feng-jin.github.io/lazy_bar_update/appcast.xml";
+				SPARKLE_PUBLIC_ED_KEY = "2TJPgA/YTXFgu+x/fnCm9oksRtRJcfe5aFUH3JjOahM=";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -482,6 +502,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A00000000000000000000108 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A00000000000000000000107 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A00000000000000000000108 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A00000000000000000000171 /* Project object */;
 }

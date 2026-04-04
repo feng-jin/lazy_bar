@@ -16,6 +16,7 @@ final class StatusBarController: NSObject {
     )
 
     private let menuBarViewModel: MenuBarViewModel
+    private let checkForUpdatesHandler: () -> Void
     private let openSettingsWindowHandler: () -> Void
     private let statusItemHost: StatusItemHost
     private let panelCoordinator = QuotesPanelCoordinator()
@@ -23,9 +24,11 @@ final class StatusBarController: NSObject {
 
     init(
         menuBarViewModel: MenuBarViewModel,
+        checkForUpdates: @escaping () -> Void,
         openSettingsWindow: @escaping () -> Void
     ) {
         self.menuBarViewModel = menuBarViewModel
+        self.checkForUpdatesHandler = checkForUpdates
         self.openSettingsWindowHandler = openSettingsWindow
         statusItemHost = StatusItemHost(
             initialPresentation: MenuBarPresentation(renderState: menuBarViewModel.renderState)
@@ -97,6 +100,9 @@ final class StatusBarController: NSObject {
             rootView: AnyView(
                 QuotesPopoverView(
                     viewModel: menuBarViewModel,
+                    onCheckForUpdates: { [weak self] in
+                        self?.checkForUpdates()
+                    },
                     onOpenSettings: { [weak self] in
                         self?.openSettings()
                     },
@@ -106,6 +112,13 @@ final class StatusBarController: NSObject {
                 )
             )
         )
+    }
+
+    @objc
+    private func checkForUpdates() {
+        Self.logger.debug("checkForUpdates from panel")
+        panelCoordinator.close()
+        checkForUpdatesHandler()
     }
 
     @objc

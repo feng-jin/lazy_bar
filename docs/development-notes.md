@@ -7,7 +7,7 @@
 - 如果当前机器只有 Command Line Tools，`xcodebuild` 会因为缺少完整 Xcode 而无法完成工程构建。
 
 ## 当前工程事实
-- 应用主体界面内容基于 SwiftUI；菜单栏入口和设置弹窗壳层使用 AppKit。状态栏入口使用 `NSStatusItem`，左键通过无箭头的自定义面板展示主面板；主面板上半部分是股票列表，下半部分是设置、退出和后续少量功能入口。
+- 应用主体界面内容基于 SwiftUI；菜单栏入口和设置弹窗壳层使用 AppKit。状态栏入口使用 `NSStatusItem`，左键通过无箭头的自定义面板展示主面板；主面板上半部分是股票列表，下半部分是检查更新、设置、退出和后续少量功能入口。
 - `Resources/Info.plist` 中启用了 `LSUIElement`，应用默认以菜单栏工具形态运行，不显示 Dock 图标。
 - 当前 `AppDependencies.live` 注入的是 `SinaQuoteProvider`，默认通过新浪财经未公开快照接口拉取 A 股准实时行情，并按 A 股交易时段动态轮询刷新：交易时段每 3 秒一次，非交易时段最长每 10 分钟一次；若下一次长轮询会跨过 09:30 或 13:00 等交易恢复边界，调度器会在边界时刻提前唤醒，避免开盘后的前几分钟继续停更；provider 侧还会对单次请求施加显式异步超时，避免底层请求悬挂时把启动状态长期卡在“加载中...”；`MockQuoteProvider` 仍保留给 Preview、调试和后续兜底场景使用。
 - 当前应用首次启动时 watchlist 为空；设置页录入或编辑 watchlist 时只要求 6 位股票代码，简称由用户手动维护，并持久化到本地。
@@ -17,7 +17,9 @@
 - 当前为了排查“左键列表已有数据但 bar 仍停在加载中”的问题，应用已经把 `Logger` 调试日志扩展到更完整的链路：`LazyBarApp` / `AppDependencies` 负责记录启动装配与首次加载，`MenuBarSettingsStore` / `MenuBarSettingsViewModel` 负责记录设置读取、保存、字段切换、watchlist 新增删除以及校验失败，`SinaQuoteProvider` / `QuoteSession` 负责记录请求发起、重试、超时、成功/失败、快照裁剪与轮询刷新，`MenuBarViewModel` 负责记录 settings 变更与 `viewState` / `renderState` 流转，`StatusBarController` / `SettingsWindowController` / `MenuBarLabelView` 负责记录状态栏同步、panel 开关、设置窗口展示和 ticker 重启动画。日志内容统一包含 symbols、字段可见性、状态文案、宽度、缓存命中、失败回退结果等上下文，便于判断问题落在设置层、数据层、状态协调层还是 `NSStatusItem` 宿主刷新层。当前 `StatusBarController` 会直接消费 `menuBarViewModel.$renderState` sink 里传入的新 render state，并在 AppKit 壳层立即重建 `MenuBarPresentation` 后同步状态栏宿主与面板尺寸，避免发布链路里再夹杂一次“先发信号、后取旧 presentation”的短暂旧值读取。
 - 当前设置能力通过独立设置弹窗承载，不再把设置表单直接内嵌到左键主面板里；展示字段编辑与 watchlist 维护继续通过 `MenuBarSettingsViewModel` 的单一草稿 `MenuBarDisplaySettings` 管理保存和取消，顶部新增行只额外保留一条临时 `WatchlistEntry` 输入，watchlist 编辑行则只补充一组与草稿顺序对齐的稳定 row id 以保证删除行后 SwiftUI 输入状态不串位，而不再额外复制一份 watchlist 草稿作为第二真源；同时 `MenuBarSettingsViewModel` 只暴露值读写接口，不再直接返回 SwiftUI `Binding`，`SettingsView` 再在视图层把这些接口组装成绑定。展示字段的枚举定义、卡片文案、实际渲染可见性判断，以及股票代码归一化、空简称回退、重复代码校验和“至少保留一个展示字段”的约束统一收敛到 `MenuBarDisplaySettings`，避免设置页勾选项和 bar / 主面板展示出现映射漂移，也避免同一套规则在 ViewModel 中重复实现。设置窗口内容区由显式约束填满窗口的 `NSHostingView` 承载，并在展示前按 SwiftUI 内容高度同步窗口尺寸，避免弹窗打开但内容空白；展示时会通过 `NSApp.activate()` 请求前台激活，再将窗口置前，规避 macOS 14 起对旧激活选项的弃用 warning；当前窗口宽度已放宽，并将设置内容拆成两个 tab，以避免长表单继续把底部操作区挤出可视范围；同时窗口每次打开前都会为 `SettingsView` 切换新的根视图 identity，确保 SwiftUI 丢弃上一次窗口会话保留下来的本地 tab 状态，默认回到“监控股票”tab。设置编辑会话的 `beginEditing()` 改为由 `SettingsWindowController.show()` 在真正展示窗口时触发；`MenuBarSettingsViewModel` 也会忽略 `settingsPublisher` 的初始回放，避免应用启动阶段仅因订阅建立就重置 draft 并产生日志。
 - 设置页当前分成“监控股票”和“展示字段”两个 tab；watchlist tab 已收敛为单段式编辑区，顶部一行录入简称和代码并直接触发添加，下方是带表头的固定高度列表，只保留必要输入、删除和行间分隔，以减少卡片嵌套层级；顶部录入区继续使用原生 SwiftUI `TextField`。列表区现在通过稳定 draft row id 绑定到草稿 watchlist，删除行后不会把输入焦点和编辑中文本错误复用到后续股票；行内输入绑定也已收口到 `MenuBarSettingsViewModel`，View 不再自己反查当前 row 再拼装 `Binding(get:set:)`；展示字段 tab 中使用两列卡片式勾选项，每个字段补充用途说明，并直接绑定到草稿设置中的字段可见性。列表本身会在固定高度内滚动，底部保存和取消区域固定在窗口底部，避免随着上方内容变长而消失；保存会立即写回持久化配置但保留弹窗，取消会放弃本轮未保存草稿并关闭窗口。
-- 当前没有第三方依赖，也没有 Swift Package 依赖。
+- 当前左键主面板底部新增了“检查更新”入口，动作由 `StatusBarController` 转发给 `AppUpdater`；`AppUpdater` 再用 Sparkle 的 `SPUStandardUpdaterController` 承担自动更新调度与手动检查。如果当前构建还没配置 `SUFeedURL` 或 `SUPublicEDKey`，应用会保留入口但点击后弹出配置提示，避免 Sparkle 在启动阶段因为缺少 feed 而直接进入错误态。
+- 当前通过 Swift Package 引入 Sparkle 2 作为唯一第三方依赖；target build settings 中新增了 `SPARKLE_FEED_URL` 与 `SPARKLE_PUBLIC_ED_KEY` 两个占位项，并由 `Resources/Info.plist` 映射到 `SUFeedURL`、`SUPublicEDKey`。要让更新真正可用，发布链路还需要补齐 appcast 托管、EdDSA 密钥、签名后的归档产物，以及面向分发包的 Developer ID 签名/公证流程。
+- 仓库当前提供了 `scripts/build_sparkle_release.sh`，会自动定位本机 DerivedData 中的 Sparkle checkout，构建 `generate_appcast` 工具，再构建 `lazy_bar` 的 Release 包、打出 `lazy_bar-<version>.zip` 并生成 `release/updates/appcast.xml`。默认产物路径适合本地验证，正式分发前仍建议改为 Developer ID 签名并公证后的构建链路。
 
 ## 常见修改入口
 - 要替换数据源：优先查看 `Sources/Providers`、`Sources/ViewModels/QuoteSession.swift` 与 `Sources/App/AppDependencies.swift`。
@@ -27,6 +29,8 @@
 - 要调整默认 watchlist 行为或持久化逻辑：优先查看 `Sources/Models/MenuBarDisplaySettings.swift` 和 `Sources/App/MenuBarSettingsStore.swift`。
 - 要调整展示格式化：优先查看 `Sources/Models/DisplayQuote.swift`。
 - 要确认应用启动、状态栏装配与设置弹窗：优先查看 `Sources/App/LazyBarApp.swift`、`Sources/App/StatusBarController.swift`、`Sources/App/SettingsWindowController.swift`、`Sources/Views/MenuBar/QuotesPopoverView.swift` 和 `Sources/Views/MenuBar/SettingsView.swift`。
+- 要调整应用更新能力：优先查看 `Sources/App/AppUpdater.swift`、`Sources/App/LazyBarApp.swift`、`Sources/App/StatusBarController.swift`、`Sources/Views/MenuBar/QuotesPopoverView.swift`、`Resources/Info.plist` 和 `lazy_bar.xcodeproj/project.pbxproj`。
+- 要调整本地发布与 appcast 生成流程：优先查看 `scripts/build_sparkle_release.sh`。
 
 ## 已知限制
 - 当前真实行情依赖新浪未公开快照接口，接口格式、可用性和限流策略都可能随时变化。

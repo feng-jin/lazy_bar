@@ -8,6 +8,7 @@ struct QuotesPopoverView: View {
     }
 
     @ObservedObject var viewModel: MenuBarViewModel
+    let onCheckForUpdates: () -> Void
     let onOpenSettings: () -> Void
     let onQuit: () -> Void
 
@@ -44,7 +45,11 @@ struct QuotesPopoverView: View {
             Divider()
                 .padding(.leading, MenuBarStyle.Metrics.panelDividerLeadingInset)
 
-            ActionsSection(onOpenSettings: onOpenSettings, onQuit: onQuit)
+            ActionsSection(
+                onCheckForUpdates: onCheckForUpdates,
+                onOpenSettings: onOpenSettings,
+                onQuit: onQuit
+            )
         }
         .padding(.vertical, MenuBarStyle.Metrics.panelOuterVerticalPadding)
         .frame(width: presentation.layout.itemWidth)
@@ -69,11 +74,21 @@ struct QuotesPopoverView: View {
 }
 
 private struct ActionsSection: View {
+    let onCheckForUpdates: () -> Void
     let onOpenSettings: () -> Void
     let onQuit: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
+            ActionRowView(
+                title: "检查更新",
+                systemImage: "arrow.trianglehead.2.clockwise.rotate.90",
+                action: onCheckForUpdates
+            )
+
+            Divider()
+                .padding(.leading, MenuBarStyle.Metrics.panelDividerLeadingInset)
+
             ActionRowView(
                 title: "设置",
                 systemImage: "gearshape",
@@ -173,6 +188,7 @@ private struct QuotePopoverRowView: View {
 #Preview("Quotes") {
     QuotesPopoverView(
         viewModel: PreviewMocks.menuBarViewModel,
+        onCheckForUpdates: {},
         onOpenSettings: {},
         onQuit: {}
     )
@@ -185,6 +201,7 @@ private struct QuotePopoverRowView: View {
             settingsStore: settingsStore,
             quoteSession: QuoteSession(provider: MockQuoteProvider())
         ),
+        onCheckForUpdates: {},
         onOpenSettings: {},
         onQuit: {}
     )

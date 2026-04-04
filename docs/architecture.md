@@ -22,6 +22,7 @@
   - `MenuBarSettingsViewModel`：负责设置弹窗中的编辑会话协调，维护一份与正式设置同结构的单一草稿 `MenuBarDisplaySettings`，并仅额外保存与 watchlist 顺序对齐的稳定 row id 列表以保持 SwiftUI 输入身份稳定；顶部新增行继续只使用一条临时 `WatchlistEntry`。保存前复用模型层清洗结果写回 settings store 抽象，避免重新引入独立 draft field 状态或双份 watchlist 真源。
 - `App`
   - `LazyBarApp`：负责组装依赖，并维持应用生命周期所需的最小 scene。
+  - `AppUpdater`：封装 Sparkle 的自动/手动更新入口，并在缺少 appcast 或公钥配置时给出提示；它属于 App 基础设施，不进入行情或设置数据链路。
   - `MenuBarSettingsStore` / `MenuBarSettingsStoring`：`MenuBarSettingsStore` 负责持久化菜单栏展示设置，`MenuBarSettingsStoring` 提供 ViewModel 依赖的最小读写与发布接口；首次启动时使用空 watchlist，后续完全依赖用户手动维护并持久化本地结果。
   - `StatusBarController`：负责状态栏按钮点击、主面板总协调，以及把同一份 `MenuBarPresentation` 同步到 AppKit 宿主和主面板容器尺寸；不承接行情状态推导或展示字段决策。
   - `StatusItemHost` / `QuotesPanelCoordinator` / `OutsideClickMonitor`：同属 AppKit 壳层内部的窄职责对象，分别收口状态栏宿主同步、主面板生命周期，以及面板打开后的外部点击关闭监听，避免这些细节继续堆在 `StatusBarController` 单个类里。
@@ -36,13 +37,14 @@
 ## 当前数据流
 1. `LazyBarApp` 通过 `AppDependencies.live` 组装依赖。
 2. `AppDependencies` 组装 `SinaQuoteProvider`、`QuoteSession` 与 `MenuBarSettingsStore`，并注入对应 ViewModel。
-3. `LazyBarApp` 创建 `StatusBarController` 与 `SettingsWindowController`。
+3. `LazyBarApp` 创建 `AppUpdater`、`StatusBarController` 与 `SettingsWindowController`。
 4. `LazyBarApp` 在装配完成后触发 `MenuBarViewModel.loadIfNeeded()`。
 5. `MenuBarViewModel` 首次加载时读取已保存的 watchlist 条目，并调用 `QuoteSession.fetchLatest(symbols:)` 拉取 `[StockQuote]`；`QuoteSession` 内部继续通过 `QuoteProviding` 访问真实或 mock provider，并结合 `QuoteRefreshScheduler` 按 A 股交易时段动态选择刷新间隔重复拉取：交易时段每 3 秒一次，非交易时段最长每 10 分钟一次；若下一次 10 分钟轮询会跨过 09:30 或 13:00 这类交易恢复边界，则会提前在边界时刻唤醒并切回高频刷新。
 6. `MenuBarSettingsViewModel` 读取 `MenuBarSettingsStore`；首次启动时 watchlist 为空，设置页支持在草稿态里新增、删除、直接编辑代码和简称。ViewModel 初始化时直接以当前持久化 settings 建立初始 draft，但会忽略 `settingsPublisher` 的初始回放，避免应用启动阶段仅因订阅建立就触发编辑态 draft reset；后续仍只在真正打开设置窗口时通过 `beginEditing()` 重置无未保存改动的 draft。股票代码长度、去重、空名称回退以及“至少保留一个展示字段”的规则由 `MenuBarDisplaySettings` 统一清洗和校验。
 8. `MenuBarViewModel` 将 `QuoteSession` 返回的 `[StockQuote]` 转成 `[DisplayQuote]`，并显式维护单一的 `MenuBarContentState` 作为主面板与 bar 共用的界面状态；随后在 ViewModel 内部直接结合当前 settings 生成 `MenuBarRenderState`。Views / AppKit 壳层再基于这份 render state 派生共享 rows、状态文案与动态列宽。列宽会基于当前股票列表里各列最长文本计算，供 bar 与左键列表共享，整体宽度也会随当前可见列动态收紧或扩展；身份列到股价列之间的基准前导间距也由共享布局统一控制，避免价格位数变化时行内视觉间距波动过大。`QuoteSession` 内部保留最近一次成功拉取的原始行情快照：当 symbol 列表变化时，ViewModel 会先让 session 裁剪到仍然有效的旧快照，再立刻进入新一轮拉取，避免 bar 在保存后无意义地回退成启动时的 `loading` 空态；如果只是改了展示字段或股票简称，则会直接基于现有快照重算 `DisplayQuote`，不再先切到 loading 再等待下一次行情刷新。当 watchlist 在加载中发生变更时，session 会取消旧一轮加载并只接受最新一轮请求结果，避免已删除或过期的股票重新写回 UI；定时刷新也通过同一条 session 链路回写最新数据，并在刷新失败时尽量保留上一份成功快照。
-9. `StatusBarController` 将 `MenuBarLabelView` 托管到 `StatusItemHost` 内部，并根据 `MenuBarViewModel` 当前 `renderState` 派生出的 layout 同步调整状态栏按钮宽度；bar 的 AppKit 宿主在 render state 变化时会重新生成一次 `MenuBarPresentation`，再替换 `MenuBarLabelView` 的 `rootView` 快照并同步 hosting view 尺寸，以规避 `NSStatusItem` 场景下 SwiftUI 子树偶发残留旧状态文本的问题。宿主仍会显式请求一次 AppKit 刷新，但会把 `layoutSubtreeIfNeeded()` / `displayIfNeeded()` 延后到当前主线程轮次结束后再合并执行，避免在状态栏按钮自身仍处于布局栈时触发递归布局警告。若左键主面板已经打开，`QuotesPanelCoordinator` 会按同一份 `presentation.layout.itemWidth` 重新测量并更新面板容器尺寸，让 bar、popover 外壳和内部股票列表持续共享同一套宽度语义；面板打开后的外部点击关闭监听则交给 `OutsideClickMonitor`，避免控制器同时持有宿主、panel 和事件监听的细节。`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并在 rows 变化时按新列表重启 ticker，避免左键列表已经切到新顺序或新股票、bar 仍停留在旧播放位置；左键点击后展示的主面板则直接观察 `MenuBarViewModel.renderState`，在视图侧派生同样的 presentation，上半部分继续共享相同的分栏展示数据、动态列宽与共享样式 token，下半部分只承载设置入口、退出和后续少量操作。
-10. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口；控制器会在 `show()` 时先通知 `MenuBarSettingsViewModel.beginEditing()`，这样只有用户真正打开设置窗口时才会按当前持久化 settings 重置无未保存改动的 draft；随后再为 `SettingsView` 注入新的根视图 identity，让 SwiftUI 丢弃上一次窗口会话留下的本地 `selectedTab` 状态，并稳定回到“监控股票”tab。
+9. `StatusBarController` 将 `MenuBarLabelView` 托管到 `StatusItemHost` 内部，并根据 `MenuBarViewModel` 当前 `renderState` 派生出的 layout 同步调整状态栏按钮宽度；bar 的 AppKit 宿主在 render state 变化时会重新生成一次 `MenuBarPresentation`，再替换 `MenuBarLabelView` 的 `rootView` 快照并同步 hosting view 尺寸，以规避 `NSStatusItem` 场景下 SwiftUI 子树偶发残留旧状态文本的问题。宿主仍会显式请求一次 AppKit 刷新，但会把 `layoutSubtreeIfNeeded()` / `displayIfNeeded()` 延后到当前主线程轮次结束后再合并执行，避免在状态栏按钮自身仍处于布局栈时触发递归布局警告。若左键主面板已经打开，`QuotesPanelCoordinator` 会按同一份 `presentation.layout.itemWidth` 重新测量并更新面板容器尺寸，让 bar、popover 外壳和内部股票列表持续共享同一套宽度语义；面板打开后的外部点击关闭监听则交给 `OutsideClickMonitor`，避免控制器同时持有宿主、panel 和事件监听的细节。`MenuBarLabelView` 在裁剪容器里按条目做纵向循环滚动，并在 rows 变化时按新列表重启 ticker，避免左键列表已经切到新顺序或新股票、bar 仍停留在旧播放位置；左键点击后展示的主面板则直接观察 `MenuBarViewModel.renderState`，在视图侧派生同样的 presentation，上半部分继续共享相同的分栏展示数据、动态列宽与共享样式 token，下半部分承载检查更新、设置、退出和后续少量操作。
+10. 左键主面板中的“检查更新”动作会先关闭当前面板，再交由 `AppUpdater` 调起 Sparkle 的检查流程；若当前构建尚未配置 `SUFeedURL` 或 `SUPublicEDKey`，则会显示一条配置缺失提示，而不是让 Sparkle 在启动时直接报错。
+11. 左键主面板中的设置按钮会关闭当前面板，并交由 `SettingsWindowController` 打开承载 `SettingsView` 的独立 AppKit 窗口；控制器会在 `show()` 时先通知 `MenuBarSettingsViewModel.beginEditing()`，这样只有用户真正打开设置窗口时才会按当前持久化 settings 重置无未保存改动的 draft；随后再为 `SettingsView` 注入新的根视图 identity，让 SwiftUI 丢弃上一次窗口会话留下的本地 `selectedTab` 状态，并稳定回到“监控股票”tab。
 
 ## 关键职责边界
 - `QuoteProviding` 是数据接入边界。当前真实行情通过 `SinaQuoteProvider` 落在这一层，后续若要切换到授权源或增加 fallback，优先继续新增或替换 provider 实现，再由 `AppDependencies` 统一装配进 `QuoteSession`，而不是改 View。
@@ -52,13 +54,14 @@
 - `MenuBarDisplaySettings`、`MenuBarSettingsStoring` 和 `MenuBarSettingsStore` 负责展示配置、watchlist 配置与持久化；watchlist 不再依赖 bundle 内置 JSON，首次启动为空列表，后续由用户手动维护。`MenuBarDisplaySettings` 本身收敛 watchlist 归一化和校验语义，`MenuBarSettingsViewModel` 只负责设置弹窗中的单一草稿模型、顶部新增行输入、稳定 row id 映射和值读写接口，以及保存/取消动作；SwiftUI `Binding` 继续留在 `SettingsView` 侧组装，避免草稿里再维护一份重复 watchlist 真源，也避免 ViewModel 直接暴露 SwiftUI 类型。
 - `MenuBarViewModel` 负责 UI 所需状态协调和少量 orchestration，`QuoteSession` 负责加载、取消、快照缓存、轮询和失败降级；不要让 View 通过空数组、布尔值等零散信号自行猜测“空 watchlist / 加载中 / 拉取失败”。
 - App 层负责 AppKit 壳层装配，以及把既有 presentation/layout 同步到宿主控件；其中状态栏宿主同步、面板生命周期和外部点击监听这类细节应优先拆成窄职责对象，而不是继续堆进一个控制器里；同时 App 层仍不承接业务逻辑、网络逻辑或行情状态计算。
+- Sparkle 更新能力属于 App 层基础设施，入口可通过 `StatusBarController` 传入左键面板，但更新配置校验、手动检查触发与 Sparkle 生命周期应收口在 `AppUpdater`，不要下沉到 ViewModel 或 View。
 - View 继续负责详情类、设置类以及菜单栏 ticker 的 SwiftUI 渲染；bar 与左键主面板的视觉常量应集中管理并优先共享，设置页中的 tab 切换、字段说明、卡片态样式和布局编排也应尽量集中在 View 层，不把展示结构判断下沉到业务层；滚动动画应限制在固定宽度容器内部，不通过修改 `NSStatusItem` 宽度实现；同一列的字体语义需要在 SwiftUI 渲染与 AppKit 宽度测量之间严格保持一致，尤其是价格和涨跌幅这类数字列。
 
 ## 当前已知事实
 - `AppDependencies` 是真实 provider、mock provider、`QuoteSession` 与后续 fallback 切换的自然入口。
 - watchlist 不再内置基础数据；用户手动维护后的结果通过 `MenuBarSettingsStore` 持久化到 `UserDefaults`。
 - 当前主交互只依赖 `MenuBarViewModel` 和 `MenuBarSettingsViewModel`；仓库不再保留未接入主交互的详情原型代码，避免半成品状态模型继续增加认知负担。
-- 工程没有第三方依赖，运行时只依赖系统框架 `SwiftUI`、`Foundation` 和 `AppKit`。
+- 工程当前通过 Swift Package 引入 Sparkle 作为唯一第三方依赖；除应用更新外，其余运行时能力仍主要依赖系统框架 `SwiftUI`、`Foundation` 和 `AppKit`。
 - 新浪行情实现当前通过 HTTP 批量请求按 `sh/sz + 代码` 拉取快照文本，再在 provider 层解析为 `StockQuote`；其稳定性和合规性低于授权数据源。
 
 ## 后续优先扩展点

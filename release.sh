@@ -1,0 +1,1 @@
+./scripts/build_sparkle_release.sh $1 ../lazy_bar_update

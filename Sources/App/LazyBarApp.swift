@@ -11,11 +11,13 @@ struct LazyBarApp: App {
 
     @StateObject private var menuBarViewModel: MenuBarViewModel
     @StateObject private var menuBarSettingsViewModel: MenuBarSettingsViewModel
+    private let appUpdater: AppUpdater
     private let settingsWindowController: SettingsWindowController
     private let statusBarController: StatusBarController
 
     init() {
         Self.logger.debug("init start")
+        appUpdater = AppUpdater()
         let dependencies = AppDependencies.live
         let menuBarViewModel = MenuBarViewModel(
             settingsStore: dependencies.menuBarSettingsStore,
@@ -34,6 +36,9 @@ struct LazyBarApp: App {
         settingsWindowController = SettingsWindowController(viewModel: menuBarSettingsViewModel)
         statusBarController = StatusBarController(
             menuBarViewModel: menuBarViewModel,
+            checkForUpdates: { [appUpdater] in
+                appUpdater.checkForUpdates()
+            },
             openSettingsWindow: { [settingsWindowController] in
                 settingsWindowController.show()
             }
