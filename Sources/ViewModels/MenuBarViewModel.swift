@@ -72,11 +72,16 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     func loadIfNeeded() async {
-        guard !hasLoaded else { return }
+        guard !hasLoaded else {
+            Self.logger.debug("loadIfNeeded skipped because data is already loaded")
+            return
+        }
+        Self.logger.debug("loadIfNeeded triggered initial load")
         await performLoad(showLoadingState: true)
     }
 
     func load() async {
+        Self.logger.debug("load triggered manual reload")
         await performLoad(showLoadingState: true)
     }
 
@@ -87,8 +92,15 @@ final class MenuBarViewModel: ObservableObject {
 
     private func performLoad(showLoadingState: Bool) async {
         let symbols = currentSymbols
+        Self.logger.debug(
+            """
+            performLoad start showLoadingState=\(showLoadingState, privacy: .public) \
+            symbols=\(Self.symbolsDescription(symbols), privacy: .public)
+            """
+        )
 
         guard !symbols.isEmpty else {
+            Self.logger.debug("performLoad found empty watchlist")
             applyEmptyWatchlistState()
             return
         }
@@ -101,6 +113,9 @@ final class MenuBarViewModel: ObservableObject {
         handleFetchOutcome(
             outcome,
             fallbackToFailureWhenEmpty: true
+        )
+        Self.logger.debug(
+            "performLoad finished outcome=\(Self.debugDescription(for: outcome), privacy: .public)"
         )
 
         if case .success = outcome {
@@ -127,23 +142,39 @@ final class MenuBarViewModel: ObservableObject {
         let symbols = settings.watchlist.map(\.symbol)
         let previousSymbols = lastObservedSymbols
         lastObservedSymbols = symbols
+        Self.logger.debug(
+            """
+            handleSettingsChange previousSymbols=\(Self.symbolsDescription(previousSymbols), privacy: .public) \
+            newSymbols=\(Self.symbolsDescription(symbols), privacy: .public) \
+            fields=\(Self.visibleFieldsDescription(settings), privacy: .public)
+            """
+        )
 
         guard symbols != previousSymbols else {
+            Self.logger.debug("handleSettingsChange only affected display configuration")
             reapplyCurrentSnapshotsIfPossible()
             return
         }
 
+        Self.logger.debug("handleSettingsChange detected symbol list change")
         await handleSymbolListChange(symbols: symbols)
     }
 
     private func handleSymbolListChange(symbols: [String]) async {
         guard !symbols.isEmpty else {
+            Self.logger.debug("handleSymbolListChange -> empty watchlist")
             applyEmptyWatchlistState()
             return
         }
 
         let retainedQuotes = quoteSession.updateTrackedSymbols(symbols)
         let retainedDisplayQuotes = displayQuotes(from: retainedQuotes)
+        Self.logger.debug(
+            """
+            handleSymbolListChange retainedQuotes=\(retainedQuotes.count, privacy: .public) \
+            retainedDisplayQuotes=\(retainedDisplayQuotes.count, privacy: .public)
+            """
+        )
 
         if !retainedDisplayQuotes.isEmpty {
             viewState = .loaded(retainedDisplayQuotes)
@@ -178,9 +209,16 @@ final class MenuBarViewModel: ObservableObject {
         hasLoaded = true
         quoteSession.reset()
         viewState = .emptyWatchlist
+        Self.logger.debug("applyEmptyWatchlistState")
     }
 
     private func reapplyCurrentSnapshotsIfPossible(fallbackToFailureWhenEmpty: Bool = false) {
+        Self.logger.debug(
+            """
+            reapplyCurrentSnapshotsIfPossible symbols=\(Self.symbolsDescription(self.currentSymbols), privacy: .public) \
+            fallbackToFailureWhenEmpty=\(fallbackToFailureWhenEmpty, privacy: .public)
+            """
+        )
         applyCachedQuotes(
             quoteSession.cachedQuotes(for: currentSymbols),
             fallbackToFailureWhenEmpty: fallbackToFailureWhenEmpty
@@ -192,6 +230,13 @@ final class MenuBarViewModel: ObservableObject {
         fallbackToFailureWhenEmpty: Bool = false
     ) {
         let displayQuotes = displayQuotes(from: quotes)
+        Self.logger.debug(
+            """
+            applyCachedQuotes raw=\(quotes.count, privacy: .public) \
+            display=\(displayQuotes.count, privacy: .public) \
+            fallbackToFailureWhenEmpty=\(fallbackToFailureWhenEmpty, privacy: .public)
+            """
+        )
 
         if !displayQuotes.isEmpty {
             viewState = .loaded(displayQuotes)
@@ -204,6 +249,12 @@ final class MenuBarViewModel: ObservableObject {
         _ outcome: QuoteSession.FetchOutcome,
         fallbackToFailureWhenEmpty: Bool
     ) {
+        Self.logger.debug(
+            """
+            handleFetchOutcome outcome=\(Self.debugDescription(for: outcome), privacy: .public) \
+            fallbackToFailureWhenEmpty=\(fallbackToFailureWhenEmpty, privacy: .public)
+            """
+        )
         switch outcome {
         case let .success(quotes):
             applyCachedQuotes(quotes, fallbackToFailureWhenEmpty: fallbackToFailureWhenEmpty)
@@ -211,6 +262,7 @@ final class MenuBarViewModel: ObservableObject {
         case let .failure(cachedQuotes):
             applyCachedQuotes(cachedQuotes, fallbackToFailureWhenEmpty: fallbackToFailureWhenEmpty)
         case .cancelled:
+            Self.logger.debug("handleFetchOutcome ignored cancelled result")
             return
         }
     }
@@ -256,5 +308,31 @@ final class MenuBarViewModel: ObservableObject {
                 ].joined(separator: "|")
             }
             .joined(separator: ",")
+    }
+
+    private static func symbolsDescription(_ symbols: [String]) -> String {
+        if symbols.isEmpty {
+            return "[]"
+        }
+
+        return "[\(symbols.joined(separator: ","))]"
+    }
+
+    private static func visibleFieldsDescription(_ settings: MenuBarDisplaySettings) -> String {
+        MenuBarDisplaySettings.Field.allCases
+            .filter { settings.showsField($0) }
+            .map(\.rawValue)
+            .joined(separator: ",")
+    }
+
+    private static func debugDescription(for outcome: QuoteSession.FetchOutcome) -> String {
+        switch outcome {
+        case let .success(quotes):
+            return "success(count: \(quotes.count), symbols: \(symbolsDescription(quotes.map(\.symbol))))"
+        case let .failure(cachedQuotes):
+            return "failure(cached: \(cachedQuotes.count), symbols: \(symbolsDescription(cachedQuotes.map(\.symbol))))"
+        case .cancelled:
+            return "cancelled"
+        }
     }
 }

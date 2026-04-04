@@ -10,7 +10,7 @@ final class StatusBarController: NSObject {
         static let maximumPanelContentHeight: CGFloat = 360
     }
 
-    private static let logger = Logger(
+    fileprivate static let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
         category: "StatusBarController"
     )
@@ -54,7 +54,10 @@ final class StatusBarController: NSObject {
             signature=\(presentation.debugSignature, privacy: .public)
             """
         )
-        guard let button = statusItemHost.button else { return }
+        guard let button = statusItemHost.button else {
+            Self.logger.error("syncPresentation skipped because status item button is unavailable")
+            return
+        }
         statusItemHost.sync(presentation: presentation)
         panelCoordinator.updateLayout(
             contentWidth: presentation.layout.itemWidth,
@@ -65,14 +68,27 @@ final class StatusBarController: NSObject {
 
     @objc
     private func handleStatusItemClick(_ sender: AnyObject?) {
+        Self.logger.debug("handleStatusItemClick")
         toggleQuotesPanel()
     }
 
     private func toggleQuotesPanel() {
-        guard let button = statusItemHost.button else { return }
+        guard let button = statusItemHost.button else {
+            Self.logger.error("toggleQuotesPanel skipped because status item button is unavailable")
+            return
+        }
+
+        let presentation = MenuBarPresentation(renderState: menuBarViewModel.renderState)
+        Self.logger.debug(
+            """
+            toggleQuotesPanel isOpen=\(self.panelCoordinator.isVisible, privacy: .public) \
+            rows=\(presentation.rows.count, privacy: .public) \
+            status=\(presentation.statusText, privacy: .public)
+            """
+        )
 
         panelCoordinator.toggle(
-            contentWidth: MenuBarPresentation(renderState: menuBarViewModel.renderState).layout.itemWidth,
+            contentWidth: presentation.layout.itemWidth,
             maximumContentHeight: Metrics.maximumPanelContentHeight,
             relativeTo: button,
             statusItemFrameProvider: { [weak self] in
@@ -94,12 +110,14 @@ final class StatusBarController: NSObject {
 
     @objc
     private func openSettings() {
+        Self.logger.debug("openSettings from panel")
         panelCoordinator.close()
         openSettingsWindowHandler()
     }
 
     @objc
     private func quitApp() {
+        Self.logger.debug("quitApp")
         NSApp.terminate(nil)
     }
 }
@@ -192,6 +210,10 @@ private final class QuotesPanelCoordinator {
     private var panelController: QuotesPanelController?
     private var outsideClickMonitor: OutsideClickMonitor?
 
+    var isVisible: Bool {
+        panelController?.isVisible == true
+    }
+
     func toggle(
         contentWidth: CGFloat,
         maximumContentHeight: CGFloat,
@@ -200,10 +222,18 @@ private final class QuotesPanelCoordinator {
         rootView: AnyView
     ) {
         if panelController?.isVisible == true {
+            StatusBarController.logger.debug("QuotesPanelCoordinator.toggle -> close existing panel")
             close()
             return
         }
 
+        StatusBarController.logger.debug(
+            """
+            QuotesPanelCoordinator.toggle -> open panel \
+            contentWidth=\(contentWidth, privacy: .public) \
+            maximumContentHeight=\(maximumContentHeight, privacy: .public)
+            """
+        )
         let panelController = QuotesPanelController(
             contentWidth: contentWidth,
             maximumContentHeight: maximumContentHeight,
@@ -227,6 +257,13 @@ private final class QuotesPanelCoordinator {
         maximumContentHeight: CGFloat,
         relativeTo button: NSStatusBarButton
     ) {
+        StatusBarController.logger.debug(
+            """
+            QuotesPanelCoordinator.updateLayout \
+            isVisible=\(self.isVisible, privacy: .public) \
+            contentWidth=\(contentWidth, privacy: .public)
+            """
+        )
         panelController?.updateLayout(
             contentWidth: contentWidth,
             maximumContentHeight: maximumContentHeight,
@@ -235,6 +272,7 @@ private final class QuotesPanelCoordinator {
     }
 
     func close() {
+        StatusBarController.logger.debug("QuotesPanelCoordinator.close")
         panelController?.close()
         panelController = nil
         outsideClickMonitor = nil

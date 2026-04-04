@@ -1,7 +1,13 @@
 /// 通过新浪财经未公开快照接口拉取 A 股准实时行情。
 import Foundation
+import os
 
 struct SinaQuoteProvider: QuoteProviding {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
+        category: "SinaQuoteProvider"
+    )
+
     private let session: URLSession
     private let maxRetryCount = 2
     private let requestTimeoutNanoseconds: UInt64 = 15_000_000_000
@@ -16,17 +22,29 @@ struct SinaQuoteProvider: QuoteProviding {
             .filter { !$0.isEmpty }
 
         guard !normalizedSymbols.isEmpty else {
+            Self.logger.debug("fetchQuotes skipped empty symbol list")
             return []
         }
 
+        Self.logger.debug(
+            "fetchQuotes start symbols=\(Self.symbolsDescription(normalizedSymbols), privacy: .public)"
+        )
         let request = try makeRequest(symbols: normalizedSymbols)
         let (responseData, response) = try await data(for: request)
         try validate(response: response)
 
         let payload = try decodePayload(from: responseData)
         let quotesBySymbol = try parseQuotes(payload)
+        let resolvedQuotes = normalizedSymbols.compactMap { quotesBySymbol[$0] }
+        Self.logger.debug(
+            """
+            fetchQuotes success requested=\(normalizedSymbols.count, privacy: .public) \
+            resolved=\(resolvedQuotes.count, privacy: .public) \
+            bytes=\(responseData.count, privacy: .public)
+            """
+        )
 
-        return normalizedSymbols.compactMap { quotesBySymbol[$0] }
+        return resolvedQuotes
     }
 
     private func data(for request: URLRequest) async throws -> (Data, URLResponse) {
@@ -37,18 +55,35 @@ struct SinaQuoteProvider: QuoteProviding {
                 return try await timedData(for: request)
             } catch {
                 guard shouldRetry(error: error), attempt < maxRetryCount else {
+                    Self.logger.error(
+                        """
+                        data request failed attempts=\(attempt + 1, privacy: .public) \
+                        error=\(error.localizedDescription, privacy: .public)
+                        """
+                    )
                     throw error
                 }
 
                 attempt += 1
                 let delayNanoseconds = UInt64(attempt) * 500_000_000
+                let delaySeconds = Double(delayNanoseconds) / 1_000_000_000
+                Self.logger.error(
+                    """
+                    data request retry attempt=\(attempt, privacy: .public) \
+                    delay=\(delaySeconds, format: .fixed(precision: 3))s \
+                    error=\(error.localizedDescription, privacy: .public)
+                    """
+                )
                 try await Task.sleep(nanoseconds: delayNanoseconds)
             }
         }
     }
 
     private func timedData(for request: URLRequest) async throws -> (Data, URLResponse) {
-        try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group in
+        Self.logger.debug(
+            "timedData start url=\(request.url?.absoluteString ?? "", privacy: .public)"
+        )
+        return try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group in
             group.addTask {
                 try await session.data(for: request)
             }
@@ -90,8 +125,12 @@ struct SinaQuoteProvider: QuoteProviding {
     private func validate(response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else { return }
         guard (200..<300).contains(httpResponse.statusCode) else {
+            Self.logger.error(
+                "validate failed statusCode=\(httpResponse.statusCode, privacy: .public)"
+            )
             throw SinaQuoteProviderError.invalidResponse
         }
+        Self.logger.debug("validate statusCode=\(httpResponse.statusCode, privacy: .public)")
     }
 
     private func decodePayload(from data: Data) throws -> String {
@@ -108,15 +147,26 @@ struct SinaQuoteProvider: QuoteProviding {
 
     private func parseQuotes(_ payload: String) throws -> [String: StockQuote] {
         var quotesBySymbol: [String: StockQuote] = [:]
+        var skippedLines = 0
 
         for rawLine in payload.split(whereSeparator: \.isNewline) {
             let line = String(rawLine).trimmingCharacters(in: .whitespacesAndNewlines)
 
             guard !line.isEmpty else { continue }
-            guard let quote = try parseQuote(line) else { continue }
+            guard let quote = try parseQuote(line) else {
+                skippedLines += 1
+                continue
+            }
 
             quotesBySymbol[quote.symbol] = quote
         }
+
+        Self.logger.debug(
+            """
+            parseQuotes parsed=\(quotesBySymbol.count, privacy: .public) \
+            skipped=\(skippedLines, privacy: .public)
+            """
+        )
 
         return quotesBySymbol
     }
@@ -234,6 +284,14 @@ struct SinaQuoteProvider: QuoteProviding {
             CFStringEncoding(CFStringEncodings.GB_18030_2000.rawValue)
         )
     )
+
+    private static func symbolsDescription(_ symbols: [String]) -> String {
+        if symbols.isEmpty {
+            return "[]"
+        }
+
+        return "[\(symbols.joined(separator: ","))]"
+    }
 }
 
 private enum SinaQuoteProviderError: Error {

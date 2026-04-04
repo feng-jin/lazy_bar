@@ -1,9 +1,15 @@
 /// 管理菜单栏展示设置，供设置窗口编辑并驱动菜单栏渲染。
 import Combine
 import Foundation
+import os
 
 @MainActor
 final class MenuBarSettingsViewModel: ObservableObject {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
+        category: "MenuBarSettingsViewModel"
+    )
+
     struct WatchlistDraftRow: Identifiable, Equatable {
         let id: UUID
         var entry: WatchlistEntry
@@ -47,18 +53,34 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     func beginEditing() {
-        guard !hasUnsavedChanges else { return }
+        guard !hasUnsavedChanges else {
+            Self.logger.debug("beginEditing skipped because there are unsaved draft changes")
+            return
+        }
+        Self.logger.debug(
+            "beginEditing watchlist=\(self.draft.settings.watchlist.count, privacy: .public) fields=\(Self.visibleFieldsDescription(self.draft.settings), privacy: .public)"
+        )
         resetDraft(from: settings)
     }
 
     func cancel() {
+        Self.logger.debug("cancel editing and reset draft")
         resetDraft(from: settings)
     }
 
     func save() {
         let sanitizedSettings = draft.settings.sanitized()
-        guard sanitizedSettings.validationMessage() == nil else { return }
-        store.update(sanitizedSettings)
+        guard let validationMessage = sanitizedSettings.validationMessage() else {
+            Self.logger.debug(
+                """
+                save watchlist=\(sanitizedSettings.watchlist.count, privacy: .public) \
+                fields=\(Self.visibleFieldsDescription(sanitizedSettings), privacy: .public)
+                """
+            )
+            store.update(sanitizedSettings)
+            return
+        }
+        Self.logger.error("save blocked validation=\(validationMessage, privacy: .public)")
     }
 
     func showsField(_ field: MenuBarDisplaySettings.Field) -> Bool {
@@ -66,7 +88,16 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     func setField(_ field: MenuBarDisplaySettings.Field, isVisible: Bool) {
+        let previousValue = draft.settings.showsField(field)
         draft.settings.setField(field, isVisible: isVisible)
+        guard previousValue != isVisible else { return }
+        Self.logger.debug(
+            """
+            setField field=\(field.rawValue, privacy: .public) \
+            isVisible=\(isVisible, privacy: .public) \
+            visibleFields=\(Self.visibleFieldsDescription(self.draft.settings), privacy: .public)
+            """
+        )
     }
 
     func newEntrySymbol() -> String {
@@ -74,7 +105,13 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     func setNewEntrySymbol(_ input: String) {
-        newEntry.symbol = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
+        let normalized = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
+        if newEntry.symbol != normalized {
+            Self.logger.debug(
+                "setNewEntrySymbol raw=\(input, privacy: .public) normalized=\(normalized, privacy: .public)"
+            )
+        }
+        newEntry.symbol = normalized
     }
 
     var watchlistRows: [WatchlistDraftRow] {
@@ -85,31 +122,75 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     func appendNewEntry() {
         let candidate = sanitizedNewEntry
-        guard candidate.symbol.count == 6 else { return }
-        guard !draft.settings.containsWatchlistSymbol(candidate.symbol) else { return }
+        guard candidate.symbol.count == 6 else {
+            Self.logger.error(
+                "appendNewEntry blocked invalidSymbol=\(candidate.symbol, privacy: .public)"
+            )
+            return
+        }
+        guard !draft.settings.containsWatchlistSymbol(candidate.symbol) else {
+            Self.logger.error(
+                "appendNewEntry blocked duplicateSymbol=\(candidate.symbol, privacy: .public)"
+            )
+            return
+        }
         draft.settings.watchlist.append(candidate)
         draft.watchlistRowIDs.append(UUID())
         newEntry = WatchlistEntry(symbol: "", companyName: "")
+        Self.logger.debug(
+            """
+            appendNewEntry symbol=\(candidate.symbol, privacy: .public) \
+            companyName=\(candidate.companyName, privacy: .public) \
+            watchlistCount=\(self.draft.settings.watchlist.count, privacy: .public)
+            """
+        )
     }
 
     func removeWatchlistEntry(id: WatchlistDraftRow.ID) {
-        guard let index = draft.watchlistRowIDs.firstIndex(of: id) else { return }
+        guard let index = draft.watchlistRowIDs.firstIndex(of: id) else {
+            Self.logger.error("removeWatchlistEntry missing row id")
+            return
+        }
+        let removedEntry = draft.settings.watchlist[index]
         draft.watchlistRowIDs.remove(at: index)
         draft.settings.watchlist.remove(at: index)
+        Self.logger.debug(
+            """
+            removeWatchlistEntry symbol=\(removedEntry.symbol, privacy: .public) \
+            companyName=\(removedEntry.companyName, privacy: .public) \
+            watchlistCount=\(self.draft.settings.watchlist.count, privacy: .public)
+            """
+        )
     }
 
     func updateWatchlistEntryCompanyName(id: WatchlistDraftRow.ID, input: String) {
-        guard let index = watchlistIndex(for: id) else { return }
+        guard let index = watchlistIndex(for: id) else {
+            Self.logger.error("updateWatchlistEntryCompanyName missing row id")
+            return
+        }
         draft.settings.watchlist[index].companyName = input
     }
 
     func updateWatchlistEntrySymbol(id: WatchlistDraftRow.ID, input: String) {
-        guard let index = watchlistIndex(for: id) else { return }
+        guard let index = watchlistIndex(for: id) else {
+            Self.logger.error("updateWatchlistEntrySymbol missing row id")
+            return
+        }
         let normalizedSymbol = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
+        let previousSymbol = draft.settings.watchlist[index].symbol
         draft.settings.watchlist[index].symbol = normalizedSymbol
 
         if draft.settings.watchlist[index].companyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             draft.settings.watchlist[index].companyName = normalizedSymbol
+        }
+
+        if previousSymbol != normalizedSymbol {
+            Self.logger.debug(
+                """
+                updateWatchlistEntrySymbol from=\(previousSymbol, privacy: .public) \
+                to=\(normalizedSymbol, privacy: .public)
+                """
+            )
         }
     }
 
@@ -141,6 +222,12 @@ final class MenuBarSettingsViewModel: ObservableObject {
             watchlistRowIDs: settings.watchlist.map { _ in UUID() }
         )
         newEntry = WatchlistEntry(symbol: "", companyName: "")
+        Self.logger.debug(
+            """
+            resetDraft watchlist=\(settings.watchlist.count, privacy: .public) \
+            fields=\(Self.visibleFieldsDescription(settings), privacy: .public)
+            """
+        )
     }
 
     private func watchlistIndex(for id: WatchlistDraftRow.ID) -> Int? {
@@ -158,5 +245,17 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     func watchlistEntrySymbol(id: WatchlistDraftRow.ID) -> String {
         watchlistEntry(id: id)?.symbol ?? ""
+    }
+
+    private static func visibleFieldsDescription(_ settings: MenuBarDisplaySettings) -> String {
+        let fields = MenuBarDisplaySettings.Field.allCases
+            .filter { settings.showsField($0) }
+            .map(\.rawValue)
+
+        if fields.isEmpty {
+            return "[]"
+        }
+
+        return "[\(fields.joined(separator: ","))]"
     }
 }

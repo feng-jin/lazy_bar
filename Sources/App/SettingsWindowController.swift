@@ -1,5 +1,6 @@
 /// 管理设置窗口的创建、展示和关闭；窗口内容继续复用 SwiftUI `SettingsView`。
 import AppKit
+import os
 import SwiftUI
 
 @MainActor
@@ -9,13 +10,17 @@ final class SettingsWindowController: NSWindowController {
         static let minimumContentHeight: CGFloat = 320
     }
 
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
+        category: "SettingsWindowController"
+    )
+
     private let hostingView: NSHostingView<SettingsView>
+    private let viewModel: MenuBarSettingsViewModel
 
     init(viewModel: MenuBarSettingsViewModel) {
-        let rootView = SettingsView(
-            viewModel: viewModel,
-            onClose: nil
-        )
+        self.viewModel = viewModel
+        let rootView = Self.makeRootView(viewModel: viewModel, onClose: nil)
         hostingView = NSHostingView(rootView: rootView)
         hostingView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -45,7 +50,7 @@ final class SettingsWindowController: NSWindowController {
 
         super.init(window: window)
 
-        hostingView.rootView = SettingsView(
+        hostingView.rootView = Self.makeRootView(
             viewModel: viewModel,
             onClose: { [weak self] in
                 self?.close()
@@ -59,13 +64,31 @@ final class SettingsWindowController: NSWindowController {
     }
 
     func show() {
-        guard let window else { return }
+        guard let window else {
+            Self.logger.error("show skipped because window is unavailable")
+            return
+        }
+
+        Self.logger.debug("show settings window")
 
         NSApp.activate()
+        hostingView.rootView = Self.makeRootView(
+            viewModel: viewModel,
+            onClose: { [weak self] in
+                self?.close()
+            }
+        )
 
         DispatchQueue.main.async {
             let fittedSize = self.hostingView.fittingSize
             let contentHeight = max(Metrics.minimumContentHeight, ceil(fittedSize.height))
+            Self.logger.debug(
+                """
+                resize settings window \
+                fittedHeight=\(fittedSize.height, privacy: .public) \
+                contentHeight=\(contentHeight, privacy: .public)
+                """
+            )
             window.setContentSize(NSSize(width: Metrics.contentWidth, height: contentHeight))
 
             if window.isMiniaturized {
@@ -77,6 +100,22 @@ final class SettingsWindowController: NSWindowController {
             window.orderFrontRegardless()
             window.makeKeyAndOrderFront(nil)
             window.makeMain()
+            Self.logger.debug("settings window visible")
         }
+    }
+
+    override func close() {
+        Self.logger.debug("close settings window")
+        super.close()
+    }
+
+    private static func makeRootView(
+        viewModel: MenuBarSettingsViewModel,
+        onClose: (() -> Void)?
+    ) -> SettingsView {
+        SettingsView(
+            viewModel: viewModel,
+            onClose: onClose
+        )
     }
 }
