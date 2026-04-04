@@ -26,7 +26,7 @@ final class MenuBarViewModel: ObservableObject {
     @Published private(set) var presentation: MenuBarPresentation
 
     private let provider: any QuoteProviding
-    private let settingsStore: MenuBarSettingsStore
+    private let settingsStore: any MenuBarSettingsStoring
     private let refreshScheduler: QuoteRefreshScheduler
     private var lastObservedSymbols: [String]
     private var hasLoaded = false
@@ -37,7 +37,8 @@ final class MenuBarViewModel: ObservableObject {
 
     init(
         provider: any QuoteProviding,
-        settingsStore: MenuBarSettingsStore,
+        settingsStore: any MenuBarSettingsStoring,
+        presentationBuilder: MenuBarPresentationBuilder = MenuBarPresentationBuilder(),
         refreshScheduler: QuoteRefreshScheduler = QuoteRefreshScheduler()
     ) {
         let initialViewState: ViewState = settingsStore.settings.watchlist.isEmpty ? .emptyWatchlist : .loading
@@ -47,14 +48,19 @@ final class MenuBarViewModel: ObservableObject {
         self.refreshScheduler = refreshScheduler
         lastObservedSymbols = settingsStore.settings.watchlist.map(\.symbol)
         viewState = initialViewState
-        presentation = MenuBarPresentation(
-            viewState: initialViewState,
+        presentation = presentationBuilder.build(
+            contentState: Self.presentationState(from: initialViewState),
             settings: settingsStore.settings
         )
 
         $viewState
-            .combineLatest(settingsStore.$settings)
-            .map(MenuBarPresentation.init(viewState:settings:))
+            .combineLatest(settingsStore.settingsPublisher)
+            .map { [presentationBuilder] viewState, settings in
+                presentationBuilder.build(
+                    contentState: Self.presentationState(from: viewState),
+                    settings: settings
+                )
+            }
             .assign(to: &$presentation)
 
         $viewState
@@ -76,7 +82,7 @@ final class MenuBarViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        settingsStore.$settings
+        settingsStore.settingsPublisher
             .map { settings in
                 settings.watchlist.map(\.symbol)
             }
@@ -88,7 +94,7 @@ final class MenuBarViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        settingsStore.$settings
+        settingsStore.settingsPublisher
             .dropFirst()
             .sink { [weak self] settings in
                 guard let self else { return }
@@ -289,6 +295,21 @@ final class MenuBarViewModel: ObservableObject {
         case let .loaded(quotes):
             let symbols = quotes.map(\.symbol).joined(separator: ",")
             return "loaded(count: \(quotes.count), symbols: [\(symbols)])"
+        }
+    }
+
+    private static func presentationState(
+        from viewState: ViewState
+    ) -> MenuBarPresentationBuilder.ContentState {
+        switch viewState {
+        case .loading:
+            return .loading
+        case .emptyWatchlist:
+            return .emptyWatchlist
+        case .failed:
+            return .failed
+        case let .loaded(quotes):
+            return .loaded(quotes)
         }
     }
 

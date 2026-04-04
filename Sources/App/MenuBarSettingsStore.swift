@@ -29,3 +29,9 @@ final class MenuBarSettingsStore: ObservableObject {
         userDefaults.set(data, forKey: storageKey)
     }
 }
+
+extension MenuBarSettingsStore: MenuBarSettingsStoring {
+    var settingsPublisher: AnyPublisher<MenuBarDisplaySettings, Never> {
+        $settings.eraseToAnyPublisher()
+    }
+}

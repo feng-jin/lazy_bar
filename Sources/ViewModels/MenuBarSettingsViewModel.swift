@@ -32,15 +32,15 @@ final class MenuBarSettingsViewModel: ObservableObject {
     @Published var draft: DraftState
     @Published var newEntry = WatchlistEntry(symbol: "", companyName: "")
 
-    private let store: MenuBarSettingsStore
+    private let store: any MenuBarSettingsStoring
     private var cancellables = Set<AnyCancellable>()
 
-    init(store: MenuBarSettingsStore) {
+    init(store: any MenuBarSettingsStoring) {
         self.store = store
         settings = store.settings
         draft = DraftState(settings: store.settings)
 
-        store.$settings
+        store.settingsPublisher
             .sink { [weak self] settings in
                 guard let self else { return }
                 self.settings = settings
