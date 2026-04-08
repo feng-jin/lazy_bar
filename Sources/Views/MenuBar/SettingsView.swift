@@ -42,6 +42,14 @@ struct SettingsView: View {
         var description: String { field.description }
     }
 
+    private struct DisplayModeOption: Identifiable {
+        let mode: MenuBarDisplaySettings.DisplayMode
+
+        var id: String { mode.id }
+        var title: String { mode.title }
+        var description: String { mode.description }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $selectedTab) {
@@ -116,44 +124,103 @@ struct SettingsView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 12, alignment: .top),
-                    GridItem(.flexible(), spacing: 12, alignment: .top)
-                ],
-                alignment: .leading,
-                spacing: 12
-            ) {
-                ForEach(displayFieldOptions) { option in
-                    Toggle(
-                        isOn: fieldBinding(for: option.field)
-                    ) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(option.title)
-                                .font(.headline)
-                                .foregroundStyle(.primary)
+            displayModeSection
 
-                            Text(option.description)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 10) {
+                Text("展示字段")
+                    .font(.headline)
+
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 12, alignment: .top),
+                        GridItem(.flexible(), spacing: 12, alignment: .top)
+                    ],
+                    alignment: .leading,
+                    spacing: 12
+                ) {
+                    ForEach(displayFieldOptions) { option in
+                        Toggle(
+                            isOn: fieldBinding(for: option.field)
+                        ) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(option.title)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+
+                                Text(option.description)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .background(cardBackground(for: viewModel.draft.settings.showsField(option.field)))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
+                                    .strokeBorder(
+                                        cardBorderColor(for: viewModel.draft.settings.showsField(option.field)),
+                                        lineWidth: 1
+                                    )
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius))
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
-                        .background(cardBackground(for: viewModel.draft.settings.showsField(option.field)))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
-                                .strokeBorder(
-                                    cardBorderColor(for: viewModel.draft.settings.showsField(option.field)),
-                                    lineWidth: 1
-                                )
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius))
+                        .toggleStyle(.checkbox)
                     }
-                    .toggleStyle(.checkbox)
                 }
             }
         }
+    }
+
+    private var displayModeSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("展示模式")
+                .font(.headline)
+
+            ForEach(displayModeOptions) { option in
+                displayModeCard(for: option)
+            }
+
+            Text("固定模式下，可在左键列表中点选要固定显示的股票；若当前固定项已不在监控列表中，会自动回退到第一只。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func displayModeCard(for option: DisplayModeOption) -> some View {
+        let isSelected = viewModel.displayMode() == option.mode
+
+        return Button {
+            viewModel.setDisplayMode(option.mode)
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: isSelected ? "largecircle.fill.circle" : "circle")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                    .padding(.top, 2)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(option.title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+
+                    Text(option.description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background(cardBackground(for: isSelected))
+            .overlay {
+                RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius)
+                    .strokeBorder(cardBorderColor(for: isSelected), lineWidth: 1)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: LayoutMetrics.fieldCardCornerRadius))
+        }
+        .buttonStyle(.plain)
     }
 
     private var watchlistEditorCard: some View {
@@ -339,6 +406,10 @@ struct SettingsView: View {
 
     private var displayFieldOptions: [DisplayFieldOption] {
         MenuBarDisplaySettings.Field.allCases.map { DisplayFieldOption(field: $0) }
+    }
+
+    private var displayModeOptions: [DisplayModeOption] {
+        MenuBarDisplaySettings.DisplayMode.allCases.map { DisplayModeOption(mode: $0) }
     }
 
     private var newEntrySymbolBinding: Binding<String> {

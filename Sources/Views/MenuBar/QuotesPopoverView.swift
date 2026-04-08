@@ -23,7 +23,10 @@ struct QuotesPopoverView: View {
                             ForEach(Array(presentation.rows.enumerated()), id: \.element.id) { index, row in
                                 QuotePopoverRowView(
                                     row: row,
-                                    layout: presentation.layout
+                                    layout: presentation.layout,
+                                    onSelect: presentation.displayMode == .fixed ? {
+                                        viewModel.pinDisplayedSymbol(row.id)
+                                    } : nil
                                 )
 
                                 if index < presentation.rows.count - 1 {
@@ -159,6 +162,7 @@ private struct ActionRowView: View {
 private struct QuotePopoverRowView: View {
     let row: MenuBarPresentation.Row
     let layout: QuoteColumnLayout
+    let onSelect: (() -> Void)?
     @State private var isHovering = false
 
     var body: some View {
@@ -179,6 +183,9 @@ private struct QuotePopoverRowView: View {
                 )
         }
         .contentShape(RoundedRectangle(cornerRadius: MenuBarStyle.Metrics.panelRowCornerRadius, style: .continuous))
+        .onTapGesture {
+            onSelect?()
+        }
         .onHover { hovering in
             isHovering = hovering
         }

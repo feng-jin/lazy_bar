@@ -88,6 +88,17 @@ final class MenuBarSettingsViewModel: ObservableObject {
         draft.settings.showsField(field)
     }
 
+    func displayMode() -> MenuBarDisplaySettings.DisplayMode {
+        draft.settings.displayMode
+    }
+
+    func setDisplayMode(_ mode: MenuBarDisplaySettings.DisplayMode) {
+        let previousMode = draft.settings.displayMode
+        draft.settings.displayMode = mode
+        guard previousMode != mode else { return }
+        Self.logger.debug("setDisplayMode mode=\(mode.rawValue, privacy: .public)")
+    }
+
     func setField(_ field: MenuBarDisplaySettings.Field, isVisible: Bool) {
         let previousValue = draft.settings.showsField(field)
         draft.settings.setField(field, isVisible: isVisible)

@@ -23,6 +23,41 @@ struct WatchlistEntry: Equatable, Codable, Sendable {
 }
 
 struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
+    private enum CodingKeys: String, CodingKey {
+        case watchlist
+        case displayMode
+        case fixedSymbol
+        case showsSymbol
+        case showsCompanyName
+        case showsPrice
+        case showsChangePercent
+    }
+
+    enum DisplayMode: String, CaseIterable, Identifiable, Codable, Sendable {
+        case scrolling
+        case fixed
+
+        var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .scrolling:
+                return "滚动模式"
+            case .fixed:
+                return "固定模式"
+            }
+        }
+
+        var description: String {
+            switch self {
+            case .scrolling:
+                return "菜单栏按当前监控列表逐条循环播放股票摘要。"
+            case .fixed:
+                return "菜单栏固定显示一只股票，不再自动轮播；固定对象可在左键列表里点选。"
+            }
+        }
+    }
+
     enum Field: String, CaseIterable, Identifiable, Sendable {
         case companyName
         case symbol
@@ -59,12 +94,43 @@ struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
     }
 
     var watchlist: [WatchlistEntry]
+    var displayMode: DisplayMode = .scrolling
+    var fixedSymbol: String?
     var showsSymbol = false
     var showsCompanyName = true
     var showsPrice = true
     var showsChangePercent = true
 
     static let `default` = MenuBarDisplaySettings(watchlist: [])
+
+    init(
+        watchlist: [WatchlistEntry],
+        displayMode: DisplayMode = .scrolling,
+        fixedSymbol: String? = nil,
+        showsSymbol: Bool = false,
+        showsCompanyName: Bool = true,
+        showsPrice: Bool = true,
+        showsChangePercent: Bool = true
+    ) {
+        self.watchlist = watchlist
+        self.displayMode = displayMode
+        self.fixedSymbol = fixedSymbol
+        self.showsSymbol = showsSymbol
+        self.showsCompanyName = showsCompanyName
+        self.showsPrice = showsPrice
+        self.showsChangePercent = showsChangePercent
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        watchlist = try container.decodeIfPresent([WatchlistEntry].self, forKey: .watchlist) ?? []
+        displayMode = try container.decodeIfPresent(DisplayMode.self, forKey: .displayMode) ?? .scrolling
+        fixedSymbol = try container.decodeIfPresent(String.self, forKey: .fixedSymbol)
+        showsSymbol = try container.decodeIfPresent(Bool.self, forKey: .showsSymbol) ?? false
+        showsCompanyName = try container.decodeIfPresent(Bool.self, forKey: .showsCompanyName) ?? true
+        showsPrice = try container.decodeIfPresent(Bool.self, forKey: .showsPrice) ?? true
+        showsChangePercent = try container.decodeIfPresent(Bool.self, forKey: .showsChangePercent) ?? true
+    }
 
     func showsField(_ field: Field) -> Bool {
         switch field {
@@ -129,9 +195,28 @@ struct MenuBarDisplaySettings: Equatable, Codable, Sendable {
         return nil
     }
 
+    func resolvedFixedSymbol(in symbols: [String]) -> String? {
+        let symbolSet = Set(symbols)
+
+        if let fixedSymbol, symbolSet.contains(fixedSymbol) {
+            return fixedSymbol
+        }
+
+        return symbols.first
+    }
+
     func sanitized() -> MenuBarDisplaySettings {
-        MenuBarDisplaySettings(
-            watchlist: watchlist.map(\.sanitized),
+        let sanitizedWatchlist = watchlist.map(\.sanitized)
+        let sanitizedSymbols = Set(sanitizedWatchlist.map(\.symbol))
+        let sanitizedFixedSymbol = fixedSymbol.flatMap { symbol in
+            let normalized = WatchlistEntry.normalizedSymbol(from: symbol)
+            return sanitizedSymbols.contains(normalized) ? normalized : nil
+        }
+
+        return MenuBarDisplaySettings(
+            watchlist: sanitizedWatchlist,
+            displayMode: displayMode,
+            fixedSymbol: sanitizedFixedSymbol,
             showsSymbol: showsSymbol,
             showsCompanyName: showsCompanyName,
             showsPrice: showsPrice,

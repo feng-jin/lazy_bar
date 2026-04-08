@@ -90,6 +90,24 @@ final class MenuBarViewModel: ObservableObject {
         hasLoaded = true
     }
 
+    func pinDisplayedSymbol(_ symbol: String) {
+        let normalizedSymbol = WatchlistEntry.normalizedSymbol(from: symbol)
+        guard settingsStore.settings.watchlist.contains(where: { $0.symbol == normalizedSymbol }) else {
+            Self.logger.error("pinDisplayedSymbol ignored missing symbol=\(normalizedSymbol, privacy: .public)")
+            return
+        }
+
+        guard settingsStore.settings.fixedSymbol != normalizedSymbol else {
+            Self.logger.debug("pinDisplayedSymbol ignored unchanged symbol=\(normalizedSymbol, privacy: .public)")
+            return
+        }
+
+        var updatedSettings = settingsStore.settings
+        updatedSettings.fixedSymbol = normalizedSymbol
+        Self.logger.debug("pinDisplayedSymbol symbol=\(normalizedSymbol, privacy: .public)")
+        settingsStore.update(updatedSettings)
+    }
+
     private func performLoad(showLoadingState: Bool) async {
         let symbols = currentSymbols
         Self.logger.debug(

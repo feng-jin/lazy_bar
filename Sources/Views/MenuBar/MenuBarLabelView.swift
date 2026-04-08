@@ -14,7 +14,7 @@ struct MenuBarLabelView: View {
         let identity = presentation.contentIdentity
         let _ = Self.logger.debug(
             """
-            body rows=\(presentation.rows.count, privacy: .public) \
+            body rows=\(presentation.barRows.count, privacy: .public) \
             status=\(presentation.statusText, privacy: .public) \
             width=\(presentation.layout.itemWidth, privacy: .public) \
             identity=\(identity, privacy: .public)
@@ -22,8 +22,12 @@ struct MenuBarLabelView: View {
         )
 
         Group {
-            if !presentation.rows.isEmpty {
-                VerticalTickerView(items: presentation.rows, layout: presentation.layout)
+            if !presentation.barRows.isEmpty {
+                if presentation.displayMode == .fixed {
+                    FixedQuoteView(item: presentation.barRows[0], layout: presentation.layout)
+                } else {
+                    VerticalTickerView(items: presentation.barRows, layout: presentation.layout)
+                }
             } else {
                 statusText(
                     presentation.statusText,
@@ -50,6 +54,26 @@ struct MenuBarLabelView: View {
             )
     }
 
+}
+
+private struct FixedQuoteView: View {
+    let item: MenuBarPresentation.Row
+    let layout: QuoteColumnLayout
+
+    var body: some View {
+        QuoteColumnsRowView(
+            columns: item.columns,
+            layout: layout,
+            typography: .menuBar,
+            height: MenuBarStyle.Metrics.contentHeight,
+            verticalOffset: MenuBarStyle.Metrics.verticalTextOffset
+        )
+        .frame(
+            width: layout.contentWidth,
+            height: MenuBarStyle.Metrics.contentHeight,
+            alignment: .leading
+        )
+    }
 }
 
 private struct VerticalTickerView: View {

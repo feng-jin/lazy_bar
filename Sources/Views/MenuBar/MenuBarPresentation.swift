@@ -5,8 +5,10 @@ struct MenuBarPresentation: Equatable {
     }
 
     let rows: [Row]
+    let barRows: [Row]
     let layout: QuoteColumnLayout
     let statusText: String
+    let displayMode: MenuBarDisplaySettings.DisplayMode
 
     init(renderState: MenuBarRenderState) {
         self.init(
@@ -27,6 +29,16 @@ struct MenuBarPresentation: Equatable {
                 columns: quote.columns(settings: settings)
             )
         }
+        displayMode = settings.displayMode
+        if
+            settings.displayMode == .fixed,
+            let fixedSymbol = settings.resolvedFixedSymbol(in: rows.map(\.id)),
+            let fixedRow = rows.first(where: { $0.id == fixedSymbol })
+        {
+            barRows = [fixedRow]
+        } else {
+            barRows = rows
+        }
         layout = QuoteColumnLayoutCalculator.layout(
             columns: rows.map(\.columns),
             statusText: statusText
@@ -35,22 +47,22 @@ struct MenuBarPresentation: Equatable {
     }
 
     var debugSignature: String {
-        if rows.isEmpty {
+        if barRows.isEmpty {
             return "status:\(statusText)"
         }
 
-        return rowsSignature
+        return rowsSignature(barRows)
     }
 
     var contentIdentity: String {
-        if rows.isEmpty {
+        if barRows.isEmpty {
             return "status:\(statusText):\(layout.itemWidth)"
         }
 
-        return "rows:\(rowsSignature):\(layout.itemWidth)"
+        return "rows:\(rowsSignature(barRows)):\(layout.itemWidth)"
     }
 
-    private var rowsSignature: String {
+    private func rowsSignature(_ rows: [Row]) -> String {
         rows
             .map { row in
                 [

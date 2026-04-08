@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A00000000000000000000141"
-               BuildableName = "lazy_bar.app"
+               BuildableName = "Lazy Bar.app"
                BlueprintName = "lazy_bar"
                ReferencedContainer = "container:lazy_bar.xcodeproj">
             </BuildableReference>
@@ -45,7 +45,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A00000000000000000000141"
-            BuildableName = "lazy_bar.app"
+            BuildableName = "Lazy Bar.app"
             BlueprintName = "lazy_bar"
             ReferencedContainer = "container:lazy_bar.xcodeproj">
          </BuildableReference>
@@ -62,7 +62,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A00000000000000000000141"
-            BuildableName = "lazy_bar.app"
+            BuildableName = "Lazy Bar.app"
             BlueprintName = "lazy_bar"
             ReferencedContainer = "container:lazy_bar.xcodeproj">
          </BuildableReference>
