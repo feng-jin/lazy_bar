@@ -24,8 +24,9 @@ struct SettingsView: View {
         static let watchlistListVerticalPadding: CGFloat = 12
         static let watchlistSectionCornerRadius: CGFloat = 14
         static let searchResultsTopOffset: CGFloat = 58
-        static let searchResultsMinHeight: CGFloat = 156
         static let searchResultsMaxHeight: CGFloat = 220
+        static let searchResultRowHeight: CGFloat = 56
+        static let searchResultDividerHeight: CGFloat = 1
         static let symbolColumnWidth: CGFloat = 108
         static let actionColumnWidth: CGFloat = 32
         static let fieldCardCornerRadius: CGFloat = 12
@@ -459,10 +460,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .frame(
-                    minHeight: LayoutMetrics.searchResultsMinHeight,
-                    maxHeight: LayoutMetrics.searchResultsMaxHeight
-                )
+                .frame(height: searchResultsListHeight)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -515,13 +513,14 @@ struct SettingsView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(isAdded)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(minHeight: LayoutMetrics.searchResultRowHeight)
+        .contentShape(Rectangle())
     }
+    .buttonStyle(.plain)
+    .disabled(isAdded)
+}
 
     private func close() {
         if let onClose {
@@ -559,6 +558,19 @@ struct SettingsView: View {
 
     private var watchlistListHeight: CGFloat {
         CGFloat(LayoutMetrics.watchlistMaxVisibleRows) * LayoutMetrics.watchlistRowHeight + LayoutMetrics.watchlistListVerticalPadding
+    }
+
+    private var searchResultsListHeight: CGFloat {
+        let resultCount = viewModel.searchResults.count
+        guard resultCount > 0 else { return 0 }
+
+        let rowsHeight = CGFloat(resultCount) * LayoutMetrics.searchResultRowHeight
+        let dividerCount = max(0, resultCount - 1)
+        let dividersHeight = CGFloat(dividerCount) * LayoutMetrics.searchResultDividerHeight
+        return min(
+            LayoutMetrics.searchResultsMaxHeight,
+            rowsHeight + dividersHeight
+        )
     }
 
     private var watchlistSectionBackground: some ShapeStyle {
