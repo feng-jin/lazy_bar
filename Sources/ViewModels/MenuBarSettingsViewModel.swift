@@ -227,16 +227,25 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     @discardableResult
-    func dismissSearchIfNeeded() -> Bool {
-        let hasVisibleSearchState = !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || showsSearchResults
+    func dismissSearchIfNeeded(reason: String = "dismissIfNeeded") -> Bool {
+        let hasVisibleSearchState = showsSearchResults
 
         guard hasVisibleSearchState else {
             return false
         }
 
-        clearSearch(reason: "dismissIfNeeded")
+        dismissSearchOverlay(reason: reason)
         return true
+    }
+
+    func revealSearchOverlayIfNeeded() {
+        let trimmedQuery = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedQuery.isEmpty else { return }
+
+        Self.logger.debug(
+            "revealSearchOverlayIfNeeded query=\(trimmedQuery, privacy: .public)"
+        )
+        isSearchOverlayVisible = true
     }
 
     private func watchlistIndex(for id: WatchlistDraftRow.ID) -> Int? {
@@ -318,6 +327,15 @@ final class MenuBarSettingsViewModel: ObservableObject {
                 )
             }
         }
+    }
+
+    private func dismissSearchOverlay(reason: String) {
+        guard isSearchOverlayVisible else {
+            return
+        }
+
+        Self.logger.debug("dismissSearchOverlay reason=\(reason, privacy: .public)")
+        isSearchOverlayVisible = false
     }
 
     private func clearSearch(reason: String) {

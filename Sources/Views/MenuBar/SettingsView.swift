@@ -1,12 +1,22 @@
 /// 提供菜单栏展示字段的设置界面。
+import os
 import SwiftUI
 
 struct SettingsView: View {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
+        category: "SettingsView"
+    )
+
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: MenuBarSettingsViewModel
     let onClose: (() -> Void)?
     @State private var selectedTab: SettingsTab = .watchlist
     @FocusState private var isSearchFieldFocused: Bool
+    @State private var searchComposerFrame: CGRect = .zero
+    @State private var searchResultsFrame: CGRect = .zero
+
+    private let settingsCoordinateSpace = "SettingsViewSpace"
 
     private enum LayoutMetrics {
         static let watchlistMaxVisibleRows = 7
@@ -117,8 +127,21 @@ struct SettingsView: View {
             .padding(.bottom, 20)
         }
         .frame(width: 500)
+        .coordinateSpace(name: settingsCoordinateSpace)
+        .simultaneousGesture(
+            SpatialTapGesture().onEnded { value in
+                handlePanelTap(at: value.location)
+            }
+        )
+        .onChange(of: isSearchFieldFocused) { _, isFocused in
+            if isFocused {
+                viewModel.revealSearchOverlayIfNeeded()
+            } else {
+                _ = viewModel.dismissSearchIfNeeded(reason: "focusLost")
+            }
+        }
         .onExitCommand {
-            if viewModel.dismissSearchIfNeeded() {
+            if viewModel.dismissSearchIfNeeded(reason: "exitCommand") {
                 isSearchFieldFocused = false
             }
         }
@@ -321,6 +344,17 @@ struct SettingsView: View {
                 viewModel.selectFirstSearchResultIfAvailable()
             }
         }
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear {
+                        searchComposerFrame = proxy.frame(in: .named(settingsCoordinateSpace))
+                    }
+                    .onChange(of: proxy.frame(in: .named(settingsCoordinateSpace))) { _, frame in
+                        searchComposerFrame = frame
+                    }
+            }
+        )
         .overlay(alignment: .topLeading) {
             if viewModel.showsSearchResults {
                 searchResultsList
@@ -432,6 +466,17 @@ struct SettingsView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear {
+                        searchResultsFrame = proxy.frame(in: .named(settingsCoordinateSpace))
+                    }
+                    .onChange(of: proxy.frame(in: .named(settingsCoordinateSpace))) { _, frame in
+                        searchResultsFrame = frame
+                    }
+            }
+        )
         .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
         .overlay {
             RoundedRectangle(cornerRadius: 10)
@@ -484,6 +529,32 @@ struct SettingsView: View {
         } else {
             dismiss()
         }
+    }
+
+    private func dismissSearchOverlay(reason: String) {
+        if viewModel.dismissSearchIfNeeded(reason: reason) {
+            isSearchFieldFocused = false
+        }
+    }
+
+    private func handlePanelTap(at location: CGPoint) {
+        guard viewModel.showsSearchResults else { return }
+
+        let tappedComposer = searchComposerFrame.contains(location)
+        let tappedResults = searchResultsFrame.contains(location)
+        Self.logger.debug(
+            """
+            handlePanelTap location=(\(location.x, privacy: .public),\(location.y, privacy: .public)) \
+            composerHit=\(tappedComposer, privacy: .public) \
+            resultsHit=\(tappedResults, privacy: .public)
+            """
+        )
+
+        guard !tappedComposer && !tappedResults else {
+            return
+        }
+
+        dismissSearchOverlay(reason: "panelTapOutsideSearch")
     }
 
     private var watchlistListHeight: CGFloat {
