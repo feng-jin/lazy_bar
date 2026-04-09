@@ -37,6 +37,9 @@
 		A00000000000000000000102 /* MenuBarRenderState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000103 /* MenuBarRenderState.swift */; };
 		A00000000000000000000104 /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000105 /* AppUpdater.swift */; };
 		A00000000000000000000106 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A00000000000000000000107 /* Sparkle */; };
+		A00000000000000000000190 /* StockSearchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000191 /* StockSearchResult.swift */; };
+		A00000000000000000000192 /* StockSearchProviding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000193 /* StockSearchProviding.swift */; };
+		A00000000000000000000194 /* SinaStockSearchProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000195 /* SinaStockSearchProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -72,6 +75,9 @@
 		A00000000000000000000099 /* QuoteSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuoteSession.swift; sourceTree = "<group>"; };
 		A00000000000000000000103 /* MenuBarRenderState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarRenderState.swift; sourceTree = "<group>"; };
 		A00000000000000000000105 /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
+		A00000000000000000000191 /* StockSearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockSearchResult.swift; sourceTree = "<group>"; };
+		A00000000000000000000193 /* StockSearchProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockSearchProviding.swift; sourceTree = "<group>"; };
+		A00000000000000000000195 /* SinaStockSearchProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SinaStockSearchProvider.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +152,7 @@
 				A00000000000000000000021 /* DisplayQuote.swift */,
 				A00000000000000000000025 /* MenuBarDisplaySettings.swift */,
 				A00000000000000000000023 /* StockQuote.swift */,
+				A00000000000000000000191 /* StockSearchResult.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -153,9 +160,11 @@
 		A00000000000000000000123 /* Providers */ = {
 			isa = PBXGroup;
 			children = (
+				A00000000000000000000195 /* SinaStockSearchProvider.swift */,
 				A00000000000000000000031 /* MockQuoteProvider.swift */,
 				A00000000000000000000032 /* QuoteProviding.swift */,
 				A00000000000000000000038 /* SinaQuoteProvider.swift */,
+				A00000000000000000000193 /* StockSearchProviding.swift */,
 			);
 			path = Providers;
 			sourceTree = "<group>";
@@ -311,10 +320,13 @@
 				A00000000000000000000092 /* MenuBarSettingsStoring.swift in Sources */,
 				A00000000000000000000019 /* MenuBarSettingsStore.swift in Sources */,
 				A0000000000000000000001A /* MenuBarDisplaySettings.swift in Sources */,
+				A00000000000000000000194 /* SinaStockSearchProvider.swift in Sources */,
 				A0000000000000000000001B /* MenuBarSettingsViewModel.swift in Sources */,
 				A0000000000000000000001C /* SettingsView.swift in Sources */,
 				A0000000000000000000001D /* StatusBarController.swift in Sources */,
 				A0000000000000000000001E /* SettingsWindowController.swift in Sources */,
+				A00000000000000000000190 /* StockSearchResult.swift in Sources */,
+				A00000000000000000000192 /* StockSearchProviding.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

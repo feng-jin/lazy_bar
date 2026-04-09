@@ -27,13 +27,22 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     @Published private(set) var settings: MenuBarDisplaySettings
     @Published var draft: DraftState
-    @Published var newEntry = WatchlistEntry(symbol: "", companyName: "")
+    @Published var searchQuery = ""
+    @Published private(set) var searchResults: [StockSearchResult] = []
+    @Published private(set) var isSearching = false
+    @Published private(set) var searchStatusMessage: String?
 
     private let store: any MenuBarSettingsStoring
+    private let stockSearchProvider: any StockSearchProviding
     private var cancellables = Set<AnyCancellable>()
+    private var searchTask: Task<Void, Never>?
 
-    init(store: any MenuBarSettingsStoring) {
+    init(
+        store: any MenuBarSettingsStoring,
+        stockSearchProvider: any StockSearchProviding
+    ) {
         self.store = store
+        self.stockSearchProvider = stockSearchProvider
         settings = store.settings
         draft = DraftState(
             settings: store.settings,
@@ -49,6 +58,15 @@ final class MenuBarSettingsViewModel: ObservableObject {
                 if !self.hasUnsavedChanges {
                     self.resetDraft(from: settings)
                 }
+            }
+            .store(in: &cancellables)
+
+        $searchQuery
+            .removeDuplicates()
+            .debounce(for: .milliseconds(250), scheduler: RunLoop.main)
+            .sink { [weak self] query in
+                Self.logger.debug("searchQuery debounced query=\(query, privacy: .public)")
+                self?.performSearch(for: query)
             }
             .store(in: &cancellables)
     }
@@ -67,6 +85,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
     func cancel() {
         Self.logger.debug("cancel editing and reset draft")
         resetDraft(from: settings)
+        clearSearch()
     }
 
     func save() {
@@ -112,50 +131,32 @@ final class MenuBarSettingsViewModel: ObservableObject {
         )
     }
 
-    func newEntrySymbol() -> String {
-        newEntry.symbol
-    }
-
-    func setNewEntrySymbol(_ input: String) {
-        let normalized = String(WatchlistEntry.normalizedSymbol(from: input).prefix(6))
-        if newEntry.symbol != normalized {
-            Self.logger.debug(
-                "setNewEntrySymbol raw=\(input, privacy: .public) normalized=\(normalized, privacy: .public)"
-            )
-        }
-        newEntry.symbol = normalized
-    }
-
     var watchlistRows: [WatchlistDraftRow] {
         zip(draft.watchlistRowIDs, draft.settings.watchlist).map { id, entry in
             WatchlistDraftRow(id: id, entry: entry)
         }
     }
 
-    func appendNewEntry() {
-        let candidate = sanitizedNewEntry
-        guard candidate.symbol.count == 6 else {
-            Self.logger.error(
-                "appendNewEntry blocked invalidSymbol=\(candidate.symbol, privacy: .public)"
+    func selectSearchResult(_ result: StockSearchResult) {
+        guard !draft.settings.containsWatchlistSymbol(result.symbol) else {
+            Self.logger.debug(
+                "selectSearchResult ignored duplicate symbol=\(result.symbol, privacy: .public)"
             )
+            searchStatusMessage = "这只股票已经在监控列表里。"
             return
         }
-        guard !draft.settings.containsWatchlistSymbol(candidate.symbol) else {
-            Self.logger.error(
-                "appendNewEntry blocked duplicateSymbol=\(candidate.symbol, privacy: .public)"
-            )
-            return
-        }
-        draft.settings.watchlist.append(candidate)
+
+        let entry = WatchlistEntry(symbol: result.symbol, companyName: result.companyName).sanitized
+        draft.settings.watchlist.append(entry)
         draft.watchlistRowIDs.append(UUID())
-        newEntry = WatchlistEntry(symbol: "", companyName: "")
         Self.logger.debug(
             """
-            appendNewEntry symbol=\(candidate.symbol, privacy: .public) \
-            companyName=\(candidate.companyName, privacy: .public) \
+            selectSearchResult symbol=\(entry.symbol, privacy: .public) \
+            companyName=\(entry.companyName, privacy: .public) \
             watchlistCount=\(self.draft.settings.watchlist.count, privacy: .public)
             """
         )
+        clearSearch()
     }
 
     func removeWatchlistEntry(id: WatchlistDraftRow.ID) {
@@ -214,18 +215,12 @@ final class MenuBarSettingsViewModel: ObservableObject {
         validationMessage == nil && hasUnsavedChanges
     }
 
-    var canAddWatchlistEntry: Bool {
-        let candidate = sanitizedNewEntry
-        guard candidate.symbol.count == 6 else { return false }
-        return !draft.settings.containsWatchlistSymbol(candidate.symbol)
+    var showsSearchResults: Bool {
+        isSearching || !searchResults.isEmpty || searchStatusMessage != nil
     }
 
     var validationMessage: String? {
         draft.settings.validationMessage()
-    }
-
-    private var sanitizedNewEntry: WatchlistEntry {
-        newEntry.sanitized
     }
 
     private func resetDraft(from settings: MenuBarDisplaySettings) {
@@ -233,13 +228,33 @@ final class MenuBarSettingsViewModel: ObservableObject {
             settings: settings,
             watchlistRowIDs: settings.watchlist.map { _ in UUID() }
         )
-        newEntry = WatchlistEntry(symbol: "", companyName: "")
         Self.logger.debug(
             """
             resetDraft watchlist=\(settings.watchlist.count, privacy: .public) \
             fields=\(Self.visibleFieldsDescription(settings), privacy: .public)
             """
         )
+    }
+
+    func isSearchResultAlreadyAdded(_ result: StockSearchResult) -> Bool {
+        draft.settings.containsWatchlistSymbol(result.symbol)
+    }
+
+    func selectFirstSearchResultIfAvailable() {
+        guard let result = searchResults.first, !isSearchResultAlreadyAdded(result) else {
+            Self.logger.debug(
+                """
+                selectFirstSearchResultIfAvailable skipped \
+                resultCount=\(self.searchResults.count, privacy: .public)
+                """
+            )
+            return
+        }
+
+        Self.logger.debug(
+            "selectFirstSearchResultIfAvailable symbol=\(result.symbol, privacy: .public)"
+        )
+        selectSearchResult(result)
     }
 
     private func watchlistIndex(for id: WatchlistDraftRow.ID) -> Int? {
@@ -269,5 +284,85 @@ final class MenuBarSettingsViewModel: ObservableObject {
         }
 
         return "[\(fields.joined(separator: ","))]"
+    }
+
+    private func performSearch(for query: String) {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        Self.logger.debug(
+            "performSearch received raw=\(query, privacy: .public) trimmed=\(trimmedQuery, privacy: .public)"
+        )
+
+        if searchTask != nil {
+            Self.logger.debug("performSearch cancelling previous in-flight search task")
+        }
+        searchTask?.cancel()
+
+        guard !trimmedQuery.isEmpty else {
+            Self.logger.debug("performSearch cleared because query is empty after trim")
+            searchResults = []
+            isSearching = false
+            searchStatusMessage = nil
+            return
+        }
+
+        isSearching = true
+        searchStatusMessage = nil
+        searchTask = Task { [weak self] in
+            guard let self else { return }
+
+            do {
+                Self.logger.debug("performSearch task started query=\(trimmedQuery, privacy: .public)")
+                let results = try await stockSearchProvider.searchStocks(query: trimmedQuery)
+                guard !Task.isCancelled else {
+                    Self.logger.debug(
+                        "performSearch task cancelled after provider returned query=\(trimmedQuery, privacy: .public)"
+                    )
+                    return
+                }
+
+                await MainActor.run {
+                    self.isSearching = false
+                    self.searchResults = results
+                    self.searchStatusMessage = results.isEmpty ? "没有找到匹配的 A 股，请换个简称或代码。" : nil
+                }
+                Self.logger.debug(
+                    """
+                    performSearch completed query=\(trimmedQuery, privacy: .public) \
+                    resultCount=\(results.count, privacy: .public) \
+                    status=\(self.searchStatusMessage ?? "nil", privacy: .public)
+                    """
+                )
+            } catch {
+                guard !Task.isCancelled else {
+                    Self.logger.debug(
+                        "performSearch task cancelled during failure handling query=\(trimmedQuery, privacy: .public)"
+                    )
+                    return
+                }
+
+                await MainActor.run {
+                    self.isSearching = false
+                    self.searchResults = []
+                    self.searchStatusMessage = "搜索失败，请稍后再试。"
+                }
+                Self.logger.error(
+                    "performSearch failed query=\(trimmedQuery, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
+                )
+            }
+        }
+    }
+
+    private func clearSearch() {
+        Self.logger.debug(
+            """
+            clearSearch previousQuery=\(self.searchQuery, privacy: .public) \
+            previousResults=\(self.searchResults.count, privacy: .public)
+            """
+        )
+        searchTask?.cancel()
+        searchQuery = ""
+        searchResults = []
+        isSearching = false
+        searchStatusMessage = nil
     }
 }

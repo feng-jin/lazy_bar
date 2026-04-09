@@ -10,22 +10,26 @@ struct AppDependencies {
 
     let menuBarSettingsStore: MenuBarSettingsStore
     let quoteSession: QuoteSession
+    let stockSearchProvider: any StockSearchProviding
 
     @MainActor
     static var live: AppDependencies {
         let menuBarSettingsStore = MenuBarSettingsStore()
         let quoteProvider = SinaQuoteProvider()
+        let stockSearchProvider = SinaStockSearchProvider()
         Self.logger.debug(
             """
             build live dependencies \
             provider=SinaQuoteProvider \
+            stockSearchProvider=SinaStockSearchProvider \
             initialWatchlist=\(menuBarSettingsStore.settings.watchlist.count, privacy: .public)
             """
         )
 
         return AppDependencies(
             menuBarSettingsStore: menuBarSettingsStore,
-            quoteSession: QuoteSession(provider: quoteProvider)
+            quoteSession: QuoteSession(provider: quoteProvider),
+            stockSearchProvider: stockSearchProvider
         )
     }
 }

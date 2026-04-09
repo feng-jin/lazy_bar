@@ -12,8 +12,8 @@ struct SettingsView: View {
         static let watchlistRowHeight: CGFloat = 44
         static let watchlistListVerticalPadding: CGFloat = 12
         static let watchlistSectionCornerRadius: CGFloat = 14
+        static let searchResultsMaxHeight: CGFloat = 220
         static let symbolColumnWidth: CGFloat = 108
-        static let composerSymbolWidth: CGFloat = 132
         static let actionColumnWidth: CGFloat = 32
         static let fieldCardCornerRadius: CGFloat = 12
     }
@@ -110,7 +110,7 @@ struct SettingsView: View {
 
     private var watchlistTabContent: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("手动维护菜单栏要监控的股票列表。简称用于展示，代码只保留 6 位数字。")
+            Text("输入股票简称、代码或拼音缩写后搜索，再从候选列表里选择要加入监控的股票。")
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
@@ -254,7 +254,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("当前还没有股票")
                         .font(.headline)
-                    Text("填写简称和代码后点“添加”，保存前你还可以继续修改或删除。")
+                    Text("先在上方搜索并选择股票；保存前你还可以继续修改或删除。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
@@ -290,39 +290,25 @@ struct SettingsView: View {
     }
 
     private var watchlistComposerRow: some View {
-        HStack(alignment: .top, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("股票简称")
+                Text("搜索股票")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
                 TextField(
-                    "例如：贵州茅台",
-                    text: $viewModel.newEntry.companyName
+                    "输入简称、代码或拼音缩写，例如：贵州茅台 / 600519 / gzmt",
+                    text: $viewModel.searchQuery
                 )
                 .textFieldStyle(.roundedBorder)
+                .onSubmit {
+                    viewModel.selectFirstSearchResultIfAvailable()
+                }
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("股票代码")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                TextField(
-                    "600519",
-                    text: newEntrySymbolBinding
-                )
-                .textFieldStyle(.roundedBorder)
-                .font(.system(.body, design: .monospaced))
-                .frame(width: LayoutMetrics.composerSymbolWidth)
+            if viewModel.showsSearchResults {
+                searchResultsList
             }
-
-            Button("添加") {
-                viewModel.appendNewEntry()
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(!viewModel.canAddWatchlistEntry)
-            .padding(.top, 22)
         }
         .padding(.horizontal, 16)
     }
@@ -388,6 +374,85 @@ struct SettingsView: View {
         .frame(minHeight: LayoutMetrics.watchlistRowHeight)
     }
 
+    private var searchResultsList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if viewModel.isSearching {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("正在搜索…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+            } else if let message = viewModel.searchStatusMessage {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(viewModel.searchResults) { result in
+                            searchResultRow(for: result)
+
+                            if result.id != viewModel.searchResults.last?.id {
+                                Divider()
+                                    .padding(.leading, 12)
+                            }
+                        }
+                    }
+                }
+                .frame(maxHeight: LayoutMetrics.searchResultsMaxHeight)
+            }
+        }
+        .background(.quaternary.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(.secondary.opacity(0.12), lineWidth: 1)
+        }
+    }
+
+    private func searchResultRow(for result: StockSearchResult) -> some View {
+        let isAdded = viewModel.isSearchResultAlreadyAdded(result)
+
+        return Button {
+            viewModel.selectSearchResult(result)
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(result.companyName)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+
+                    Text(result.marketSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 0)
+
+                Text(result.symbol)
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundStyle(.secondary)
+
+                if isAdded {
+                    Text("已添加")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isAdded)
+    }
+
     private func close() {
         if let onClose {
             onClose()
@@ -410,13 +475,6 @@ struct SettingsView: View {
 
     private var displayModeOptions: [DisplayModeOption] {
         MenuBarDisplaySettings.DisplayMode.allCases.map { DisplayModeOption(mode: $0) }
-    }
-
-    private var newEntrySymbolBinding: Binding<String> {
-        Binding(
-            get: { viewModel.newEntrySymbol() },
-            set: { viewModel.setNewEntrySymbol($0) }
-        )
     }
 
     private func fieldBinding(for field: MenuBarDisplaySettings.Field) -> Binding<Bool> {
