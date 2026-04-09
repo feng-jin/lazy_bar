@@ -1,5 +1,6 @@
 /// 管理设置窗口的创建、展示和关闭；窗口内容继续复用 SwiftUI `SettingsView`。
 import AppKit
+import Combine
 import os
 import SwiftUI
 
@@ -18,6 +19,7 @@ final class SettingsWindowController: NSWindowController {
     private let hostingView: NSHostingView<AnyView>
     private let viewModel: MenuBarSettingsViewModel
     private var rootViewIdentity = UUID()
+    private var cancellables = Set<AnyCancellable>()
 
     init(viewModel: MenuBarSettingsViewModel) {
         self.viewModel = viewModel
@@ -62,6 +64,8 @@ final class SettingsWindowController: NSWindowController {
                 self?.close()
             }
         )
+
+        bindDebugObservers()
     }
 
     @available(*, unavailable)
@@ -116,6 +120,52 @@ final class SettingsWindowController: NSWindowController {
     override func close() {
         Self.logger.debug("close settings window")
         super.close()
+    }
+
+    private func bindDebugObservers() {
+        viewModel.$searchResults
+            .sink { [weak self] results in
+                self?.logSearchLayout(reason: "searchResults", resultCount: results.count)
+            }
+            .store(in: &cancellables)
+
+        viewModel.$isSearching
+            .sink { [weak self] isSearching in
+                self?.logSearchLayout(reason: "isSearching=\(isSearching)")
+            }
+            .store(in: &cancellables)
+
+        viewModel.$searchStatusMessage
+            .sink { [weak self] message in
+                self?.logSearchLayout(reason: "searchStatus", status: message)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func logSearchLayout(
+        reason: String,
+        resultCount: Int? = nil,
+        status: String? = nil
+    ) {
+        let fittedSize = hostingView.fittingSize
+        let windowContentSize = window?.contentView?.bounds.size ?? .zero
+        let windowFrameSize = window?.frame.size ?? .zero
+
+        Self.logger.debug(
+            """
+            searchLayout reason=\(reason, privacy: .public) \
+            query=\(self.viewModel.searchQuery, privacy: .public) \
+            showsSearchResults=\(self.viewModel.showsSearchResults, privacy: .public) \
+            resultCount=\(resultCount ?? self.viewModel.searchResults.count, privacy: .public) \
+            status=\(status ?? self.viewModel.searchStatusMessage ?? "nil", privacy: .public) \
+            fittedWidth=\(fittedSize.width, privacy: .public) \
+            fittedHeight=\(fittedSize.height, privacy: .public) \
+            contentWidth=\(windowContentSize.width, privacy: .public) \
+            contentHeight=\(windowContentSize.height, privacy: .public) \
+            frameWidth=\(windowFrameSize.width, privacy: .public) \
+            frameHeight=\(windowFrameSize.height, privacy: .public)
+            """
+        )
     }
 
     private static func makeRootView(

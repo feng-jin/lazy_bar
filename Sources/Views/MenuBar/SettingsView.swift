@@ -12,6 +12,8 @@ struct SettingsView: View {
         static let watchlistRowHeight: CGFloat = 44
         static let watchlistListVerticalPadding: CGFloat = 12
         static let watchlistSectionCornerRadius: CGFloat = 14
+        static let searchResultsTopOffset: CGFloat = 58
+        static let searchResultsMinHeight: CGFloat = 156
         static let searchResultsMaxHeight: CGFloat = 220
         static let symbolColumnWidth: CGFloat = 108
         static let actionColumnWidth: CGFloat = 32
@@ -63,17 +65,25 @@ struct SettingsView: View {
             .padding(.top, 20)
             .padding(.bottom, 16)
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    switch selectedTab {
-                    case .watchlist:
+            Group {
+                switch selectedTab {
+                case .watchlist:
+                    VStack(alignment: .leading, spacing: 18) {
                         watchlistTabContent
-                    case .displayFields:
-                        displayFieldsTabContent
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+
+                case .displayFields:
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 18) {
+                            displayFieldsTabContent
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
             }
 
             Divider()
@@ -290,27 +300,29 @@ struct SettingsView: View {
     }
 
     private var watchlistComposerRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("搜索股票")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("搜索股票")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
-                TextField(
-                    "输入简称、代码或拼音缩写，例如：贵州茅台 / 600519 / gzmt",
-                    text: $viewModel.searchQuery
-                )
-                .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    viewModel.selectFirstSearchResultIfAvailable()
-                }
+            TextField(
+                "输入简称、代码或拼音缩写，例如：贵州茅台 / 600519 / gzmt",
+                text: $viewModel.searchQuery
+            )
+            .textFieldStyle(.roundedBorder)
+            .onSubmit {
+                viewModel.selectFirstSearchResultIfAvailable()
             }
-
+        }
+        .overlay(alignment: .topLeading) {
             if viewModel.showsSearchResults {
                 searchResultsList
+                    .padding(.top, LayoutMetrics.searchResultsTopOffset)
+                    .zIndex(1)
             }
         }
         .padding(.horizontal, 16)
+        .zIndex(1)
     }
 
     private var watchlistTableHeader: some View {
@@ -405,14 +417,19 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .frame(maxHeight: LayoutMetrics.searchResultsMaxHeight)
+                .frame(
+                    minHeight: LayoutMetrics.searchResultsMinHeight,
+                    maxHeight: LayoutMetrics.searchResultsMaxHeight
+                )
             }
         }
-        .background(.quaternary.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
         .overlay {
             RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(.secondary.opacity(0.12), lineWidth: 1)
+                .strokeBorder(.secondary.opacity(0.18), lineWidth: 1)
         }
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 6)
     }
 
     private func searchResultRow(for result: StockSearchResult) -> some View {
