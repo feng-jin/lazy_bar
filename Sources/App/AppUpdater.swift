@@ -29,7 +29,6 @@ final class AppUpdater {
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
-        Self.logger.debug("Sparkle updater initialized")
     }
 
     func checkForUpdates() {
@@ -39,7 +38,6 @@ final class AppUpdater {
             return
         }
 
-        Self.logger.debug("checkForUpdates")
         updaterController.checkForUpdates(nil)
     }
 

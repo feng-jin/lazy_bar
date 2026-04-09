@@ -28,10 +28,7 @@ struct SinaStockSearchProvider: StockSearchProviding {
 
         let request = try makeRequest(query: normalizedQuery)
         Self.logger.debug(
-            """
-            searchStocks start query=\(normalizedQuery, privacy: .public) \
-            url=\(request.url?.absoluteString ?? "", privacy: .public)
-            """
+            "searchStocks start query=\(normalizedQuery, privacy: .public)"
         )
         let (data, response) = try await session.data(for: request)
         try validate(response: response)
@@ -77,11 +74,8 @@ struct SinaStockSearchProvider: StockSearchProviding {
 
     private func validate(response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
-            Self.logger.debug("validate skipped non-http response")
             return
         }
-
-        Self.logger.debug("validate statusCode=\(httpResponse.statusCode, privacy: .public)")
 
         guard (200..<300).contains(httpResponse.statusCode) else {
             Self.logger.error(
@@ -93,12 +87,10 @@ struct SinaStockSearchProvider: StockSearchProviding {
 
     private func decodePayload(from data: Data) throws -> String {
         if let payload = String(data: data, encoding: Self.gb18030Encoding) {
-            Self.logger.debug("decodePayload encoding=gb18030 characters=\(payload.count, privacy: .public)")
             return payload
         }
 
         if let payload = String(data: data, encoding: .utf8) {
-            Self.logger.debug("decodePayload encoding=utf8 characters=\(payload.count, privacy: .public)")
             return payload
         }
 
@@ -164,22 +156,14 @@ struct SinaStockSearchProvider: StockSearchProviding {
             )
         }
 
-        Self.logger.debug(
-            """
-            parseSearchResults rawItems=\(rawItems.count, privacy: .public) \
-            accepted=\(results.count, privacy: .public) \
-            invalid=\(invalidFieldCount, privacy: .public) \
-            unsupported=\(unsupportedCount, privacy: .public) \
-            duplicates=\(duplicateCount, privacy: .public)
-            """
-        )
-
-        if let firstResult = results.first {
+        if invalidFieldCount > 0 || unsupportedCount > 0 || duplicateCount > 0 {
             Self.logger.debug(
                 """
-                parseSearchResults firstResult symbol=\(firstResult.symbol, privacy: .public) \
-                companyName=\(firstResult.companyName, privacy: .public) \
-                market=\(firstResult.marketSummary, privacy: .public)
+                parseSearchResults filtered rawItems=\(rawItems.count, privacy: .public) \
+                accepted=\(results.count, privacy: .public) \
+                invalid=\(invalidFieldCount, privacy: .public) \
+                unsupported=\(unsupportedCount, privacy: .public) \
+                duplicates=\(duplicateCount, privacy: .public)
                 """
             )
         }

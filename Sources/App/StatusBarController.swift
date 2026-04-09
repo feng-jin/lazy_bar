@@ -48,15 +48,6 @@ final class StatusBarController: NSObject {
     }
 
     private func syncPresentation(_ presentation: MenuBarPresentation) {
-        Self.logger.debug(
-            """
-            syncPresentation rows=\(presentation.rows.count, privacy: .public) \
-            status=\(presentation.statusText, privacy: .public) \
-            itemWidth=\(presentation.layout.itemWidth, privacy: .public) \
-            contentWidth=\(presentation.layout.contentWidth, privacy: .public) \
-            signature=\(presentation.debugSignature, privacy: .public)
-            """
-        )
         guard let button = statusItemHost.button else {
             Self.logger.error("syncPresentation skipped because status item button is unavailable")
             return
@@ -71,7 +62,6 @@ final class StatusBarController: NSObject {
 
     @objc
     private func handleStatusItemClick(_ sender: AnyObject?) {
-        Self.logger.debug("handleStatusItemClick")
         toggleQuotesPanel()
     }
 
@@ -82,13 +72,6 @@ final class StatusBarController: NSObject {
         }
 
         let presentation = MenuBarPresentation(renderState: menuBarViewModel.renderState)
-        Self.logger.debug(
-            """
-            toggleQuotesPanel isOpen=\(self.panelCoordinator.isVisible, privacy: .public) \
-            rows=\(presentation.rows.count, privacy: .public) \
-            status=\(presentation.statusText, privacy: .public)
-            """
-        )
 
         panelCoordinator.toggle(
             contentWidth: presentation.layout.itemWidth,
@@ -116,21 +99,18 @@ final class StatusBarController: NSObject {
 
     @objc
     private func checkForUpdates() {
-        Self.logger.debug("checkForUpdates from panel")
         panelCoordinator.close()
         checkForUpdatesHandler()
     }
 
     @objc
     private func openSettings() {
-        Self.logger.debug("openSettings from panel")
         panelCoordinator.close()
         openSettingsWindowHandler()
     }
 
     @objc
     private func quitApp() {
-        Self.logger.debug("quitApp")
         NSApp.terminate(nil)
     }
 }
@@ -255,18 +235,10 @@ private final class QuotesPanelCoordinator {
         rootView: AnyView
     ) {
         if panelController?.isVisible == true {
-            StatusBarController.logger.debug("QuotesPanelCoordinator.toggle -> close existing panel")
             close()
             return
         }
 
-        StatusBarController.logger.debug(
-            """
-            QuotesPanelCoordinator.toggle -> open panel \
-            contentWidth=\(contentWidth, privacy: .public) \
-            maximumContentHeight=\(maximumContentHeight, privacy: .public)
-            """
-        )
         let panelController = QuotesPanelController(
             contentWidth: contentWidth,
             maximumContentHeight: maximumContentHeight,
@@ -290,13 +262,6 @@ private final class QuotesPanelCoordinator {
         maximumContentHeight: CGFloat,
         relativeTo button: NSStatusBarButton
     ) {
-        StatusBarController.logger.debug(
-            """
-            QuotesPanelCoordinator.updateLayout \
-            isVisible=\(self.isVisible, privacy: .public) \
-            contentWidth=\(contentWidth, privacy: .public)
-            """
-        )
         panelController?.updateLayout(
             contentWidth: contentWidth,
             maximumContentHeight: maximumContentHeight,
@@ -305,7 +270,6 @@ private final class QuotesPanelCoordinator {
     }
 
     func close() {
-        StatusBarController.logger.debug("QuotesPanelCoordinator.close")
         panelController?.close()
         panelController = nil
         outsideClickMonitor = nil

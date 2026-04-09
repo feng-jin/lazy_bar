@@ -6,6 +6,7 @@ struct SettingsView: View {
     @ObservedObject var viewModel: MenuBarSettingsViewModel
     let onClose: (() -> Void)?
     @State private var selectedTab: SettingsTab = .watchlist
+    @FocusState private var isSearchFieldFocused: Bool
 
     private enum LayoutMetrics {
         static let watchlistMaxVisibleRows = 7
@@ -116,6 +117,11 @@ struct SettingsView: View {
             .padding(.bottom, 20)
         }
         .frame(width: 500)
+        .onExitCommand {
+            if viewModel.dismissSearchIfNeeded() {
+                isSearchFieldFocused = false
+            }
+        }
     }
 
     private var watchlistTabContent: some View {
@@ -310,6 +316,7 @@ struct SettingsView: View {
                 text: $viewModel.searchQuery
             )
             .textFieldStyle(.roundedBorder)
+            .focused($isSearchFieldFocused)
             .onSubmit {
                 viewModel.selectFirstSearchResultIfAvailable()
             }
@@ -318,6 +325,7 @@ struct SettingsView: View {
             if viewModel.showsSearchResults {
                 searchResultsList
                     .padding(.top, LayoutMetrics.searchResultsTopOffset)
+                    .allowsHitTesting(viewModel.showsSearchResults)
                     .zIndex(1)
             }
         }
@@ -424,7 +432,7 @@ struct SettingsView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
         .overlay {
             RoundedRectangle(cornerRadius: 10)
                 .strokeBorder(.secondary.opacity(0.18), lineWidth: 1)

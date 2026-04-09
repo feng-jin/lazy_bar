@@ -31,6 +31,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
     @Published private(set) var searchResults: [StockSearchResult] = []
     @Published private(set) var isSearching = false
     @Published private(set) var searchStatusMessage: String?
+    @Published private(set) var isSearchOverlayVisible = false
 
     private let store: any MenuBarSettingsStoring
     private let stockSearchProvider: any StockSearchProviding
@@ -65,7 +66,6 @@ final class MenuBarSettingsViewModel: ObservableObject {
             .removeDuplicates()
             .debounce(for: .milliseconds(250), scheduler: RunLoop.main)
             .sink { [weak self] query in
-                Self.logger.debug("searchQuery debounced query=\(query, privacy: .public)")
                 self?.performSearch(for: query)
             }
             .store(in: &cancellables)
@@ -73,29 +73,21 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     func beginEditing() {
         guard !hasUnsavedChanges else {
-            Self.logger.debug("beginEditing skipped because there are unsaved draft changes")
             return
         }
-        Self.logger.debug(
-            "beginEditing watchlist=\(self.draft.settings.watchlist.count, privacy: .public) fields=\(Self.visibleFieldsDescription(self.draft.settings), privacy: .public)"
-        )
         resetDraft(from: settings)
     }
 
     func cancel() {
-        Self.logger.debug("cancel editing and reset draft")
         resetDraft(from: settings)
-        clearSearch()
+        clearSearch(reason: "cancel")
     }
 
     func save() {
         let sanitizedSettings = draft.settings.sanitized()
         guard let validationMessage = sanitizedSettings.validationMessage() else {
             Self.logger.debug(
-                """
-                save watchlist=\(sanitizedSettings.watchlist.count, privacy: .public) \
-                fields=\(Self.visibleFieldsDescription(sanitizedSettings), privacy: .public)
-                """
+                "save watchlist=\(sanitizedSettings.watchlist.count, privacy: .public)"
             )
             store.update(sanitizedSettings)
             return
@@ -115,20 +107,12 @@ final class MenuBarSettingsViewModel: ObservableObject {
         let previousMode = draft.settings.displayMode
         draft.settings.displayMode = mode
         guard previousMode != mode else { return }
-        Self.logger.debug("setDisplayMode mode=\(mode.rawValue, privacy: .public)")
     }
 
     func setField(_ field: MenuBarDisplaySettings.Field, isVisible: Bool) {
         let previousValue = draft.settings.showsField(field)
         draft.settings.setField(field, isVisible: isVisible)
         guard previousValue != isVisible else { return }
-        Self.logger.debug(
-            """
-            setField field=\(field.rawValue, privacy: .public) \
-            isVisible=\(isVisible, privacy: .public) \
-            visibleFields=\(Self.visibleFieldsDescription(self.draft.settings), privacy: .public)
-            """
-        )
     }
 
     var watchlistRows: [WatchlistDraftRow] {
@@ -156,7 +140,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
             watchlistCount=\(self.draft.settings.watchlist.count, privacy: .public)
             """
         )
-        clearSearch()
+        clearSearch(reason: "selectResult")
     }
 
     func removeWatchlistEntry(id: WatchlistDraftRow.ID) {
@@ -216,7 +200,7 @@ final class MenuBarSettingsViewModel: ObservableObject {
     }
 
     var showsSearchResults: Bool {
-        isSearching || !searchResults.isEmpty || searchStatusMessage != nil
+        isSearchOverlayVisible
     }
 
     var validationMessage: String? {
@@ -228,12 +212,6 @@ final class MenuBarSettingsViewModel: ObservableObject {
             settings: settings,
             watchlistRowIDs: settings.watchlist.map { _ in UUID() }
         )
-        Self.logger.debug(
-            """
-            resetDraft watchlist=\(settings.watchlist.count, privacy: .public) \
-            fields=\(Self.visibleFieldsDescription(settings), privacy: .public)
-            """
-        )
     }
 
     func isSearchResultAlreadyAdded(_ result: StockSearchResult) -> Bool {
@@ -242,19 +220,23 @@ final class MenuBarSettingsViewModel: ObservableObject {
 
     func selectFirstSearchResultIfAvailable() {
         guard let result = searchResults.first, !isSearchResultAlreadyAdded(result) else {
-            Self.logger.debug(
-                """
-                selectFirstSearchResultIfAvailable skipped \
-                resultCount=\(self.searchResults.count, privacy: .public)
-                """
-            )
             return
         }
 
-        Self.logger.debug(
-            "selectFirstSearchResultIfAvailable symbol=\(result.symbol, privacy: .public)"
-        )
         selectSearchResult(result)
+    }
+
+    @discardableResult
+    func dismissSearchIfNeeded() -> Bool {
+        let hasVisibleSearchState = !searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            || showsSearchResults
+
+        guard hasVisibleSearchState else {
+            return false
+        }
+
+        clearSearch(reason: "dismissIfNeeded")
+        return true
     }
 
     private func watchlistIndex(for id: WatchlistDraftRow.ID) -> Int? {
@@ -273,24 +255,8 @@ final class MenuBarSettingsViewModel: ObservableObject {
     func watchlistEntrySymbol(id: WatchlistDraftRow.ID) -> String {
         watchlistEntry(id: id)?.symbol ?? ""
     }
-
-    private static func visibleFieldsDescription(_ settings: MenuBarDisplaySettings) -> String {
-        let fields = MenuBarDisplaySettings.Field.allCases
-            .filter { settings.showsField($0) }
-            .map(\.rawValue)
-
-        if fields.isEmpty {
-            return "[]"
-        }
-
-        return "[\(fields.joined(separator: ","))]"
-    }
-
     private func performSearch(for query: String) {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        Self.logger.debug(
-            "performSearch received raw=\(query, privacy: .public) trimmed=\(trimmedQuery, privacy: .public)"
-        )
 
         if searchTask != nil {
             Self.logger.debug("performSearch cancelling previous in-flight search task")
@@ -298,14 +264,12 @@ final class MenuBarSettingsViewModel: ObservableObject {
         searchTask?.cancel()
 
         guard !trimmedQuery.isEmpty else {
-            Self.logger.debug("performSearch cleared because query is empty after trim")
-            searchResults = []
-            isSearching = false
-            searchStatusMessage = nil
+            clearSearch(reason: "emptyQuery")
             return
         }
 
         isSearching = true
+        isSearchOverlayVisible = true
         searchStatusMessage = nil
         searchTask = Task { [weak self] in
             guard let self else { return }
@@ -324,6 +288,8 @@ final class MenuBarSettingsViewModel: ObservableObject {
                     self.isSearching = false
                     self.searchResults = results
                     self.searchStatusMessage = results.isEmpty ? "没有找到匹配的 A 股，请换个简称或代码。" : nil
+                    self.isSearchOverlayVisible = true
+                    self.searchTask = nil
                 }
                 Self.logger.debug(
                     """
@@ -344,6 +310,8 @@ final class MenuBarSettingsViewModel: ObservableObject {
                     self.isSearching = false
                     self.searchResults = []
                     self.searchStatusMessage = "搜索失败，请稍后再试。"
+                    self.isSearchOverlayVisible = true
+                    self.searchTask = nil
                 }
                 Self.logger.error(
                     "performSearch failed query=\(trimmedQuery, privacy: .public) error=\(error.localizedDescription, privacy: .public)"
@@ -352,14 +320,15 @@ final class MenuBarSettingsViewModel: ObservableObject {
         }
     }
 
-    private func clearSearch() {
-        Self.logger.debug(
-            """
-            clearSearch previousQuery=\(self.searchQuery, privacy: .public) \
-            previousResults=\(self.searchResults.count, privacy: .public)
-            """
-        )
+    private func clearSearch(reason: String) {
+        guard isSearchOverlayVisible || !searchQuery.isEmpty || !searchResults.isEmpty || isSearching else {
+            return
+        }
+
+        Self.logger.debug("clearSearch reason=\(reason, privacy: .public)")
         searchTask?.cancel()
+        searchTask = nil
+        isSearchOverlayVisible = false
         searchQuery = ""
         searchResults = []
         isSearching = false

@@ -1,25 +1,11 @@
 /// 菜单栏上的紧凑 ticker 标签，在固定宽度内上下循环播放股票摘要。
-import os
 import SwiftUI
 
 struct MenuBarLabelView: View {
-    fileprivate static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "lazy_bar",
-        category: "MenuBarLabelView"
-    )
-
     let presentation: MenuBarPresentation
 
     var body: some View {
         let identity = presentation.contentIdentity
-        let _ = Self.logger.debug(
-            """
-            body rows=\(presentation.barRows.count, privacy: .public) \
-            status=\(presentation.statusText, privacy: .public) \
-            width=\(presentation.layout.itemWidth, privacy: .public) \
-            identity=\(identity, privacy: .public)
-            """
-        )
 
         Group {
             if !presentation.barRows.isEmpty {
@@ -157,12 +143,6 @@ private struct VerticalTickerView: View {
     }
 
     private func restartAnimation() {
-        MenuBarLabelView.logger.debug(
-            """
-            ticker restart count=\(items.count, privacy: .public) \
-            firstID=\(items.first?.id ?? "nil", privacy: .public)
-            """
-        )
         animationTask?.cancel()
         animationTask = nil
         currentIndex = 0
@@ -192,7 +172,6 @@ private struct VerticalTickerView: View {
 
     private func syncItemsChange() {
         guard !items.isEmpty else {
-            MenuBarLabelView.logger.debug("ticker items cleared")
             animationTask?.cancel()
             animationTask = nil
             currentIndex = 0
@@ -202,9 +181,6 @@ private struct VerticalTickerView: View {
         }
 
         if items.count == 1 {
-            MenuBarLabelView.logger.debug(
-                "ticker switched to single item id=\(items.first?.id ?? "nil", privacy: .public)"
-            )
             animationTask?.cancel()
             animationTask = nil
             currentIndex = 0

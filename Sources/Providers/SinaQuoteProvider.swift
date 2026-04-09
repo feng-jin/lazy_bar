@@ -22,7 +22,6 @@ struct SinaQuoteProvider: QuoteProviding {
             .filter { !$0.isEmpty }
 
         guard !normalizedSymbols.isEmpty else {
-            Self.logger.debug("fetchQuotes skipped empty symbol list")
             return []
         }
 
@@ -66,11 +65,9 @@ struct SinaQuoteProvider: QuoteProviding {
 
                 attempt += 1
                 let delayNanoseconds = UInt64(attempt) * 500_000_000
-                let delaySeconds = Double(delayNanoseconds) / 1_000_000_000
                 Self.logger.error(
                     """
                     data request retry attempt=\(attempt, privacy: .public) \
-                    delay=\(delaySeconds, format: .fixed(precision: 3))s \
                     error=\(error.localizedDescription, privacy: .public)
                     """
                 )
@@ -80,9 +77,6 @@ struct SinaQuoteProvider: QuoteProviding {
     }
 
     private func timedData(for request: URLRequest) async throws -> (Data, URLResponse) {
-        Self.logger.debug(
-            "timedData start url=\(request.url?.absoluteString ?? "", privacy: .public)"
-        )
         return try await withThrowingTaskGroup(of: (Data, URLResponse).self) { group in
             group.addTask {
                 try await session.data(for: request)
@@ -130,7 +124,6 @@ struct SinaQuoteProvider: QuoteProviding {
             )
             throw SinaQuoteProviderError.invalidResponse
         }
-        Self.logger.debug("validate statusCode=\(httpResponse.statusCode, privacy: .public)")
     }
 
     private func decodePayload(from data: Data) throws -> String {
@@ -161,12 +154,14 @@ struct SinaQuoteProvider: QuoteProviding {
             quotesBySymbol[quote.symbol] = quote
         }
 
-        Self.logger.debug(
-            """
-            parseQuotes parsed=\(quotesBySymbol.count, privacy: .public) \
-            skipped=\(skippedLines, privacy: .public)
-            """
-        )
+        if skippedLines > 0 {
+            Self.logger.debug(
+                """
+                parseQuotes filtered parsed=\(quotesBySymbol.count, privacy: .public) \
+                skipped=\(skippedLines, privacy: .public)
+                """
+            )
+        }
 
         return quotesBySymbol
     }
